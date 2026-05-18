@@ -1,7 +1,7 @@
 # OpsFlow AI — Architecture Document
 
 > Multi-tenant AI Workflow CRM for async automation, lead operations, and workflow orchestration.
-> ~9,000 lines across ~190 files. 38 API routes + SSE + webhook trigger. 3 sellable templates + template marketplace.
+> ~9,500 lines across ~200 files. 38 API routes + SSE + webhook trigger. 3 sellable templates + template marketplace.
 
 ---
 
@@ -78,13 +78,14 @@ opsflow-ai/
 │   │   ├── app/
 │   │   │   ├── (auth)/               # 登录/注册页面
 │   │   │   ├── (dashboard)/          # 仪表盘页面组
-│   │   │   │   ├── page.tsx          # 首页仪表盘
+│   │   │   │   ├── home/             # 仪表盘首页 (/home, 中间件改写)
 │   │   │   │   ├── leads/            # CRM 线索管理
 │   │   │   │   ├── workflows/        # 工作流管理 + 构建器
 │   │   │   │   ├── runs/             # 全局运行面板
 │   │   │   │   ├── settings/         # 组织设置 + 成员管理
 │   │   │   │   └── audit-log/        # 审计日志查看
-│   │   │   └── api/                  # 31 个 API 路由
+    │   │   │   ├── page.tsx              # 公开落地页 (/)
+    │   │   │   └── api/                  # 38 个 API 路由
 │   │   │       ├── auth/             # login, register, logout, verify
 │   │   │       └── orgs/[slug]/      # CRUD + AI + runs + members
 │   │   ├── components/

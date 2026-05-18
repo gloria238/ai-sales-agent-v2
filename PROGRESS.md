@@ -1,6 +1,6 @@
 # OpsFlow AI — Progress Report
 
-> Last updated: 2026-05-18 (Phase 12 complete — Commercial UI/UX Upgrade)
+> Last updated: 2026-05-18 (Phase 12+ — Deployment fixes, UI overhaul, Landing rewrite)
 > Project: Multi-tenant AI Workflow CRM
 
 ---
@@ -22,7 +22,7 @@
 | Phase 11: Security Hardening v2 | ✅ Done | 100% |
 | Phase 12: Commercial UI/UX Upgrade | ✅ Done | 100% |
 
-**Total source code:** ~9,500 lines across ~195 files
+**Total source code:** ~10,000 lines across ~200 files
 **Total tests:** 85 unit (67 web + 18 worker) + 105 integration + 4 E2E specs
 **API endpoints:** 38 total + SSE + webhook trigger
 **Infrastructure:** TanStack Query, SSE, Redis Rate Limiting, Feature Flags, Structured JSON Logging, Resend Email, BullMQ Queue
@@ -645,3 +645,57 @@ Creates client-ready presentation data:
 7. **API key middleware auth** — Keys are created/managed but middleware doesn't verify Bearer tokens yet (Prisma not available in Edge runtime).
 8. **Notification persistence** — Sonner toasts used for transient notifications; no persisted notification model.
 9. **Stripe billing** — Not implemented.
+10. **Tailwind design token bug (FIXED)** — Custom colors (bg-accent, text-text, etc.) were not registered in tailwind.config.js. Tailwind silently dropped all design-token classes. Converted CSS variables to RGB format for opacity support, registered 22 custom colors.
+11. **Dashboard routing (FIXED)** — Landing page and dashboard both mapped to `/`. Moved dashboard to `/home` with middleware rewrite for authenticated users.
+12. **API keys 404 (FIXED)** — Missing `page.tsx` at `settings/api-keys/`. Created server component wrapper.
+13. **UICOLORBUG (FIXED)** — 11 components used hardcoded zinc/gray colors instead of design tokens. all migrated.
+
+---
+
+## Phase 12+ — Deployment Fixes & UI Overhaul ✅
+
+> Completed: 2026-05-18
+
+### Deploy debugging (5 errors resolved)
+
+| Error | Root Cause | Fix |
+|-------|-----------|-----|
+| pnpm outdated lockfile | `zod` removed from package.json but lockfile not updated | `pnpm install --no-frozen-lockfile` |
+| Module not found: zod | `lib/validation.ts` still imports zod (16 schemas) | Restored `zod@^4.4.3` |
+| ENOENT client-reference-manifest | Two pages at `/` — dashboard shadowed, manifest missing | Moved dashboard to `/home`, middleware rewrite |
+| /settings/api-keys 404 | Directory existed but no `page.tsx` | Created server component wrapper |
+| All UI invisible (critical) | Custom colors not in tailwind.config.js — zero CSS generated | Registered 22 colors, converted CSS vars to RGB |
+
+### Dashboard routing fix
+
+- Dashboard moved from `(dashboard)/page.tsx` → `(dashboard)/home/page.tsx`
+- Middleware: `NextResponse.rewrite("/home")` for authenticated users at `/` (keeps URL at `/`)
+- Landing page at `app/page.tsx` remains static for unauthenticated visitors
+
+### Landing page rewrite
+
+Repositioned from "workflow automation demo" → "AI-native operations platform":
+- Hero: "Run your sales operations on autopilot"
+- Removed developer jargon (BullMQ, JWT, SSE, CSP from customer-facing sections)
+- Added: 4 concrete use cases, 6 audience badges, credibility section with business value
+- Credibility trigger: "Designed to reflect real production operational systems"
+- Typography: `text-7xl` hero, `text-4xl` section titles, `text-base` feature titles, `text-sm` descriptions
+
+### Tailwind design system fix (critical)
+
+**Root cause**: `tailwind.config.js` only defined `surface` color. Every `bg-accent`, `text-text`, `bg-bg-card`, `border-border` class generated ZERO CSS. Buttons appeared white-on-white, dropdowns transparent, text invisible.
+
+**Fix**:
+1. Registered 22 custom colors in Tailwind config as `rgb(var(--x) / <alpha-value>)`
+2. Converted all CSS variables from hex (`#2563eb`) to RGB triplets (`37 99 235`) for opacity support
+3. Updated all `var(--x)` references to `rgb(var(--x))` in CSS and JS
+4. Migrated 11 UI components from hardcoded zinc/gray to design tokens
+
+### UI/UX improvements
+
+- Font: removed weight 300 (too thin), minimum 400
+- Text contrast: `text-secondary` darkened, `text-muted` darkened
+- Toast notifications: premium glass styling with design tokens
+- Export CSV button: proper outline styling with icon (was plain gray link)
+- All form elements: rounded-xl, focus rings, proper placeholder colors
+
