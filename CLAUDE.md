@@ -129,6 +129,7 @@ packages/
 - **AI**: DeepSeek API client. 4 AI endpoints: suggest-nodes, generate-workflow, score-lead, analyze-run. Feature flags via `lib/feature-flags.ts`.
 - **Email**: Resend SDK. `apps/worker/src/email.ts` — template variable resolution (`{{lead.email}}`) + send. Worker `executeNode` calls real email when action is `send_email`.
 - **DB**: PrismaClient singleton cached on `globalThis`. `experimental.serverComponentsExternalPackages: ["@prisma/client"]` in next.config for Vercel.
+- **Design system**: CSS custom properties in `globals.css` (RGB triplets for Tailwind opacity support). All colors registered in `tailwind.config.js` as `rgb(var(--x) / <alpha-value>)`. 11 UI components in `components/ui/` use design tokens exclusively — never hardcoded colors. Glass morphism via `.glass-card` utility class.
 
 ### RBAC permissions (10 permissions)
 
@@ -149,8 +150,9 @@ packages/
 ### Key files
 
 ```
-apps/web/app/page.tsx                — Public landing page (hero, features, CTAs)
-apps/web/app/(dashboard)/page.tsx    — Dashboard with metrics, pipeline chart, onboarding card
+apps/web/app/page.tsx                — Public landing page (static, unauthenticated visitors)
+apps/web/middleware.ts               — Rewrites / → /home for authenticated users
+apps/web/app/(dashboard)/home/page.tsx — Dashboard home (Bento grid, pipeline chart, worker health)
 apps/web/app/(dashboard)/templates/  — Workflow template marketplace (browse + install)
 apps/web/app/(dashboard)/docs/       — API documentation page (38 endpoints)
 apps/web/app/(dashboard)/settings/api-keys/ — API key management
