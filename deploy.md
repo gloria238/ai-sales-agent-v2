@@ -1,6 +1,94 @@
-# Vercel Deployment Debugging Guide
+# Deployment Guide — SalesAgent AI
 
-Lessons from troubleshooting Vercel deploy failures and UI bugs in this project.
+> Lessons from Vercel + Railway + Supabase + Upstash deployment debugging.
+> Updated: 2026-05-19 (post OpsFlow → SalesAgent migration)
+
+---
+
+## Recent Deploy Issues (SalesAgent AI)
+
+### Error D1: pnpm frozen-lockfile fails — @opsflow packages missing
+
+```
+ERR_PNPM_OUTDATED_LOCKFILE
+specifiers in the lockfile don't match specifiers in package.json
+```
+
+**Cause**: After renaming packages from `@opsflow/*` → `@salesagent/*`, the `pnpm-lock.yaml` on the remote (GitHub) still referenced `@opsflow/db`, `@opsflow/worker`, `@opsflow/web`. Vercel clones the repo and runs `pnpm install --frozen-lockfile` which requires exact lockfile match.
+
+**Fix**: Delete `pnpm-lock.yaml`, run `pnpm install` locally to regenerate with `@salesagent/*` references, commit and push the new lockfile.
+
+**Prevention**: After any package rename, always regenerate and commit the lockfile before deploying.
+
+### Error D2: $transaction incompatible with pgBouncer → 500 on POST/PATCH
+
+```
+P2028: Transaction API error: Transaction not found.
+Transaction already closed: timeout was 5000ms, however 5939ms passed.
+```
+
+**Cause**: Supabase connection pooler (pgBouncer) does not support interactive Prisma `$transaction()` calls. This is a well-known Prisma + Supabase limitation.
+
+**Affected routes**: `leads/route.ts` (POST), `leads/[id]/route.ts` (PATCH + DELETE), `register/route.ts`
+
+**Fix**: Replace all `prisma.$transaction(async (tx) => { ... })` with sequential `prisma.xxx()` calls. For registration, add try/catch rollback to delete orphaned user if org creation fails.
+
+```ts
+// BEFORE (broken on pgBouncer)
+const lead = await prisma.$transaction(async (tx) => {
+  const l = await tx.lead.create({ data: ... });
+  await tx.leadActivity.create({ data: ... });
+  return l;
+});
+
+// AFTER (sequential, pgBouncer-safe)
+const l = await prisma.lead.create({ data: ... });
+await prisma.leadActivity.create({ data: ... });
+const lead = l;
+```
+
+### Error D3: JSX build errors on Vercel (not caught by `pnpm dev`)
+
+**Errors encountered**:
+- Stray `</Link>` closing tag in `leads/[id]/page.tsx` — caused "Unexpected token div" webpack error
+- Missing outer `</div>` wrapper — same symptom
+- `DialogHeader`/`DialogTitle` not exported from custom `@/components/ui/dialog`
+- `Badge variant="outline"` — Badge only supports `default | success | warning | danger`
+
+**Cause**: `pnpm dev` (Next.js dev mode) is more lenient with JSX/type errors. Vercel runs `next build` which is strict.
+
+**Fix**: Always run `npx next build` locally before pushing. `pnpm dev` is NOT a valid build test.
+
+### Error D4: Upstash Redis max requests limit
+
+```
+ERR max requests limit exceeded. Limit: 500000, Usage: 500000.
+```
+
+**Cause**: Upstash Redis free tier has a 500K command limit per day. Running 4 BullMQ workers + heavy integration tests exhausts this quickly.
+
+**Fix**: 
+- Kill the worker during integration tests if Redis is not needed
+- Or upgrade Upstash plan
+- The workers DID start correctly with `prefix: "sales-agent"` isolation — the limit hit confirms isolation is working
+
+### Error D5: Cross-project Redis queue collision (prevention)
+
+**Risk**: Running OpsFlow and SalesAgent on the same Upstash Redis instance without queue prefix isolation.
+
+**Fix applied**: All BullMQ Queue and Worker instances use `prefix: "sales-agent"`:
+
+```ts
+const Q_PREFIX = "sales-agent";
+new Queue("conversation-jobs", { connection, prefix: Q_PREFIX });
+new Worker("conversation-jobs", processor, { connection, prefix: Q_PREFIX });
+```
+
+Redis keys: `sales-agent:conversation-jobs:...` vs OpsFlow's `bull:workflow-runs:...` — fully isolated.
+
+---
+
+## Legacy OpsFlow Issues (still relevant)
 
 ## Error 1: Outdated lockfile
 
@@ -110,14 +198,64 @@ Even after registering custom colors, some components used hardcoded Tailwind co
 
 **Fix**: Replaced all hardcoded colors with design tokens across 11 UI components.
 
-## Summary checklist
+## Pre-Deploy Checklist
 
-- [ ] After changing dependencies: run `pnpm install`, commit lockfile
-- [ ] Before removing a dependency: grep for imports
-- [ ] No two `page.tsx` files at the same route (route groups don't change paths)
-- [ ] Every directory route needs a `page.tsx`
-- [ ] Middleware auth rewrites use `NextResponse.rewrite()`, not `redirect()`
-- [ ] Every custom color in className must be in `tailwind.config.js` colors
-- [ ] CSS color variables must be RGB triplets for Tailwind opacity support
-- [ ] All UI components must use design tokens, never hardcoded colors
-- [ ] Verify build locally: `pnpm --filter @opsflow/web build`
+```bash
+# 1. Build test — catches JSX/type errors dev mode misses
+pnpm --filter @salesagent/web build
+
+# 2. Lockfile must match package.json
+pnpm install --frozen-lockfile  # fails = lockfile needs update
+
+# 3. No hardcoded @opsflow references
+grep -r "@opsflow" apps/ packages/ --include="*.ts" --include="*.tsx" --include="*.json"
+
+# 4. Queue prefix isolation
+grep "Q_PREFIX\|prefix:" apps/worker/src/queue.ts
+
+# 5. All $transaction calls replaced (pgBouncer compat)
+grep -r "\$transaction" apps/web/app/api --include="*.ts"
+
+# 6. Unit tests pass
+pnpm --filter @salesagent/web test
+
+# 7. Build and push
+git push origin main
+```
+
+## Production Env Vars
+
+| Variable | Used by | Notes |
+|----------|---------|-------|
+| `DATABASE_URL` | Web, Worker, DB | Supabase pooled (pgBouncer, transaction mode) |
+| `DIRECT_URL` | DB push/migrate | Supabase direct connection |
+| `REDIS_URL` | Worker, Web | Upstash Redis (BullMQ + rate limiting) |
+| `UPSTASH_REDIS_REST_URL` | Web | Upstash REST API for serverless rate limiting |
+| `UPSTASH_REDIS_REST_TOKEN` | Web | Upstash REST API token |
+| `JWT_SECRET` | Web | 64-char random string, NO fallback |
+| `DEEPSEEK_API_KEY` | Web, Worker | DeepSeek AI |
+| `RESEND_API_KEY` | Worker | Resend email delivery |
+| `EMAIL_FROM` | Worker | Sender address |
+
+## Vercel Config
+
+```
+Build Command: pnpm --filter @salesagent/db generate && pnpm --filter @salesagent/web build
+Output Directory: Next.js default
+Install Command: pnpm install --frozen-lockfile
+Root Directory: apps/web
+```
+
+## Railway Config (Worker)
+
+```toml
+[build]
+builder = "nixpacks"
+buildCommand = "pnpm install --frozen-lockfile && pnpm --filter @salesagent/db generate"
+
+[deploy]
+startCommand = "npx tsx apps/worker/src/index.ts"
+healthcheckPath = "/"
+```
+
+Env vars needed: `DATABASE_URL`, `DIRECT_URL`, `REDIS_URL`, `DEEPSEEK_API_KEY`, `RESEND_API_KEY`, `EMAIL_FROM`
