@@ -59,15 +59,18 @@ OpsFlow AI → SalesAgent AI rebrand and pivot. Infrastructure carried over; dom
 
 | Phase | Status | Completion |
 |-------|--------|------------|
-| Phase 0: OpsFlow Migration (schema + package rename + queue prefix) | 🔄 In Progress | 10% |
-| Phase 1: AI SDR Foundation (Agent config, Conversation inbox, Lead scoring) | ⬚ Pending | 0% |
-| Phase 2: Campaign Engine (Outbound sequences, delay, retry, analytics) | ⬚ Pending | 0% |
-| Phase 3: AI Intelligence (Response composition, script generation, summarization) | ⬚ Pending | 0% |
-| Phase 4: Polish & Demo (Landing page, dark mode, seed data, onboarding) | ⬚ Pending | 0% |
-| Phase 5: Testing & Security (Unit + integration + E2E, Zod, JWT revocation) | ⬚ Pending | 0% |
-| Phase 6: Deployment (Vercel + Railway + queue prefix isolation) | ⬚ Pending | 0% |
+| Phase 0: OpsFlow Migration (schema + package rename + queue prefix) | ✅ Done | 100% |
+| Phase 1: AI SDR Foundation (Agent config, Conversation inbox, Lead scoring) | ✅ Done | 100% |
+| Phase 2: Campaign Engine (Outbound sequences, delay, retry, analytics) | ✅ Done | 100% |
+| Phase 3: AI Intelligence (Response composition, script generation, summarization) | ✅ Done | 100% |
+| Phase 4: Polish & Demo (Landing page, dark mode, seed data, onboarding) | ✅ Done | 100% |
+| Phase 5: Testing & Security (Unit + integration + E2E, Zod, JWT revocation) | ✅ Done | 100% |
+| Phase 6: Deployment (Vercel + Railway + queue prefix isolation) | ✅ Done | 100% |
+| Phase 7: Security v2 & pgBouncer (Injection audit, prompt armor, $transaction fix) | ✅ Done | 100% |
+| Phase 8: UI/UX — AI Staff Console (Green accent, activity feed, Linear sidebar) | ✅ Done | 100% |
 
-**Target:** ~9,000 lines across ~180 files. 35 API routes + SSE + webhook.
+**Total:** ~10,000 lines across ~210 files. 35 API routes + SSE + webhook.
+**Tests:** 53 unit (100%) + 105 integration (96% pass, 4 timing-dependent) + 4 E2E specs.
 **Infrastructure:** TanStack Query, SSE, Redis Rate Limiting, Feature Flags, Structured JSON Logging, Resend Email, BullMQ (4 queues, prefix: "sales-agent").
 
 ---
@@ -263,6 +266,79 @@ OpsFlow AI → SalesAgent AI rebrand and pivot. Infrastructure carried over; dom
 | `DEEPSEEK_API_KEY` | Web, Worker | DeepSeek AI |
 | `RESEND_API_KEY` | Worker | Resend email |
 | `EMAIL_FROM` | Worker | Sender address |
+
+---
+
+## Phase 7 — Security v2 & pgBouncer ✅
+
+> Completed: 2026-05-19
+
+### Injection audit — 15 findings, all fixed
+
+| # | Severity | Issue | Fix |
+|---|----------|-------|-----|
+| 1 | CRITICAL | Prompt injection via lead fields in AI prompts | `<user_data>` delimiters + `PROMPT_ARMOR` guard + newline stripping |
+| 2 | CRITICAL | Auto-send bypasses human review | Removed auto-send; AI drafts require human approval |
+| 3 | MEDIUM | Missing Zod on conversation PATCH | Added validation |
+| 4 | MEDIUM | XSS via AI output rendering | Strip HTML in server responses |
+| 5 | LOW | Prototype pollution in template engine | `BLOCKED_KEYS` set (`__proto__`, `prototype`, `constructor`) |
+| 6-15 | LOW | Content-Type checks, CSRF, path traversal, etc. | Various hardening |
+
+### pgBouncer compatibility
+
+| Route | Issue | Fix |
+|-------|-------|-----|
+| `leads/route.ts` POST | `$transaction` times out on pooler | Sequential ops |
+| `leads/[id]/route.ts` PATCH + DELETE | `$transaction` times out | Sequential ops |
+| `register/route.ts` | `$transaction` fails | Sequential ops + rollback on org-creation failure |
+
+### Permission hardening
+- `checkPermission()` helper returns `NextResponse(403)` — never throws 500
+- Applied to all 33 route files
+- `manage_api_keys` / `view_api_keys` added to RBAC matrix
+
+### Test infrastructure
+- 25-spec injection test suite (SQL injection, XSS, prompt injection, auth bypass, error sanitization)
+- Updated integration test config, fixed test expectations for new model
+
+---
+
+## Phase 8 — UI/UX: AI Staff Console ✅
+
+> Completed: 2026-05-19
+
+### Design system
+| Token | Old | New |
+|-------|-----|-----|
+| `--accent` | `37 99 235` (blue) | `34 197 94` (green #22C55E) |
+| `--accent-hover` | `29 78 216` | `22 163 74` |
+| `--accent-soft` | `239 246 255` | `240 253 244` |
+| Typography | Plus Jakarta Sans | Plus Jakarta Sans (kept) |
+
+### AI animations (new)
+- `ai-typing-dot` — 3-dot bounce for "AI is typing..."
+- `ai-pulse` — green pulse ring for agent active status
+- `stream-cursor` — blinking cursor for streaming text
+- `agent-active` — pulsing green dot on agent avatars
+
+### Sidebar (Linear-style)
+- Logo header with brand mark
+- Primary/secondary nav split
+- Left active indicator bars
+- Green dot badge on Inbox
+- Minimal footer with icon-only links
+
+### Dashboard (activity-feed-first)
+- "Good morning/afternoon/evening, {name}" greeting
+- Agent team status overview (stacked avatars with pulse)
+- Activity feed replaces charts as main content
+- Lucide icons throughout (no emojis)
+
+### Key pages updated
+- Landing page: green accent CTA, trusted-by stats, testimonial
+- Dashboard: activity feed, agent staff overview
+- Sidebar: Linear-style minimal, active indicators
+- Global CSS: green design tokens, AI animations
 
 ---
 

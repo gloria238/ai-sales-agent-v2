@@ -2,7 +2,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@salesagent/db";
 import { getSession } from "@/lib/session";
-import { requirePermission } from "@/lib/permissions";
+import { requirePermission, checkPermission } from "@/lib/permissions";
 
 const MAX_ROWS = 500;
 const VALID_STAGES = ["new", "qualified", "proposal", "negotiation", "closed-won", "closed-lost"];
@@ -16,7 +16,7 @@ export async function POST(request: Request, { params }: { params: { slug: strin
   });
   if (!membership) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  try { requirePermission(membership.role, "manage_leads"); }
+  try { const _perm = checkPermission(membership.role, "manage_leads"); if (_perm) return _perm; }
   catch { return NextResponse.json({ error: "Forbidden" }, { status: 403 }); }
 
   const body = await request.json();

@@ -13,11 +13,14 @@ function getResend(): Resend {
 }
 
 // Resolve {{variable}} placeholders against context
+const BLOCKED_KEYS = new Set(["__proto__", "prototype", "constructor"]);
+
 function resolveTemplate(template: string, context: Record<string, unknown>): string {
   return template.replace(/\{\{([\w.]+)\}\}/g, (_match, path: string) => {
     const keys = path.split(".");
     let value: unknown = context;
     for (const key of keys) {
+      if (BLOCKED_KEYS.has(key)) return `{{${path}}}`;
       if (value && typeof value === "object") {
         value = (value as Record<string, unknown>)[key];
       } else {

@@ -4,46 +4,61 @@
 
 @layer base {
   :root {
+    /* ── Surface ──────────────────────────── */
     --bg: 248 250 252;
     --bg-card: 255 255 255;
     --bg-subtle: 241 245 249;
     --bg-muted: 226 232 240;
+
+    /* ── Border ───────────────────────────── */
     --border: 226 232 240;
     --border-light: 241 245 249;
-    --text: 15 23 42;
-    --text-secondary: 51 65 85;
-    --text-muted: 100 116 139;
-    --accent: 37 99 235;
-    --accent-hover: 29 78 216;
-    --accent-soft: 239 246 255;
+
+    /* ── Text — higher contrast for professionalism ── */
+    --text: 15 23 42;          /* slate-900 */
+    --text-secondary: 51 65 85; /* slate-700 */
+    --text-muted: 100 116 139; /* slate-500 */
+
+    /* ── Accent — Green (money/sales/conversion) ── */
+    --accent: 34 197 94;          /* green-500 #22C55E */
+    --accent-hover: 22 163 74;    /* green-600 #16A34A */
+    --accent-soft: 240 253 244;   /* green-50  #F0FDF4 */
+    --accent-muted: 220 252 231;  /* green-100 #DCFCE7 */
+
+    /* ── Semantic ─────────────────────────── */
     --success: 16 185 129;
     --success-soft: 236 253 245;
     --warning: 245 158 11;
     --warning-soft: 255 251 235;
     --danger: 239 68 68;
     --danger-soft: 254 242 242;
-    /* Glass tokens — keep as rgba, not color variables */
+
+    /* ── Glass ────────────────────────────── */
     --glass-bg: rgba(255, 255, 255, 0.72);
     --glass-border: rgba(255, 255, 255, 0.6);
     --glass-shadow: 0 0 0 1px rgba(0, 0, 0, 0.04), 0 2px 8px -2px rgba(0, 0, 0, 0.06);
     --glass-shadow-hover: 0 0 0 1px rgba(0, 0, 0, 0.06), 0 8px 24px -4px rgba(0, 0, 0, 0.08);
-    --sidebar-bg: rgba(255, 255, 255, 0.8);
+
+    /* ── Sidebar ──────────────────────────── */
+    --sidebar-bg: rgba(248, 250, 252, 0.92);
     --sidebar-border: rgba(0, 0, 0, 0.06);
+    --sidebar-w: 220px;
   }
 
   .dark {
     --bg: 2 6 23;
     --bg-card: 15 23 42;
-    --bg-subtle: 30 41 59;
-    --bg-muted: 51 65 85;
+    --bg-subtle: 23 31 52;
+    --bg-muted: 30 41 59;
     --border: 30 41 59;
-    --border-light: 15 23 42;
+    --border-light: 23 31 52;
     --text: 241 245 249;
     --text-secondary: 203 213 225;
     --text-muted: 148 163 184;
-    --accent: 59 130 246;
-    --accent-hover: 96 165 250;
-    --accent-soft: 30 58 95;
+    --accent: 34 197 94;
+    --accent-hover: 22 163 74;
+    --accent-soft: 5 46 22;
+    --accent-muted: 5 46 22;
     --success: 52 211 153;
     --success-soft: 6 78 59;
     --warning: 251 191 36;
@@ -54,15 +69,13 @@
     --glass-border: rgba(255, 255, 255, 0.06);
     --glass-shadow: 0 0 0 1px rgba(255, 255, 255, 0.04), 0 2px 8px -2px rgba(0, 0, 0, 0.2);
     --glass-shadow-hover: 0 0 0 1px rgba(255, 255, 255, 0.06), 0 8px 24px -4px rgba(0, 0, 0, 0.4);
-    --sidebar-bg: rgba(2, 6, 23, 0.85);
-    --sidebar-border: rgba(255, 255, 255, 0.06);
+    --sidebar-bg: rgba(2, 6, 23, 0.92);
+    --sidebar-border: rgba(255, 255, 255, 0.05);
   }
 }
 
 @layer base {
-  html {
-    scroll-behavior: smooth;
-  }
+  html { scroll-behavior: smooth; }
 
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
@@ -89,7 +102,6 @@
     border-radius: 4px;
   }
 
-  /* Neutralize autofill */
   input:-webkit-autofill {
     -webkit-box-shadow: 0 0 0 1000px white inset !important;
     -webkit-text-fill-color: #0f172a !important;
@@ -143,5 +155,59 @@
     background-size: 200% 100%;
     animation: skeleton 2s ease-in-out infinite;
     border-radius: 0.5rem;
+  }
+}
+
+/* ── Animations ─────────────────────────────────────────────── */
+@layer utilities {
+  @keyframes skeleton {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  @keyframes fade-in {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes slide-up {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes scale-in {
+    from { opacity: 0; transform: scale(0.96); }
+    to { opacity: 1; transform: scale(1); }
+  }
+
+  @keyframes ai-typing-dot {
+    0%, 60%, 100% { opacity: 0.2; transform: translateY(0); }
+    30% { opacity: 1; transform: translateY(-3px); }
+  }
+
+  @keyframes ai-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4); }
+    50% { box-shadow: 0 0 0 8px rgba(34, 197, 94, 0); }
+  }
+
+  @keyframes stream-cursor {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+  }
+
+  .animate-fade-in { animation: fade-in 300ms ease-out both; }
+  .animate-slide-up { animation: slide-up 400ms ease-out both; }
+  .animate-scale-in { animation: scale-in 200ms ease-out both; }
+
+  .typing-dot-1 { animation: ai-typing-dot 1.4s infinite; }
+  .typing-dot-2 { animation: ai-typing-dot 1.4s 0.2s infinite; }
+  .typing-dot-3 { animation: ai-typing-dot 1.4s 0.4s infinite; }
+
+  .agent-active { animation: ai-pulse 2s infinite; }
+
+  .stream-cursor::after {
+    content: '▊';
+    animation: stream-cursor 1s infinite;
+    color: rgb(var(--accent));
   }
 }

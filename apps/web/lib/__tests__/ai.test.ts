@@ -1,115 +1,76 @@
 import { describe, it, expect } from "vitest";
 
-// We test the extractBalancedJSON function by importing from ai.ts
-// But it's not exported, so we test via callDeepSeekJSON's behavior indirectly.
-// Instead, test the prompt builders and feature flags.
-
 import {
-  NODE_SUGGESTION_SYSTEM,
-  buildNodeSuggestionPrompt,
-  WORKFLOW_GENERATION_SYSTEM,
-  buildWorkflowGenerationPrompt,
-  LEAD_SCORING_SYSTEM,
-  buildLeadScoringPrompt,
-  ANOMALY_ANALYSIS_SYSTEM,
-  buildAnomalyAnalysisPrompt,
-  COMPOSE_EMAIL_SYSTEM,
-  buildComposeEmailPrompt,
-  CLASSIFY_EMAIL_SYSTEM,
-  buildClassifyEmailPrompt,
+  COMPOSE_RESPONSE_SYSTEM, buildComposeResponsePrompt,
+  LEAD_SCORING_SYSTEM, buildLeadScoringPrompt,
+  SUMMARIZE_CONVERSATION_SYSTEM, buildSummarizeConversationPrompt,
+  GENERATE_SCRIPT_SYSTEM, buildGenerateScriptPrompt,
 } from "@/lib/prompts";
 import { isEnabled } from "@/lib/feature-flags";
 
-// ── Prompt System Tests ─────────────────────────────────────────
+// ── Compose Response Tests ─────────────────────────────────────
 
-describe("NODE_SUGGESTION_SYSTEM", () => {
-  it("includes JSON object wrapper instruction", () => {
-    expect(NODE_SUGGESTION_SYSTEM).toContain('"suggestions"');
-    expect(NODE_SUGGESTION_SYSTEM).toContain("JSON object containing");
+describe("COMPOSE_RESPONSE_SYSTEM", () => {
+  it("includes JSON output fields", () => {
+    expect(COMPOSE_RESPONSE_SYSTEM).toContain("subject");
+    expect(COMPOSE_RESPONSE_SYSTEM).toContain("body");
+    expect(COMPOSE_RESPONSE_SYSTEM).toContain("tone");
+    expect(COMPOSE_RESPONSE_SYSTEM).toContain("suggestedAction");
   });
 
-  it("includes all valid node types", () => {
-    for (const t of ["trigger", "action", "condition", "delay"]) {
-      expect(NODE_SUGGESTION_SYSTEM).toContain(t);
+  it("includes agent personality guidance", () => {
+    expect(COMPOSE_RESPONSE_SYSTEM).toContain("personality");
+  });
+
+  it("includes email types", () => {
+    for (const t of ["welcome", "follow-up", "cold-outreach", "re-engagement", "proposal"]) {
+      expect(COMPOSE_RESPONSE_SYSTEM).toContain(t);
     }
   });
+});
 
-  it("includes action types from platform context", () => {
-    expect(NODE_SUGGESTION_SYSTEM).toContain("send_email");
-    expect(NODE_SUGGESTION_SYSTEM).toContain("score_lead");
-    expect(NODE_SUGGESTION_SYSTEM).toContain("update_lead");
-    expect(NODE_SUGGESTION_SYSTEM).toContain("compose_email");
+describe("buildComposeResponsePrompt", () => {
+  it("includes lead data and agent config", () => {
+    const prompt = buildComposeResponsePrompt({
+      leadName: "Alice", leadEmail: "alice@test.com", leadStage: "qualified",
+      leadCompany: "Acme", leadScore: 85,
+      agentPersonality: "Friendly SDR", agentGoals: "qualify",
+      knowledgeBase: "SaaS product", conversationHistory: [],
+    });
+    expect(prompt).toContain("Alice");
+    expect(prompt).toContain("alice@test.com");
+    expect(prompt).toContain("Acme");
+    expect(prompt).toContain("85");
+    expect(prompt).toContain("Friendly SDR");
   });
 
-  it("includes CRM data model", () => {
-    expect(NODE_SUGGESTION_SYSTEM).toContain("lead.name");
-    expect(NODE_SUGGESTION_SYSTEM).toContain("lead.stage");
-    expect(NODE_SUGGESTION_SYSTEM).toContain("lead.email");
+  it("renders conversation history", () => {
+    const prompt = buildComposeResponsePrompt({
+      leadName: "Bob", leadEmail: "b@b.com", leadStage: "new",
+      agentPersonality: "Direct", agentGoals: "book", knowledgeBase: "{}",
+      conversationHistory: [
+        { direction: "inbound", content: "Tell me about pricing", createdAt: "2026-01-01" },
+        { direction: "outbound", content: "Sure, let me share details", createdAt: "2026-01-01" },
+      ],
+    });
+    expect(prompt).toContain("Tell me about pricing");
+    expect(prompt).toContain("[INBOUND]");
+    expect(prompt).toContain("[OUTBOUND]");
   });
 });
 
-describe("buildNodeSuggestionPrompt", () => {
-  it("builds prompt with nodes and edges", () => {
-    const nodes = [{ type: "trigger", label: "Start", config: { type: "manual" } }];
-    const edges = [{ source: "n1", target: "n2", sourceHandle: null }];
-    const prompt = buildNodeSuggestionPrompt(nodes, edges);
-    expect(prompt).toContain("Start");
-    expect(prompt).toContain("n1");
-    expect(prompt).toContain("Suggest 3-5 nodes");
-  });
-
-  it("includes selected node type when provided", () => {
-    const prompt = buildNodeSuggestionPrompt([], [], "action");
-    expect(prompt).toContain('configuring a "action" node');
-  });
-
-  it("defaults to general suggestions without node type", () => {
-    const prompt = buildNodeSuggestionPrompt([], []);
-    expect(prompt).toContain("general workflow improvements");
-  });
-});
-
-// ── Workflow Generation Tests ───────────────────────────────────
-
-describe("WORKFLOW_GENERATION_SYSTEM", () => {
-  it("includes all available action types", () => {
-    const actions = ["send_email", "update_lead", "create_lead", "score_lead", "compose_email"];
-    for (const a of actions) {
-      expect(WORKFLOW_GENERATION_SYSTEM).toContain(a);
-    }
-  });
-
-  it("includes condition operators", () => {
-    expect(WORKFLOW_GENERATION_SYSTEM).toContain("equals");
-    expect(WORKFLOW_GENERATION_SYSTEM).toContain("greater_than");
-    expect(WORKFLOW_GENERATION_SYSTEM).toContain("contains");
-  });
-
-  it("includes JSON output format instruction", () => {
-    expect(WORKFLOW_GENERATION_SYSTEM).toContain("nodes: array");
-    expect(WORKFLOW_GENERATION_SYSTEM).toContain("edges: array");
-  });
-
-  it("includes CRM data model", () => {
-    expect(WORKFLOW_GENERATION_SYSTEM).toContain("lead.stage");
-    expect(WORKFLOW_GENERATION_SYSTEM).toContain("PIPELINE STAGES");
-  });
-});
-
-describe("buildWorkflowGenerationPrompt", () => {
-  it("wraps description in JSON structure request", () => {
-    const prompt = buildWorkflowGenerationPrompt("Send welcome email to new leads");
-    expect(prompt).toContain("Send welcome email to new leads");
-    expect(prompt).toContain("production-ready workflow");
-    expect(prompt).toContain("valid config");
-  });
-});
-
-// ── Lead Scoring Tests ──────────────────────────────────────────
+// ── Lead Scoring Tests ─────────────────────────────────────────
 
 describe("LEAD_SCORING_SYSTEM", () => {
-  it("includes scoring criteria", () => {
-    expect(LEAD_SCORING_SYSTEM).toContain("score");
+  it("includes BANT dimensions", () => {
+    expect(LEAD_SCORING_SYSTEM).toContain("intent");
+    expect(LEAD_SCORING_SYSTEM).toContain("budget");
+    expect(LEAD_SCORING_SYSTEM).toContain("authority");
+    expect(LEAD_SCORING_SYSTEM).toContain("need");
+    expect(LEAD_SCORING_SYSTEM).toContain("timeline");
+  });
+
+  it("includes scoring labels", () => {
     expect(LEAD_SCORING_SYSTEM).toContain("hot");
     expect(LEAD_SCORING_SYSTEM).toContain("warm");
     expect(LEAD_SCORING_SYSTEM).toContain("cold");
@@ -117,181 +78,111 @@ describe("LEAD_SCORING_SYSTEM", () => {
 });
 
 describe("buildLeadScoringPrompt", () => {
-  it("includes lead data fields", () => {
-    const lead = {
-      name: "Alice",
-      email: "alice@company.com",
-      stage: "qualified",
-      tags: { vip: true },
+  it("includes lead profile fields", () => {
+    const prompt = buildLeadScoringPrompt({
+      name: "Alice", email: "alice@c.com", company: "Acme",
+      stage: "qualified", source: "website", tags: ["vip"],
       createdAt: "2026-01-01",
-    };
-    const prompt = buildLeadScoringPrompt(lead);
+    });
     expect(prompt).toContain("Alice");
-    expect(prompt).toContain("alice@company.com");
+    expect(prompt).toContain("alice@c.com");
+    expect(prompt).toContain("Acme");
     expect(prompt).toContain("qualified");
-    expect(prompt).toContain("vip");
-    expect(prompt).toContain("Pipeline stages progress");
+    expect(prompt).toContain("website");
   });
 
   it("handles missing optional fields", () => {
-    const lead = {
-      name: "Bob",
-      email: null,
-      stage: null,
-      tags: null,
-      createdAt: "2026-01-01",
-    };
-    const prompt = buildLeadScoringPrompt(lead);
+    const prompt = buildLeadScoringPrompt({
+      name: "Bob", email: null, company: null,
+      stage: null, source: null, tags: null, createdAt: "2026-01-01",
+    });
     expect(prompt).toContain("N/A");
-    expect(prompt).toContain("none");
-  });
-});
-
-// ── Anomaly Analysis Tests ──────────────────────────────────────
-
-describe("ANOMALY_ANALYSIS_SYSTEM", () => {
-  it("requires JSON output with correct fields", () => {
-    expect(ANOMALY_ANALYSIS_SYSTEM).toContain("rootCause");
-    expect(ANOMALY_ANALYSIS_SYSTEM).toContain("failedNode");
-    expect(ANOMALY_ANALYSIS_SYSTEM).toContain("suggestedFix");
-    expect(ANOMALY_ANALYSIS_SYSTEM).toContain("isTransient");
-  });
-});
-
-describe("buildAnomalyAnalysisPrompt", () => {
-  it("includes run ID and events", () => {
-    const events = [{ nodeId: "n1", status: "failed", input: {}, output: {} }];
-    const prompt = buildAnomalyAnalysisPrompt("run-123", "failed", events);
-    expect(prompt).toContain("run-123");
-    expect(prompt).toContain("n1");
-    expect(prompt).toContain("failed");
-    expect(prompt).toContain("rootCause");
-    expect(prompt).toContain("isTransient");
-  });
-});
-
-// ── Email Composition Tests ─────────────────────────────────────
-
-describe("COMPOSE_EMAIL_SYSTEM", () => {
-  it("includes all email types", () => {
-    const types = ["welcome", "follow-up", "cold-outreach", "re-engagement", "proposal"];
-    for (const t of types) {
-      expect(COMPOSE_EMAIL_SYSTEM).toContain(t);
-    }
   });
 
-  it("requests JSON with subject and body", () => {
-    expect(COMPOSE_EMAIL_SYSTEM).toContain("subject");
-    expect(COMPOSE_EMAIL_SYSTEM).toContain("body");
-  });
-
-  it("forbids markdown fences", () => {
-    expect(COMPOSE_EMAIL_SYSTEM).toContain("Do NOT include markdown fences");
-  });
-});
-
-describe("buildComposeEmailPrompt", () => {
-  it("includes lead context in prompt", () => {
-    const prompt = buildComposeEmailPrompt({
-      emailType: "follow-up",
-      leadContext: { name: "Alice", email: "a@b.com", stage: "qualified", tags: ["vip"] },
+  it("includes pipeline stage info", () => {
+    const prompt = buildLeadScoringPrompt({
+      name: "Carol", email: "c@d.com", company: null,
+      stage: "proposal", source: null, tags: null, createdAt: "2026-01-01",
     });
-    expect(prompt).toContain("follow-up");
+    expect(prompt).toContain("closed_won");
+    expect(prompt).toContain("closed_lost");
+  });
+});
+
+// ── Summarize Conversation Tests ───────────────────────────────
+
+describe("SUMMARIZE_CONVERSATION_SYSTEM", () => {
+  it("includes required fields", () => {
+    expect(SUMMARIZE_CONVERSATION_SYSTEM).toContain("summary");
+    expect(SUMMARIZE_CONVERSATION_SYSTEM).toContain("keyPoints");
+    expect(SUMMARIZE_CONVERSATION_SYSTEM).toContain("objections");
+    expect(SUMMARIZE_CONVERSATION_SYSTEM).toContain("sentiment");
+    expect(SUMMARIZE_CONVERSATION_SYSTEM).toContain("shouldEscalate");
+  });
+});
+
+describe("buildSummarizeConversationPrompt", () => {
+  it("includes lead and messages", () => {
+    const prompt = buildSummarizeConversationPrompt({
+      leadName: "Alice", leadCompany: "Acme",
+      messages: [
+        { direction: "inbound", content: "I need help", createdAt: "2026-01-01" },
+        { direction: "outbound", content: "How can I assist?", createdAt: "2026-01-01" },
+      ],
+    });
     expect(prompt).toContain("Alice");
-    expect(prompt).toContain("a@b.com");
-    expect(prompt).toContain("qualified");
-    expect(prompt).toContain("vip");
-  });
-
-  it("includes additional context when provided", () => {
-    const prompt = buildComposeEmailPrompt({
-      emailType: "proposal",
-      leadContext: { name: "Bob", email: "b@c.com", stage: "negotiation" },
-      additionalContext: "Budget: $50K, timeline: 2 weeks",
-    });
-    expect(prompt).toContain("Budget: $50K");
-    expect(prompt).toContain("2 weeks");
-  });
-
-  it("handles missing tags gracefully", () => {
-    const prompt = buildComposeEmailPrompt({
-      emailType: "welcome",
-      leadContext: { name: "Charlie" },
-    });
-    expect(prompt).toContain("none");
+    expect(prompt).toContain("Acme");
+    expect(prompt).toContain("I need help");
+    expect(prompt).toContain("[INBOUND]");
   });
 });
 
-// ── Email Classification Tests ──────────────────────────────────
+// ── Generate Script Tests ──────────────────────────────────────
 
-describe("CLASSIFY_EMAIL_SYSTEM", () => {
-  it("includes all intent categories", () => {
-    const intents = ["sales_inquiry", "support_request", "complaint", "scheduling", "introduction", "unsubscribe", "spam"];
-    for (const i of intents) {
-      expect(CLASSIFY_EMAIL_SYSTEM).toContain(i);
-    }
+describe("GENERATE_SCRIPT_SYSTEM", () => {
+  it("includes step types", () => {
+    expect(GENERATE_SCRIPT_SYSTEM).toContain("email");
+    expect(GENERATE_SCRIPT_SYSTEM).toContain("ai_email");
+    expect(GENERATE_SCRIPT_SYSTEM).toContain("delay");
   });
 
-  it("requests JSON with correct fields", () => {
-    expect(CLASSIFY_EMAIL_SYSTEM).toContain("intent");
-    expect(CLASSIFY_EMAIL_SYSTEM).toContain("sentiment");
-    expect(CLASSIFY_EMAIL_SYSTEM).toContain("urgency");
-    expect(CLASSIFY_EMAIL_SYSTEM).toContain("suggestedAction");
+  it("includes campaign categories", () => {
+    expect(GENERATE_SCRIPT_SYSTEM).toContain("cold_outreach");
+    expect(GENERATE_SCRIPT_SYSTEM).toContain("follow_up");
   });
 });
 
-describe("buildClassifyEmailPrompt", () => {
-  it("includes email content", () => {
-    const prompt = buildClassifyEmailPrompt({
-      subject: "Need help with setup",
-      body: "Hi, I'm having trouble setting up my account.",
-      fromEmail: "customer@example.com",
+describe("buildGenerateScriptPrompt", () => {
+  it("includes description and target params", () => {
+    const prompt = buildGenerateScriptPrompt({
+      description: "Cold outreach for SaaS founders",
+      industry: "SaaS", targetPersona: "Founder", goal: "Book demo",
     });
-    expect(prompt).toContain("Need help with setup");
-    expect(prompt).toContain("setting up my account");
-    expect(prompt).toContain("customer@example.com");
-  });
-
-  it("handles missing fromEmail", () => {
-    const prompt = buildClassifyEmailPrompt({
-      subject: "Hello",
-      body: "World",
-    });
-    expect(prompt).toContain("Unknown");
+    expect(prompt).toContain("Cold outreach for SaaS founders");
+    expect(prompt).toContain("SaaS");
+    expect(prompt).toContain("Founder");
+    expect(prompt).toContain("Book demo");
   });
 });
 
-// ── Feature Flags Tests ─────────────────────────────────────────
+// ── Feature Flags Tests ────────────────────────────────────────
 
 describe("isEnabled", () => {
-  it("ai_suggestions defaults to true", () => {
-    expect(isEnabled("ai_suggestions")).toBe(true);
+  it("ai_compose_response defaults to true", () => {
+    expect(isEnabled("ai_compose_response")).toBe(true);
   });
-
-  it("ai_workflow_generation defaults to true", () => {
-    expect(isEnabled("ai_workflow_generation")).toBe(true);
-  });
-
   it("ai_lead_scoring defaults to true", () => {
     expect(isEnabled("ai_lead_scoring")).toBe(true);
   });
-
-  it("ai_anomaly_detection defaults to true", () => {
-    expect(isEnabled("ai_anomaly_detection")).toBe(true);
+  it("ai_summarize_conversation defaults to true", () => {
+    expect(isEnabled("ai_summarize_conversation")).toBe(true);
   });
-
-  it("ai_compose_email defaults to true", () => {
-    expect(isEnabled("ai_compose_email")).toBe(true);
+  it("ai_generate_script defaults to true", () => {
+    expect(isEnabled("ai_generate_script")).toBe(true);
   });
-
-  it("ai_classify_email defaults to true", () => {
-    expect(isEnabled("ai_classify_email")).toBe(true);
-  });
-
   it("advanced_tables defaults to true", () => {
     expect(isEnabled("advanced_tables")).toBe(true);
   });
-
   it("realtime_updates defaults to true", () => {
     expect(isEnabled("realtime_updates")).toBe(true);
   });

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@salesagent/db";
 import { getSession } from "@/lib/session";
-import { requirePermission } from "@/lib/permissions";
+import { requirePermission, checkPermission } from "@/lib/permissions";
 import { callDeepSeekJSON } from "@/lib/ai";
 import { GENERATE_SCRIPT_SYSTEM, buildGenerateScriptPrompt } from "@/lib/prompts";
 import { generateScriptSchema } from "@/lib/validation";
@@ -15,7 +15,7 @@ export async function POST(request: Request, { params }: { params: { slug: strin
     where: { userId: session.userId, organization: { slug: params.slug } },
   });
   if (!membership) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  requirePermission(membership.role, "manage_agents");
+  const _perm = checkPermission(membership.role, "manage_agents"); if (_perm) return _perm;
 
   if (!isEnabled("ai_generate_script")) {
     return NextResponse.json({ error: "AI script generation is disabled" }, { status: 503 });
@@ -42,7 +42,7 @@ export async function POST(request: Request, { params }: { params: { slug: strin
 
     return NextResponse.json({ script: result });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Script generation failed";
-    return NextResponse.json({ error: message }, { status: 502 });
+    console.error("Script generation error:", err instanceof Error ? err.message : "Unknown");
+    return NextResponse.json({ error: "Script generation failed" }, { status: 502 });
   }
 }

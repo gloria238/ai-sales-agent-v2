@@ -42,13 +42,13 @@ describe("API Keys CRUD", () => {
     createdKeyId = body.key.id;
   });
 
-  it("POST returns 403 for admin", async () => {
+  it("POST succeeds for admin (has manage_api_keys)", async () => {
     const { res } = await fetchJSON(`${BASE}/api/orgs/${orgSlug}/api-keys`, {
       method: "POST",
       headers: { Cookie: adminCookie },
-      body: JSON.stringify({ name: "Unauthorized" }),
+      body: JSON.stringify({ name: "Admin Created Key" }),
     });
-    expect(res.status).toBe(403);
+    expect(res.status).toBe(201);
   });
 
   it("POST returns 403 for viewer", async () => {
@@ -84,8 +84,7 @@ describe("API Keys CRUD", () => {
     expect(found).toBeUndefined();
   });
 
-  it("DELETE returns 403 for admin", async () => {
-    // Create another key first
+  it("DELETE succeeds for admin (has manage_api_keys)", async () => {
     const { body: create } = await fetchJSON(`${BASE}/api/orgs/${orgSlug}/api-keys`, {
       method: "POST",
       headers: { Cookie: ownerCookie },
@@ -95,7 +94,7 @@ describe("API Keys CRUD", () => {
       method: "DELETE",
       headers: { Cookie: adminCookie },
     });
-    expect(res.status).toBe(403);
+    expect(res.status).toBe(204);
   });
 
   it("DELETE returns 404 for non-existent key", async () => {

@@ -23,38 +23,41 @@ export async function POST(request: Request) {
     const passwordHash = await hashPassword(password);
     const isAlice = email === "alice@example.com";
 
-    const user = await prisma.$transaction(async (tx) => {
-      const u = await tx.user.create({
-        data: { email, name, passwordHash },
-      });
+    // Sequential ops — pgBouncer incompatible with interactive $transaction
+    const u = await prisma.user.create({
+      data: { email, name, passwordHash },
+    });
 
-      let orgId: string;
-      let orgSlug: string;
-      const role: "owner" | "viewer" = isAlice ? "owner" : "viewer";
+    let orgId: string;
+    let orgSlug: string;
+    const role: "owner" | "viewer" = isAlice ? "owner" : "viewer";
 
+    try {
       if (isAlice) {
-        const org = await tx.organization.create({
+        const org = await prisma.organization.create({
           data: { name: `${name}'s Workspace`, slug: `${email.split("@")[0]}-workspace` },
         });
         orgId = org.id;
         orgSlug = org.slug;
       } else {
-        const aliceOrg = await tx.organization.findFirst({
+        const aliceOrg = await prisma.organization.findFirst({
           where: { memberships: { some: { user: { email: "alice@example.com" }, role: "owner" } } },
         });
-        if (!aliceOrg) {
-          throw new Error("Registration is currently unavailable. Please contact your administrator.");
-        }
+        if (!aliceOrg) throw new Error("Registration is currently unavailable");
         orgId = aliceOrg.id;
         orgSlug = aliceOrg.slug;
       }
 
-      await tx.membership.create({
+      await prisma.membership.create({
         data: { organizationId: orgId, userId: u.id, role },
       });
+    } catch (err) {
+      // Rollback: delete the orphaned user
+      await prisma.user.delete({ where: { id: u.id } });
+      throw err;
+    }
 
-      return { ...u, orgId, orgSlug, role };
-    });
+    const user = { ...u, orgId, orgSlug, role };
 
     // Generate verification token (10-minute expiry)
     const loginToken = crypto.randomUUID();

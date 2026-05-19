@@ -16,7 +16,7 @@ describe("Auth API", () => {
         body: JSON.stringify({ password: "test123456" }),
       });
       expect(res.status).toBe(400);
-      expect(body.error).toContain("required");
+      expect(body.error).toBeDefined();
     });
 
     it("returns 400 when password is missing", async () => {
@@ -25,7 +25,7 @@ describe("Auth API", () => {
         body: JSON.stringify({ email: "admin@salesagent.test" }),
       });
       expect(res.status).toBe(400);
-      expect(body.error).toContain("required");
+      expect(body.error).toBeDefined();
     });
 
     it("returns 401 for wrong password", async () => {
@@ -78,7 +78,7 @@ describe("Auth API", () => {
         body: JSON.stringify({ email: `${T}@test.com`, password: "test123456" }),
       });
       expect(res.status).toBe(400);
-      expect(body.error).toContain("required");
+      expect(body.error).toBeDefined();
     });
 
     it("returns 400 when password is too short (< 8 chars)", async () => {

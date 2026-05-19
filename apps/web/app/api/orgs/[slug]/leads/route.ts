@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@salesagent/db";
 import { getSession } from "@/lib/session";
-import { requirePermission } from "@/lib/permissions";
+import { requirePermission, checkPermission } from "@/lib/permissions";
 import { logAudit } from "@/lib/audit";
 import { createLeadSchema } from "@/lib/validation";
 
@@ -20,7 +20,7 @@ export async function GET(request: Request, { params }: { params: { slug: string
   }
 
   try {
-    requirePermission(membership.role, "view_leads");
+    const _perm = checkPermission(membership.role, "view_leads"); if (_perm) return _perm;
   } catch {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
@@ -84,7 +84,7 @@ export async function POST(request: Request, { params }: { params: { slug: strin
   }
 
   try {
-    requirePermission(membership.role, "manage_leads");
+    const _perm = checkPermission(membership.role, "manage_leads"); if (_perm) return _perm;
   } catch {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
@@ -96,42 +96,41 @@ export async function POST(request: Request, { params }: { params: { slug: strin
   }
   const { name, email, stage, tags } = parsed.data;
 
-  const lead = await prisma.$transaction(async (tx) => {
-    const l = await tx.lead.create({
-      data: {
-        organizationId: membership.organizationId,
-        name,
-        email,
-        stage,
-        tags: tags || [],
-      },
-    });
-
-    await tx.leadActivity.create({
-      data: {
-        leadId: l.id,
-        organizationId: membership.organizationId,
-        userId: session.userId,
-        userName: session.name ?? "Unknown",
-        type: "created",
-        content: "Lead created",
-      },
-    });
-
-    await tx.auditLog.create({
-      data: {
-        organizationId: membership.organizationId,
-        userId: session.userId,
-        userName: session.name ?? "Unknown",
-        action: "lead.created",
-        targetType: "Lead",
-        targetId: l.id,
-        metadata: { name, email, stage: stage || "new" },
-      },
-    });
-
-    return l;
+  // Sequential ops — pgBouncer incompatible with interactive $transaction
+  const l = await prisma.lead.create({
+    data: {
+      organizationId: membership.organizationId,
+      name,
+      email,
+      stage,
+      tags: tags || [],
+    },
   });
+
+  await prisma.leadActivity.create({
+    data: {
+      leadId: l.id,
+      organizationId: membership.organizationId,
+      userId: session.userId,
+      userName: session.name ?? "Unknown",
+      type: "created",
+      content: "Lead created",
+    },
+  });
+
+  await prisma.auditLog.create({
+    data: {
+      organizationId: membership.organizationId,
+      userId: session.userId,
+      userName: session.name ?? "Unknown",
+      action: "lead.created",
+      targetType: "Lead",
+      targetId: l.id,
+      metadata: { name, email, stage: stage || "new" },
+    },
+  });
+
+  const lead = l;
 
   return NextResponse.json(lead, { status: 201 });
 }

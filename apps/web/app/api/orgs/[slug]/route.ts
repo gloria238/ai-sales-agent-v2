@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@salesagent/db";
 import { getSession } from "@/lib/session";
-import { requirePermission } from "@/lib/permissions";
+import { requirePermission, checkPermission } from "@/lib/permissions";
 import { signToken } from "@/lib/auth";
 import { logAudit } from "@/lib/audit";
 
@@ -33,7 +33,7 @@ export async function PATCH(request: Request, { params }: { params: { slug: stri
   });
   if (!membership) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  try { requirePermission(membership.role, "manage_org"); }
+  try { const _perm = checkPermission(membership.role, "manage_org"); if (_perm) return _perm; }
   catch { return NextResponse.json({ error: "Forbidden" }, { status: 403 }); }
 
   const body = await request.json();

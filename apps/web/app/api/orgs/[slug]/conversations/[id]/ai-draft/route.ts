@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@salesagent/db";
 import { getSession } from "@/lib/session";
-import { requirePermission } from "@/lib/permissions";
+import { requirePermission, checkPermission } from "@/lib/permissions";
 import { callDeepSeekJSON } from "@/lib/ai";
 import { COMPOSE_RESPONSE_SYSTEM, buildComposeResponsePrompt } from "@/lib/prompts";
 import { isEnabled } from "@/lib/feature-flags";
@@ -14,7 +14,7 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
     where: { userId: session.userId, organization: { slug: params.slug } },
   });
   if (!membership) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  requirePermission(membership.role, "manage_agents");
+  const _perm = checkPermission(membership.role, "manage_agents"); if (_perm) return _perm;
 
   if (!isEnabled("ai_compose_response")) {
     return NextResponse.json({ error: "AI response composition is not enabled" }, { status: 503 });

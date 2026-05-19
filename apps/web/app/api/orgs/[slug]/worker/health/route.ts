@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@salesagent/db";
 import { getSession } from "@/lib/session";
-import { requirePermission } from "@/lib/permissions";
+import { requirePermission, checkPermission } from "@/lib/permissions";
 
 export const dynamic = "force-dynamic";
 
@@ -15,12 +15,12 @@ export async function GET(_request: Request, { params }: { params: { slug: strin
     });
     if (!membership) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-    requirePermission(membership.role, "view_agents");
+    const _perm = checkPermission(membership.role, "view_agents"); if (_perm) return _perm;
 
     const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000);
     const [recentEvent, activeJobs] = await Promise.all([
       prisma.message.findFirst({
-        where: { createdAt: { gte: fiveMinAgo } },
+        where: { conversation: { organizationId: membership.organizationId }, createdAt: { gte: fiveMinAgo } },
         orderBy: { createdAt: "desc" },
         select: { createdAt: true },
       }),

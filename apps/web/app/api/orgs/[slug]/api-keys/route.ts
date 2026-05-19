@@ -2,7 +2,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@salesagent/db";
 import { getSession } from "@/lib/session";
-import { requirePermission } from "@/lib/permissions";
+import { requirePermission, checkPermission } from "@/lib/permissions";
 import { createApiKeySchema } from "@/lib/validation";
 import crypto from "crypto";
 
@@ -15,8 +15,7 @@ export async function GET(_request: Request, { params }: { params: { slug: strin
   });
   if (!membership) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  try { requirePermission(membership.role, "view_audit_log"); }
-  catch { return NextResponse.json({ error: "Forbidden" }, { status: 403 }); }
+  const _perm = checkPermission(membership.role, "view_api_keys"); if (_perm) return _perm;
 
   // Store API keys in a JSON field on the organization for simplicity
   const org = await prisma.organization.findUnique({
@@ -40,8 +39,7 @@ export async function POST(request: Request, { params }: { params: { slug: strin
   });
   if (!membership) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  try { requirePermission(membership.role, "manage_org"); }
-  catch { return NextResponse.json({ error: "Forbidden" }, { status: 403 }); }
+  const _perm2 = checkPermission(membership.role, "manage_api_keys"); if (_perm2) return _perm2;
 
   const body = await request.json();
   const parsed = createApiKeySchema.safeParse(body);

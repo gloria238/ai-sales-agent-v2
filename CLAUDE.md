@@ -202,20 +202,19 @@ packages/db/clean-demo-org.ts       — FK-safe org cleanup before re-seed
 - **Phase 4: AI Intelligence**. Response composition, lead scoring, conversation summarization, script generation.
 - **Phase 5: Campaign Engine**. Outbound campaign creation, scheduling, delivery tracking, analytics.
 - **Phase 6: Polish & Demo**. Landing page, dark mode, mobile nav, demo seed data, onboarding.
-- **Phase 7: Testing & Security**. Unit + integration + E2E tests. CSP/HSTS/rate-limit/JWT revocation/Zod validation.
-- **Phase 8: Deployment**. Vercel + Railway + Supabase + Upstash. Queue prefix isolation.
-- **Target**: ~9,000 lines across ~180 files. 35 API routes + SSE + webhook trigger.
-- Web app: Vercel (JWT + API key auth, email verification, glass UI, dashboard, inbox, agents, leads, campaigns, settings, docs).
-- Worker: Railway (BullMQ + Redis, AI response composition, lead scoring, campaign delivery, Resend tracking, healthcheck).
-- Email: Resend verification + AI-composed sales emails with open/click tracking. Template variables `{{lead.name}}`, `{{lead.email}}`, `{{lead.company}}`.
-- Scripts: 3 sales playbook scripts (`/scripts`). One-click install.
-- Demo: `pnpm seed-demo` → Acme Corp (15 leads, 3 agents, 10 conversations). Login: demo@acmecorp.com / demo123456.
-- Landing: Public page at `/` with glass navbar, premium hero, features, CTAs.
-- UX: Plus Jakarta Sans font, glass-morphism sidebar/cards, dark mode, mobile nav, Bento grid dashboard, onboarding wizard, skeleton loaders, smooth 200ms transitions, focus-visible rings, prefers-reduced-motion.
-- Security: Timing-safe webhook comparison, Zod input validation, JWT revocation via Redis, error sanitization, SHA256 API key hashing, CSP/HSTS, rate limiting.
-- Queue isolation: All BullMQ queues use `prefix: "sales-agent"` to prevent conflicts with other projects on the same Redis instance.
-- Known: pgBouncer incompatible with interactive `$transaction`. API key Bearer auth pending (Edge runtime constraint).
-- GitHub push via Desktop. `npx vercel --prod --cwd apps/web` for Vercel deploy.
+- **Phase 7: Testing & Security**. 53 unit + 105 integration + 4 E2E specs. CSP/HSTS/rate-limit/JWT revocation/Zod.
+- **Phase 8: Security v2 & pgBouncer**. Injection audit (15 findings fixed). Prompt injection armor (`<user_data>` + PROMPT_ARMOR). Auto-send removed. Prototype pollution blocked. CSV injection sanitized. `checkPermission()` helper. All `$transaction` → sequential ops for pgBouncer compat.
+- **Phase 9: UI/UX — AI Staff Console**. Green accent (#22C55E). Linear-style sidebar. Activity-feed-first dashboard ("Good morning" greeting, agent team status, live activity). AI animations (typing dots, pulse, cursor). Intercom-style inbox with Lead Intelligence panel.
+- **~10,000 lines** across ~210 files. 35 API routes + SSE + webhook.
+- Web app: ✅ Vercel (JWT + API key auth, green glass UI, activity dashboard, inbox, agents, leads, campaigns, scripts).
+- Worker: ✅ Railway (4 BullMQ workers, `prefix: "sales-agent"`, AI compose, scoring, campaign delivery, healthcheck).
+- Email: ✅ Resend verification + AI-composed sales emails with open/click tracking.
+- Demo: `pnpm seed-demo` → Acme Corp (15 leads, 3 agents, 10 conversations, 2 campaigns).
+- Landing: Green-accent hero, trust stats, customer logos, testimonial.
+- UX: Green accent, Linear-style sidebar, AI activity feed, typing animations, Intercom-style inbox, Lead Intelligence panel.
+- Security: Prompt injection armor, auto-send removed, prototype pollution blocked, CSV injection sanitized, checkPermission 403, Zod (16 schemas), CSP/HSTS, rate limiting, JWT revocation.
+- Queue isolation: All BullMQ queues + Workers use `prefix: "sales-agent"`.
+- Known: Upstash Redis 500K free limit exhausts under heavy test load. API key Bearer auth pending (Edge runtime).
 
 ### Seed scripts reference
 

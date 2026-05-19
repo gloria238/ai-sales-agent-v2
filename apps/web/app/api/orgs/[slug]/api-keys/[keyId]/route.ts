@@ -2,7 +2,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@salesagent/db";
 import { getSession } from "@/lib/session";
-import { requirePermission } from "@/lib/permissions";
+import { requirePermission, checkPermission } from "@/lib/permissions";
 
 export async function DELETE(_request: Request, { params }: { params: { slug: string; keyId: string } }) {
   const session = await getSession();
@@ -13,8 +13,7 @@ export async function DELETE(_request: Request, { params }: { params: { slug: st
   });
   if (!membership) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  try { requirePermission(membership.role, "manage_org"); }
-  catch { return NextResponse.json({ error: "Forbidden" }, { status: 403 }); }
+  const _perm = checkPermission(membership.role, "manage_api_keys"); if (_perm) return _perm;
 
   const org = await prisma.organization.findUnique({
     where: { id: membership.organizationId },

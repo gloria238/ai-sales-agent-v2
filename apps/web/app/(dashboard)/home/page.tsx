@@ -4,7 +4,8 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { WorkerStatusCard } from "../worker-status-card";
 import { OnboardingCard } from "../onboarding-card";
-import { ArrowRight, MessageSquare, Users, Bot, Zap, CheckCircle, TrendingUp, Plus } from "lucide-react";
+import { ArrowRight, MessageSquare, Users, Bot, Zap, CheckCircle, TrendingUp, Plus, Send, RefreshCw } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export default async function DashboardHomePage() {
   const session = await getSession();
@@ -54,8 +55,8 @@ export default async function DashboardHomePage() {
       {/* Page header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-text">{org.name}</h1>
-          <p className="text-sm text-text-secondary mt-1">Monitor AI SDR performance, leads, and campaign health.</p>
+          <h1 className="text-xl font-bold tracking-tight text-text">Good {new Date().getHours() < 12 ? "morning" : new Date().getHours() < 18 ? "afternoon" : "evening"}, {session.name?.split(" ")[0] || "there"}</h1>
+          <p className="text-sm text-text-secondary mt-1">Your AI sales team is working.</p>
         </div>
         <div className="flex items-center gap-2">
           <Link href="/agents" className="inline-flex items-center gap-2 rounded-xl bg-accent text-white text-sm font-medium px-4 py-2.5 hover:bg-accent-hover transition-colors duration-200 shadow-sm shadow-accent/25">
@@ -72,98 +73,61 @@ export default async function DashboardHomePage() {
 
       <OnboardingCard show={agentCount === 0 && leadCount === 0} orgSlug={session.orgSlug} />
 
-      {/* Bento Grid — SDR metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Link href="/inbox" className="group">
-          <div className="glass-card p-5 h-full cursor-pointer">
-            <div className="flex items-start justify-between">
-              <div className="size-11 rounded-2xl bg-accent-soft flex items-center justify-center">
-                <MessageSquare className="size-5 text-accent" />
-              </div>
-              <ArrowRight className="size-4 text-text-muted opacity-0 group-hover:opacity-100 transition-all duration-200 -translate-x-1 group-hover:translate-x-0" />
-            </div>
-            <p className="mt-4 text-3xl font-bold tracking-tight text-text">{activeConversations}</p>
-            <p className="text-sm text-text-secondary mt-1">Active Conversations</p>
-          </div>
-        </Link>
-
-        <Link href="/leads" className="group">
-          <div className="glass-card p-5 h-full cursor-pointer">
-            <div className="flex items-start justify-between">
-              <div className="size-11 rounded-2xl bg-success-soft flex items-center justify-center">
-                <Users className="size-5 text-success" />
-              </div>
-              <ArrowRight className="size-4 text-text-muted opacity-0 group-hover:opacity-100 transition-all duration-200 -translate-x-1 group-hover:translate-x-0" />
-            </div>
-            <p className="mt-4 text-3xl font-bold tracking-tight text-text">{qualifiedLeads}</p>
-            <p className="text-sm text-text-secondary mt-1">Qualified Leads</p>
-          </div>
-        </Link>
-
-        <Link href="/agents" className="group">
-          <div className="glass-card p-5 h-full cursor-pointer">
-            <div className="flex items-start justify-between">
-              <div className="size-11 rounded-2xl bg-bg-subtle flex items-center justify-center">
-                <Bot className="size-5 text-text-secondary" />
-              </div>
-              <ArrowRight className="size-4 text-text-muted opacity-0 group-hover:opacity-100 transition-all duration-200 -translate-x-1 group-hover:translate-x-0" />
-            </div>
-            <p className="mt-4 text-3xl font-bold tracking-tight text-text">{agentCount}</p>
-            <p className="text-sm text-text-secondary mt-1">AI Agents</p>
-          </div>
-        </Link>
-      </div>
-
-      {/* SDR health — 4 mini cards */}
-      {(conversationCount > 0 || activeCampaigns > 0) && (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          {[
-            { icon: MessageSquare, label: "Needs Reply", count: needsReply, color: "text-danger", bg: "bg-danger-soft" },
-            { icon: CheckCircle, label: "Response Rate", count: `${activeConversations > 0 ? Math.round((activeConversations - needsReply) / activeConversations * 100) : 100}%`, color: "text-success", bg: "bg-success-soft" },
-            { icon: Zap, label: "Today's Activity", count: todayTotal, color: "text-accent", bg: "bg-accent-soft" },
-            { icon: TrendingUp, label: "Active Campaigns", count: activeCampaigns, color: "text-warning", bg: "bg-warning-soft" },
-          ].map(({ icon: Icon, label, count, color, bg }) => (
-            <div key={label} className="glass-card p-4 flex items-center gap-3">
-              <div className={`size-9 rounded-xl ${bg} flex items-center justify-center shrink-0`}>
-                <Icon className={`size-4 ${color}`} />
-              </div>
-              <div>
-                <p className="text-lg font-bold text-text">{count}</p>
-                <p className="text-xs text-text-muted">{label}</p>
-              </div>
+      {/* AI Team Status — staff overview */}
+      <div className="flex items-center gap-4">
+        <div className="flex -space-x-2">
+          {["Inbound SDR", "Outbound Closer", "Enterprise Agent"].map((name, i) => (
+            <div key={name} className="size-9 rounded-full bg-accent-soft border-2 border-bg flex items-center justify-center shrink-0 relative group cursor-pointer" title={name}>
+              <Bot className="size-4 text-accent" />
+              <span className="absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full bg-accent border-2 border-bg agent-active" />
             </div>
           ))}
         </div>
-      )}
-
-      {/* Two-column: Activity feed + Worker health */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-3">
-          <div className="flex items-center gap-2">
-            <Zap className="size-4 text-accent" />
-            <h3 className="text-sm font-semibold text-text">Live Activity</h3>
-            <span className="relative flex size-1.5 ml-1">
+        <div>
+          <p className="text-xs font-semibold text-accent flex items-center gap-1.5">
+            <span className="relative flex size-1.5">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75" />
               <span className="relative inline-flex rounded-full size-1.5 bg-accent" />
             </span>
-          </div>
-          <div className="space-y-1.5">
+            {agentCount} agents active
+          </p>
+          <p className="text-[11px] text-text-muted mt-0.5">handling {activeConversations} conversations</p>
+        </div>
+        <div className="ml-auto flex items-center gap-3 text-xs text-text-muted">
+          <span className="flex items-center gap-1"><CheckCircle className="size-3 text-success" /> {needsReply} need reply</span>
+          <span className="flex items-center gap-1"><TrendingUp className="size-3 text-accent" /> {qualifiedLeads} qualified</span>
+        </div>
+      </div>
+
+      {/* Activity Feed — main content */}
+      <div>
+        <h2 className="text-sm font-semibold text-text mb-3 flex items-center gap-2">
+          Activity
+          <span className="relative flex size-1.5">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75" />
+            <span className="relative inline-flex rounded-full size-1.5 bg-accent" />
+          </span>
+        </h2>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 space-y-1">
             {[
-              { icon: "🤖", text: "AI qualified lead from", highlight: "Stripe integration", time: "2 min ago", color: "border-l-accent" },
-              { icon: "📅", text: "Meeting booked via", highlight: "follow-up sequence #3", time: "8 min ago", color: "border-l-green-400" },
-              { icon: "📨", text: "Campaign", highlight: "SaaS Founder Q2 Outreach", time: "15 min ago", sub: " — 12 emails sent", color: "border-l-blue-400" },
-              { icon: "🔄", text: "Campaign retry executed for", highlight: "3 bounced emails", time: "22 min ago", color: "border-l-amber-400" },
-              { icon: "⭐", text: "Lead score updated:", highlight: "Alice Chen → 87 (Hot)", time: "31 min ago", color: "border-l-red-400" },
-              { icon: "✉️", text: "AI draft approved by", highlight: "Sarah (Admin)", time: "45 min ago", sub: " — reply sent to Bob Martinez", color: "border-l-accent" },
-              { icon: "🎯", text: "New lead created:", highlight: "David Kim · SaaSFast", time: "1 hour ago", color: "border-l-green-400" },
+              { icon: Bot, text: "AI replied to", highlight: "Alice Chen", time: "2 min ago", meta: "Inbound SDR · auto-sent", color: "border-l-accent" },
+              { icon: TrendingUp, text: "Lead qualified:", highlight: "Bob Martinez → 87 (Hot)", time: "8 min ago", meta: "Intent: high · Budget: confirmed", color: "border-l-green-400" },
+              { icon: Send, text: "Campaign email sent to", highlight: "12 leads", time: "15 min ago", meta: "SaaS Founder Q2 Outreach · step 2/4", color: "border-l-accent" },
+              { icon: CheckCircle, text: "Meeting booked with", highlight: "Carol Davis", time: "22 min ago", meta: "Outbound Closer · Thursday 2pm", color: "border-l-green-400" },
+              { icon: MessageSquare, text: "New inbound message from", highlight: "David Kim", time: "31 min ago", meta: "SaaSFast · asking about pricing", color: "border-l-blue-400" },
+              { icon: Bot, text: "AI escalated to human:", highlight: "Eva Johansson", time: "45 min ago", meta: "Enterprise deal · needs approval", color: "border-l-amber-400" },
+              { icon: RefreshCw, text: "Campaign retry:", highlight: "3 bounced emails recovered", time: "1 hour ago", meta: "Re-engagement campaign", color: "border-l-amber-400" },
             ].map((item, i) => (
-              <div key={i} className={cn("glass-card p-3 border-l-2 flex items-center gap-3", item.color)}>
-                <span className="text-sm shrink-0">{item.icon}</span>
+              <div key={i} className={cn("glass-card p-3 border-l-2 flex items-center gap-3 cursor-pointer hover:border-accent/40 transition-all", item.color)}>
+                <div className="size-8 rounded-lg bg-bg-subtle flex items-center justify-center shrink-0">
+                  <item.icon className="size-3.5 text-text-secondary" />
+                </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs text-text-secondary truncate">
-                    {item.text} <span className="font-medium text-text">{item.highlight}</span>
-                    {item.sub && <span className="text-text-muted">{item.sub}</span>}
+                  <p className="text-[13px] text-text-secondary truncate">
+                    {item.text} <span className="font-semibold text-text">{item.highlight}</span>
                   </p>
+                  <p className="text-[11px] text-text-muted mt-0.5">{item.meta}</p>
                 </div>
                 <span className="text-[10px] text-text-muted shrink-0">{item.time}</span>
               </div>

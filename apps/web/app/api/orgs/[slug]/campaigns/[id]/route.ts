@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@salesagent/db";
 import { getSession } from "@/lib/session";
-import { requirePermission } from "@/lib/permissions";
+import { requirePermission, checkPermission } from "@/lib/permissions";
 import { updateCampaignSchema } from "@/lib/validation";
 
 export async function GET(req: NextRequest, { params }: { params: { slug: string; id: string } }) {
@@ -12,7 +12,7 @@ export async function GET(req: NextRequest, { params }: { params: { slug: string
     where: { userId: session.userId, organization: { slug: params.slug } },
   });
   if (!membership) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  requirePermission(membership.role, "view_agents");
+  const _perm = checkPermission(membership.role, "view_agents"); if (_perm) return _perm;
 
   const campaign = await prisma.campaign.findFirst({
     where: { id: params.id, organizationId: membership.organizationId },
@@ -35,7 +35,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { slug: stri
     where: { userId: session.userId, organization: { slug: params.slug } },
   });
   if (!membership) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  requirePermission(membership.role, "manage_campaigns");
+  const _perm = checkPermission(membership.role, "manage_campaigns"); if (_perm) return _perm;
 
   const body = await req.json();
   const parsed = updateCampaignSchema.safeParse(body);

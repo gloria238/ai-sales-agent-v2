@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@salesagent/db";
 import { getSession } from "@/lib/session";
-import { requirePermission } from "@/lib/permissions";
+import { requirePermission, checkPermission } from "@/lib/permissions";
 import { logAudit } from "@/lib/audit";
 
 export async function PATCH(request: Request, { params }: { params: { slug: string; membershipId: string } }) {
@@ -13,7 +13,7 @@ export async function PATCH(request: Request, { params }: { params: { slug: stri
   });
   if (!membership) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  try { requirePermission(membership.role, "manage_members"); }
+  try { const _perm = checkPermission(membership.role, "manage_members"); if (_perm) return _perm; }
   catch { return NextResponse.json({ error: "Forbidden" }, { status: 403 }); }
 
   const target = await prisma.membership.findFirst({
@@ -61,7 +61,7 @@ export async function DELETE(request: Request, { params }: { params: { slug: str
   });
   if (!membership) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  try { requirePermission(membership.role, "manage_members"); }
+  try { const _perm = checkPermission(membership.role, "manage_members"); if (_perm) return _perm; }
   catch { return NextResponse.json({ error: "Forbidden" }, { status: 403 }); }
 
   const target = await prisma.membership.findFirst({

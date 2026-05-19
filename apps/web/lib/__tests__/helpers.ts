@@ -57,13 +57,13 @@ export async function getTestUser(role: "admin" | "operator" | "viewer"): Promis
 /** Get an owner-level user. Falls back to admin if alice password not set. */
 export async function getOwner(): Promise<TestUser> {
   if (_userCache.has("owner")) return _userCache.get("owner")!;
-  const pw = process.env.ALICE_PASSWORD ?? "Aa7!GzwF7X_W)LB$OSkKkY3x";
+  const pw = process.env.ALICE_PASSWORD ?? "test123456";
   try {
     const u = await loginAndGetCookie("alice@example.com", pw);
     _userCache.set("owner", u);
     return u;
   } catch {
-    // Fallback: admin has same workflow/lead permissions as owner (except manage_org)
+    // Fallback: admin has same agent/lead permissions as owner (except manage_org)
     console.warn("alice login failed — using admin as owner proxy (missing manage_org)");
     return getTestUser("admin");
   }

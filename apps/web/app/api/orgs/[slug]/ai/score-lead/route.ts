@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@salesagent/db";
 import { getSession } from "@/lib/session";
-import { requirePermission } from "@/lib/permissions";
+import { requirePermission, checkPermission } from "@/lib/permissions";
 import { callDeepSeekJSON } from "@/lib/ai";
 import { LEAD_SCORING_SYSTEM, buildLeadScoringPrompt } from "@/lib/prompts";
 import { scoreLeadSchema } from "@/lib/validation";
@@ -15,7 +15,7 @@ export async function POST(request: Request, { params }: { params: { slug: strin
     where: { userId: session.userId, organization: { slug: params.slug } },
   });
   if (!membership) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  requirePermission(membership.role, "view_leads");
+  const _perm = checkPermission(membership.role, "view_leads"); if (_perm) return _perm;
 
   if (!isEnabled("ai_lead_scoring")) {
     return NextResponse.json({ error: "AI lead scoring is disabled" }, { status: 503 });
@@ -69,7 +69,7 @@ export async function POST(request: Request, { params }: { params: { slug: strin
       recommendedAgentType: result.recommendedAgentType || "inbound_qualifier",
     });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Scoring failed";
-    return NextResponse.json({ error: message }, { status: 502 });
+    console.error("Lead scoring error:", err instanceof Error ? err.message : "Unknown");
+    return NextResponse.json({ error: "Scoring failed" }, { status: 502 });
   }
 }

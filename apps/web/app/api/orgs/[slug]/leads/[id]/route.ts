@@ -40,46 +40,42 @@ export async function PATCH(request: Request, { params }: { params: { slug: stri
     return NextResponse.json({ error: "No valid fields to update" }, { status: 400 });
   }
 
-  const updated = await prisma.$transaction(async (tx) => {
-    const old = await tx.lead.findUniqueOrThrow({ where: { id: params.id } });
-    const newStage = changes.stage as string | undefined;
+  // Sequential ops — pgBouncer incompatible with interactive $transaction
+  const old = await prisma.lead.findUniqueOrThrow({ where: { id: params.id } });
+  const newStage = changes.stage as string | undefined;
 
-    if (newStage && newStage !== old.stage) {
-      await tx.leadActivity.create({
-        data: {
-          leadId: params.id,
-          organizationId: old.organizationId,
-          userId: session.userId,
-          userName: session.name ?? "Unknown",
-          type: "stage_change",
-          content: `Stage changed from ${old.stage || "none"} to ${newStage}`,
-          metadata: { fromStage: old.stage, toStage: newStage },
-        },
-      });
-    }
-
-    delete changes.createdAt;
-    delete changes.updatedAt;
-
-    const result = await tx.lead.update({
-      where: { id: params.id },
-      data: changes,
-    });
-
-    await tx.auditLog.create({
+  if (newStage && newStage !== old.stage) {
+    await prisma.leadActivity.create({
       data: {
+        leadId: params.id,
         organizationId: old.organizationId,
         userId: session.userId,
         userName: session.name ?? "Unknown",
-        action: "lead.updated",
-        targetType: "Lead",
-        targetId: params.id,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        metadata: changes as any,
+        type: "stage_change",
+        content: `Stage changed from ${old.stage || "none"} to ${newStage}`,
+        metadata: { fromStage: old.stage, toStage: newStage },
       },
     });
+  }
 
-    return result;
+  delete changes.createdAt;
+  delete changes.updatedAt;
+
+  const updated = await prisma.lead.update({
+    where: { id: params.id },
+    data: changes,
+  });
+
+  await prisma.auditLog.create({
+    data: {
+      organizationId: old.organizationId,
+      userId: session.userId,
+      userName: session.name ?? "Unknown",
+      action: "lead.updated",
+      targetType: "Lead",
+      targetId: params.id,
+      metadata: changes as any,
+    },
   });
 
   return NextResponse.json(updated);
@@ -97,20 +93,19 @@ export async function DELETE(request: Request, { params }: { params: { slug: str
 
   const leadData = await prisma.lead.findUniqueOrThrow({ where: { id: params.id } });
 
-  await prisma.$transaction(async (tx) => {
-    await tx.lead.delete({ where: { id: params.id } });
+  const { name: leadName, email: leadEmail, stage: leadStage, organizationId } = leadData;
+  await prisma.lead.delete({ where: { id: params.id } });
 
-    await tx.auditLog.create({
-      data: {
-        organizationId: leadData.organizationId,
-        userId: session.userId,
-        userName: session.name ?? "Unknown",
-        action: "lead.deleted",
-        targetType: "Lead",
-        targetId: params.id,
-        metadata: { name: leadData.name, email: leadData.email, stage: leadData.stage },
-      },
-    });
+  await prisma.auditLog.create({
+    data: {
+      organizationId,
+      userId: session.userId,
+      userName: session.name ?? "Unknown",
+      action: "lead.deleted",
+      targetType: "Lead",
+      targetId: params.id,
+      metadata: { name: leadName, email: leadEmail, stage: leadStage },
+    },
   });
 
   return new NextResponse(null, { status: 204 });

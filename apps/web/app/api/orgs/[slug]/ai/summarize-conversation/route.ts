@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@salesagent/db";
 import { getSession } from "@/lib/session";
-import { requirePermission } from "@/lib/permissions";
+import { requirePermission, checkPermission } from "@/lib/permissions";
 import { callDeepSeekJSON } from "@/lib/ai";
 import { SUMMARIZE_CONVERSATION_SYSTEM, buildSummarizeConversationPrompt } from "@/lib/prompts";
 import { summarizeConversationSchema } from "@/lib/validation";
@@ -15,7 +15,7 @@ export async function POST(request: Request, { params }: { params: { slug: strin
     where: { userId: session.userId, organization: { slug: params.slug } },
   });
   if (!membership) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  requirePermission(membership.role, "view_agents");
+  const _perm = checkPermission(membership.role, "view_agents"); if (_perm) return _perm;
 
   if (!isEnabled("ai_summarize_conversation")) {
     return NextResponse.json({ error: "AI conversation summarization is disabled" }, { status: 503 });
@@ -53,7 +53,7 @@ export async function POST(request: Request, { params }: { params: { slug: strin
 
     return NextResponse.json(result);
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Summarization failed";
-    return NextResponse.json({ error: message }, { status: 502 });
+    console.error("Summarization error:", err instanceof Error ? err.message : "Unknown");
+    return NextResponse.json({ error: "Summarization failed" }, { status: 502 });
   }
 }

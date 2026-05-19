@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@salesagent/db";
 import { getSession } from "@/lib/session";
-import { requirePermission } from "@/lib/permissions";
+import { requirePermission, checkPermission } from "@/lib/permissions";
 import { logAudit } from "@/lib/audit";
 
 export const dynamic = "force-dynamic";
@@ -16,7 +16,7 @@ export async function GET(request: Request, { params }: { params: { slug: string
     });
     if (!membership) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-    try { requirePermission(membership.role, "view_members"); }
+    try { const _perm = checkPermission(membership.role, "view_members"); if (_perm) return _perm; }
     catch { return NextResponse.json({ error: "Forbidden" }, { status: 403 }); }
 
     const members = await prisma.membership.findMany({
@@ -43,7 +43,7 @@ export async function POST(request: Request, { params }: { params: { slug: strin
     });
     if (!membership) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-    try { requirePermission(membership.role, "manage_members"); }
+    try { const _perm = checkPermission(membership.role, "manage_members"); if (_perm) return _perm; }
     catch { return NextResponse.json({ error: "Forbidden" }, { status: 403 }); }
 
     const { email, role } = await request.json();

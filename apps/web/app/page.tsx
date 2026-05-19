@@ -85,19 +85,21 @@ export default function LandingPage() {
       {/* Trusted by */}
       <section className="max-w-4xl mx-auto px-6 pb-24">
         <p className="text-xs font-semibold text-text-muted uppercase tracking-[0.2em] text-center mb-7">Trusted by modern GTM teams</p>
-        <div className="flex flex-wrap items-center justify-center gap-x-10 gap-y-4 opacity-50 grayscale">
+        <div className="flex flex-wrap items-center justify-center gap-x-10 gap-y-4 opacity-40">
           {["Acme Corp", "ScaleUp AI", "SaaS Founders", "GrowthLabs", "NordicTech", "PipelineIQ", "OutboundOS", "RevOps Co"].map((name) => (
             <span key={name} className="text-sm font-bold text-text-secondary tracking-tight">{name}</span>
           ))}
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 mt-12">
           {[
-            { stat: "12,847", label: "AI-qualified leads this month", icon: "🎯" },
-            { stat: "3,241", label: "Meetings booked by AI agents", icon: "📅" },
-            { stat: "94.2%", label: "Response rate on managed conversations", icon: "⚡" },
+            { stat: "12,847", label: "AI-qualified leads this month", icon: "target" },
+            { stat: "3,241", label: "Meetings booked by AI agents", icon: "calendar" },
+            { stat: "94.2%", label: "Response rate on managed conversations", icon: "zap" },
           ].map((s) => (
             <div key={s.label} className="glass-card p-5 text-center">
-              <div className="text-2xl mb-2">{s.icon}</div>
+              <div className="size-10 rounded-xl bg-accent-soft flex items-center justify-center mx-auto mb-3">
+                <div className="size-4 rounded-sm bg-accent/20" />
+              </div>
               <p className="text-2xl font-bold text-text tracking-tight">{s.stat}</p>
               <p className="text-xs text-text-muted mt-1">{s.label}</p>
             </div>

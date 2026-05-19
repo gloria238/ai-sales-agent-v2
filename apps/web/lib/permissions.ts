@@ -12,6 +12,8 @@ export const PERMISSION_MAP: Record<string, Role[]> = {
   view_leads: ["owner", "admin", "operator", "viewer"],
   view_members: ["owner", "admin", "operator", "viewer"],
   view_audit_log: ["owner", "admin", "operator", "viewer"],
+  manage_api_keys: ["owner", "admin"],
+  view_api_keys: ["owner", "admin"],
   run_campaigns: ["owner", "admin", "operator"],
 };
 
@@ -27,4 +29,14 @@ export function requirePermission(role: string, permission: Permission): void {
   if (!hasPermission(role, permission)) {
     throw new Error("Forbidden");
   }
+}
+
+import { NextResponse } from "next/server";
+
+/** Returns null if allowed, or a 403 Response if denied. Use: `const err = checkPermission(...); if (err) return err;` */
+export function checkPermission(role: string, permission: Permission): NextResponse | null {
+  if (!hasPermission(role, permission)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+  return null;
 }

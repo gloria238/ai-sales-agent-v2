@@ -2,7 +2,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@salesagent/db";
 import { getSession } from "@/lib/session";
-import { requirePermission } from "@/lib/permissions";
+import { requirePermission, checkPermission } from "@/lib/permissions";
 
 export async function GET(_request: Request, { params }: { params: { slug: string } }) {
   const session = await getSession();
@@ -13,7 +13,7 @@ export async function GET(_request: Request, { params }: { params: { slug: strin
   });
   if (!membership) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  try { requirePermission(membership.role, "view_leads"); }
+  try { const _perm = checkPermission(membership.role, "view_leads"); if (_perm) return _perm; }
   catch { return NextResponse.json({ error: "Forbidden" }, { status: 403 }); }
 
   const leads = await prisma.lead.findMany({
@@ -43,8 +43,10 @@ export async function GET(_request: Request, { params }: { params: { slug: strin
 }
 
 function escapeCsv(value: string): string {
-  if (value.includes(",") || value.includes('"') || value.includes("\n")) {
-    return `"${value.replace(/"/g, '""')}"`;
+  // Prevent CSV injection: prefix formula characters with single quote
+  const sanitized = /^[=+\-@]/.test(value) ? `'${value}` : value;
+  if (sanitized.includes(",") || sanitized.includes('"') || sanitized.includes("\n")) {
+    return `"${sanitized.replace(/"/g, '""')}"`;
   }
-  return value;
+  return sanitized;
 }

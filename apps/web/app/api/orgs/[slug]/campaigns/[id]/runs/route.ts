@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@salesagent/db";
 import { getSession } from "@/lib/session";
-import { requirePermission } from "@/lib/permissions";
+import { requirePermission, checkPermission } from "@/lib/permissions";
 
 export async function GET(req: NextRequest, { params }: { params: { slug: string; id: string } }) {
   const session = await getSession();
@@ -11,7 +11,7 @@ export async function GET(req: NextRequest, { params }: { params: { slug: string
     where: { userId: session.userId, organization: { slug: params.slug } },
   });
   if (!membership) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  requirePermission(membership.role, "view_agents");
+  const _perm = checkPermission(membership.role, "view_agents"); if (_perm) return _perm;
 
   const runs = await prisma.campaignRun.findMany({
     where: { campaignId: params.id, campaign: { organizationId: membership.organizationId } },

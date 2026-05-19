@@ -16,6 +16,7 @@ export default defineConfig({
       "lib/__tests__/api-audit-log.test.ts",
       "lib/__tests__/api-templates-export-import.test.ts",
       "lib/__tests__/api-api-keys.test.ts",
+      "lib/__tests__/injection.test.ts",
     ],
     setupFiles: ["lib/__tests__/setup.ts"],
   },

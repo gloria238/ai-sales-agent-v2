@@ -111,10 +111,13 @@ function parseDelay(d: string): number {
   }
 }
 
+const BLOCKED_KEYS = new Set(["__proto__", "prototype", "constructor"]);
+
 function resolveTemplate(template: string, context: Record<string, unknown>): string {
   return template.replace(/\{\{([\w.]+)\}\}/g, (_: string, path: string) => {
     let value: unknown = context;
     for (const key of path.split(".")) {
+      if (BLOCKED_KEYS.has(key)) return `{{${path}}}`;
       if (value && typeof value === "object") value = (value as Record<string, unknown>)[key];
       else return `{{${path}}}`;
     }
@@ -211,12 +214,8 @@ const conversationWorker = new Worker("conversation-jobs", async (job: Job<{ con
       aiMetadata: { tone: result.tone, suggestedAction: result.suggestedAction },
     },
   });
-  if (process.env.RESEND_API_KEY && result.suggestedAction === "send_now") {
-    const conv = await prisma.conversation.findUnique({ where: { id: job.data.conversationId }, include: { lead: true } });
-    if (conv?.lead.email) {
-      await sendEmail({ action: "send_email", to: conv.lead.email, subject: result.subject, body: result.body }, { lead: conv.lead });
-    }
-  }
+  // AI draft is saved as a message but NEVER auto-sent.
+  // Human approval is required before any outbound email goes out.
   await prisma.conversation.update({ where: { id: job.data.conversationId }, data: { updatedAt: new Date() } });
 }, { connection, prefix: Q_PREFIX, concurrency: 5 });
 
