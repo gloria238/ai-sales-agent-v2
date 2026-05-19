@@ -49,7 +49,7 @@ async function loginAndGetCookie(email: string, password: string): Promise<TestU
  */
 export async function getTestUser(role: "admin" | "operator" | "viewer"): Promise<TestUser> {
   if (_userCache.has(role)) return _userCache.get(role)!;
-  const u = await loginAndGetCookie(`${role}@opsflow.test`, "test123456");
+  const u = await loginAndGetCookie(`${role}@salesagent.test`, "test123456");
   _userCache.set(role, u);
   return u;
 }

@@ -1,12 +1,11 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@opsflow/db";
+import { prisma } from "@salesagent/db";
 import { getSession } from "@/lib/session";
 import { requirePermission } from "@/lib/permissions";
 import { callDeepSeekJSON } from "@/lib/ai";
 import { LEAD_SCORING_SYSTEM, buildLeadScoringPrompt } from "@/lib/prompts";
-import type { AIScoreResponse } from "@/components/workflow/types";
+import { scoreLeadSchema } from "@/lib/validation";
 import { isEnabled } from "@/lib/feature-flags";
-import { getRequestContext, logWarn } from "@/lib/logger";
 
 export async function POST(request: Request, { params }: { params: { slug: string } }) {
   const session = await getSession();
@@ -16,54 +15,58 @@ export async function POST(request: Request, { params }: { params: { slug: strin
     where: { userId: session.userId, organization: { slug: params.slug } },
   });
   if (!membership) return NextResponse.json({ error: "Not found" }, { status: 404 });
-
-  try { requirePermission(membership.role, "view_leads"); }
-  catch { return NextResponse.json({ error: "Forbidden" }, { status: 403 }); }
+  requirePermission(membership.role, "view_leads");
 
   if (!isEnabled("ai_lead_scoring")) {
-    logWarn(getRequestContext(request), "AI lead scoring disabled by feature flag");
     return NextResponse.json({ error: "AI lead scoring is disabled" }, { status: 503 });
   }
 
   const body = await request.json();
+  const parsed = scoreLeadSchema.safeParse(body);
+  if (!parsed.success) return NextResponse.json({ error: "leadId required" }, { status: 400 });
 
-  let lead: { name: string; email?: string | null; stage?: string | null; tags?: Record<string, unknown> | null; createdAt: string };
+  const dbLead = await prisma.lead.findFirst({
+    where: { id: parsed.data.leadId, organizationId: membership.organizationId },
+    include: { activities: { orderBy: { createdAt: "desc" }, take: 10 } },
+  });
+  if (!dbLead) return NextResponse.json({ error: "Lead not found" }, { status: 404 });
 
-  if (body.leadId) {
-    const dbLead = await prisma.lead.findFirst({
-      where: { id: body.leadId, organizationId: membership.organizationId },
-    });
-    if (!dbLead) return NextResponse.json({ error: "Lead not found" }, { status: 404 });
-    lead = {
-      name: dbLead.name,
-      email: dbLead.email,
-      stage: dbLead.stage,
-      tags: dbLead.tags as Record<string, unknown> | null,
-      createdAt: dbLead.createdAt.toISOString(),
-    };
-  } else if (body.name) {
-    lead = {
-      name: body.name,
-      email: body.email || null,
-      stage: body.stage || null,
-      tags: body.tags || null,
-      createdAt: body.createdAt || new Date().toISOString(),
-    };
-  } else {
-    return NextResponse.json({ error: "leadId or name required" }, { status: 400 });
-  }
+  const lead = {
+    name: dbLead.name,
+    email: dbLead.email,
+    company: dbLead.company,
+    stage: dbLead.stage,
+    source: dbLead.source,
+    tags: dbLead.tags,
+    createdAt: dbLead.createdAt.toISOString(),
+    recentActivity: dbLead.activities.map((a) => ({
+      type: a.type,
+      content: a.content,
+      createdAt: a.createdAt.toISOString(),
+    })),
+  };
 
   try {
     const prompt = buildLeadScoringPrompt(lead);
-    const result = await callDeepSeekJSON<AIScoreResponse>(prompt, LEAD_SCORING_SYSTEM, { temperature: 0.3 });
+    const result = await callDeepSeekJSON<{
+      score: number; label: string; breakdown: Record<string, number>;
+      signals: string[]; concerns: string[]; recommendedAction: string; recommendedAgentType: string;
+    }>(prompt, LEAD_SCORING_SYSTEM, { temperature: 0.3 });
+
     const score = Math.max(0, Math.min(100, Math.round(result.score ?? 0)));
-    const label = score >= 75 ? "hot" : score >= 40 ? "warm" : "cold";
+    const label = result.label || (score >= 70 ? "hot" : score >= 40 ? "warm" : "cold");
+
+    // Persist score to lead
+    await prisma.lead.update({ where: { id: dbLead.id }, data: { score } });
 
     return NextResponse.json({
       score,
       label,
-      reason: result.reason || "No analysis available",
-      nextAction: result.nextAction || "Review lead details",
+      breakdown: result.breakdown || {},
+      signals: result.signals || [],
+      concerns: result.concerns || [],
+      recommendedAction: result.recommendedAction || "Review lead",
+      recommendedAgentType: result.recommendedAgentType || "inbound_qualifier",
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Scoring failed";

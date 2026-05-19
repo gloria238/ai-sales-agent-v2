@@ -80,9 +80,9 @@ describe("Core Business Flow", () => {
     await waitForServer();
 
     // Strategy 1: Try known test accounts (from pnpm seed-members)
-    let auth = await tryLogin("admin@opsflow.test", "test123456");
+    let auth = await tryLogin("admin@salesagent.test", "test123456");
     if (auth) {
-      console.log("Using admin@opsflow.test (from seed-members)");
+      console.log("Using admin@salesagent.test (from seed-members)");
     } else {
       // Strategy 2: Register fresh alice@example.com
       auth = await tryRegisterAsAlice();
@@ -95,7 +95,7 @@ describe("Core Business Flow", () => {
       console.warn(
         "Skipping integration tests — no test account available.\n" +
         "Run one of:\n" +
-        "  pnpm seed-members <org-slug>   (creates admin@opsflow.test / test123456)\n" +
+        "  pnpm seed-members <org-slug>   (creates admin@salesagent.test / test123456)\n" +
         "  pnpm seed                      (resets DB, then integration test can register alice)",
       );
       return;

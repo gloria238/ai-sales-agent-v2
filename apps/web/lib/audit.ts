@@ -1,4 +1,4 @@
-import { prisma } from "@opsflow/db";
+import { prisma } from "@salesagent/db";
 import type { Prisma } from "@prisma/client";
 
 export async function logAudit(params: {

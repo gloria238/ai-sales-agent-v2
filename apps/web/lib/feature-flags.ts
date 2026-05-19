@@ -1,10 +1,8 @@
 const FLAGS = {
-  ai_suggestions: { env: "FEATURE_AI_SUGGESTIONS", default: true },
-  ai_workflow_generation: { env: "FEATURE_AI_WORKFLOW_GEN", default: true },
-  ai_lead_scoring: { env: "FEATURE_AI_LEAD_SCORING", default: true },
-  ai_anomaly_detection: { env: "FEATURE_AI_ANOMALY_DETECTION", default: true },
-  ai_compose_email: { env: "FEATURE_AI_COMPOSE_EMAIL", default: true },
-  ai_classify_email: { env: "FEATURE_AI_CLASSIFY_EMAIL", default: true },
+  ai_compose_response: { env: "FEATURE_AI_COMPOSE", default: true },
+  ai_lead_scoring: { env: "FEATURE_AI_SCORE", default: true },
+  ai_summarize_conversation: { env: "FEATURE_AI_SUMMARIZE", default: true },
+  ai_generate_script: { env: "FEATURE_AI_SCRIPT_GEN", default: true },
   advanced_tables: { env: "FEATURE_ADVANCED_TABLES", default: true },
   realtime_updates: { env: "FEATURE_REALTIME", default: true },
 } as const;

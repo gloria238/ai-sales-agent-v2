@@ -22,7 +22,7 @@ describe("Auth API", () => {
     it("returns 400 when password is missing", async () => {
       const { res, body } = await fetchJSON(`${BASE}/api/auth/login`, {
         method: "POST",
-        body: JSON.stringify({ email: "admin@opsflow.test" }),
+        body: JSON.stringify({ email: "admin@salesagent.test" }),
       });
       expect(res.status).toBe(400);
       expect(body.error).toContain("required");
@@ -31,7 +31,7 @@ describe("Auth API", () => {
     it("returns 401 for wrong password", async () => {
       const { res, body } = await fetchJSON(`${BASE}/api/auth/login`, {
         method: "POST",
-        body: JSON.stringify({ email: "admin@opsflow.test", password: "wrong-password!!!" }),
+        body: JSON.stringify({ email: "admin@salesagent.test", password: "wrong-password!!!" }),
       });
       expect(res.status).toBe(401);
       expect(body.error).toContain("Invalid");
@@ -49,11 +49,11 @@ describe("Auth API", () => {
     it("returns 200 with user + org + cookie for valid login", async () => {
       const { res, body } = await fetchJSON(`${BASE}/api/auth/login`, {
         method: "POST",
-        body: JSON.stringify({ email: "admin@opsflow.test", password: "test123456" }),
+        body: JSON.stringify({ email: "admin@salesagent.test", password: "test123456" }),
       });
       expect(res.status).toBe(200);
       expect(body.user).toBeDefined();
-      expect(body.user.email).toBe("admin@opsflow.test");
+      expect(body.user.email).toBe("admin@salesagent.test");
       expect(body.org.slug).toBeDefined();
       expect(res.headers.get("set-cookie")).toContain("session=");
     });
@@ -65,7 +65,7 @@ describe("Auth API", () => {
       });
       const { body: wrongPw } = await fetchJSON(`${BASE}/api/auth/login`, {
         method: "POST",
-        body: JSON.stringify({ email: "admin@opsflow.test", password: "wrong!!!" }),
+        body: JSON.stringify({ email: "admin@salesagent.test", password: "wrong!!!" }),
       });
       expect(noUser.error).toBe(wrongPw.error); // both: "Invalid email or password"
     });
@@ -93,7 +93,7 @@ describe("Auth API", () => {
     it("returns 409 for duplicate email", async () => {
       const { res, body } = await fetchJSON(`${BASE}/api/auth/register`, {
         method: "POST",
-        body: JSON.stringify({ email: "admin@opsflow.test", password: "test123456", name: "Dup" }),
+        body: JSON.stringify({ email: "admin@salesagent.test", password: "test123456", name: "Dup" }),
       });
       expect(res.status).toBe(409);
       expect(body.error).toContain("already registered");

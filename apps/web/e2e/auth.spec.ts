@@ -26,7 +26,7 @@ test.describe("Authentication", () => {
 
   test("login with valid credentials redirects to dashboard", async ({ page }) => {
     await page.goto("/login");
-    await page.fill('input[type="email"]', "admin@opsflow.test");
+    await page.fill('input[type="email"]', "admin@salesagent.test");
     await page.fill('input[type="password"]', "test123456");
     await page.click('button[type="submit"]');
 
@@ -38,7 +38,7 @@ test.describe("Authentication", () => {
 
   test("successful login shows user name in header", async ({ page }) => {
     await page.goto("/login");
-    await page.fill('input[type="email"]', "admin@opsflow.test");
+    await page.fill('input[type="email"]', "admin@salesagent.test");
     await page.fill('input[type="password"]', "test123456");
     await page.click('button[type="submit"]');
     await page.waitForURL("/", { timeout: 15000 });
@@ -49,7 +49,7 @@ test.describe("Authentication", () => {
   test("logout redirects to login", async ({ page }) => {
     // Login first
     await page.goto("/login");
-    await page.fill('input[type="email"]', "admin@opsflow.test");
+    await page.fill('input[type="email"]', "admin@salesagent.test");
     await page.fill('input[type="password"]', "test123456");
     await page.click('button[type="submit"]');
     await page.waitForURL("/", { timeout: 15000 });

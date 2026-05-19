@@ -1,4 +1,4 @@
-import { prisma } from "@opsflow/db";
+import { prisma } from "@salesagent/db";
 import { getSession } from "@/lib/session";
 import { redirect } from "next/navigation";
 import { SettingsGeneralForm } from "./settings-general";

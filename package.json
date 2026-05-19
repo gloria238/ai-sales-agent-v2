@@ -8,21 +8,21 @@
       "esbuild"
     ]
   },
-  "name": "opsflow-ai",
+  "name": "salesagent-ai",
   "version": "1.0.0",
-  "description": "OpsFlow AI - Monorepo",
+  "description": "SalesAgent AI - AI SDR / Outbound Sales Operating System",
   "private": true,
   "scripts": {
     "dev": "turbo run dev",
     "build": "turbo run build",
     "lint": "turbo run lint",
-    "seed": "pnpm --filter @opsflow/db seed",
+    "seed": "pnpm --filter @salesagent/db seed",
     "seed-members": "pnpm tsx packages/db/seed-members.ts",
     "seed-prod": "pnpm tsx packages/db/seed-production.ts",
     "seed-verify-alice": "pnpm tsx packages/db/seed-verify-alice.ts",
     "clean-org": "pnpm tsx packages/db/clean-demo-org.ts",
     "seed-demo": "pnpm tsx packages/db/seed-demo.ts",
-    "postinstall": "pnpm --filter @opsflow/db generate",
+    "postinstall": "pnpm --filter @salesagent/db generate",
     "start": "npx tsx apps/worker/src/index.ts"
   },
   "keywords": [],

@@ -1,4 +1,4 @@
-// One-off: delete all workflows + leads from demo-org, then re-seed with templates.
+// FK-safe org cleanup: delete all conversations, campaigns, agents, scripts + leads.
 // Usage: pnpm tsx packages/db/clean-demo-org.ts <org-slug>
 // WARNING: destructive — only run this on demo data.
 
@@ -12,40 +12,36 @@ const prisma = new PrismaClient();
 
 async function main() {
   const orgSlug = process.argv[2];
-  if (!orgSlug) {
-    console.error("Usage: pnpm tsx packages/db/clean-demo-org.ts <org-slug>");
-    process.exit(1);
-  }
+  if (!orgSlug) { console.error("Usage: pnpm tsx packages/db/clean-demo-org.ts <org-slug>"); process.exit(1); }
 
   const org = await prisma.organization.findUnique({ where: { slug: orgSlug } });
-  if (!org) {
-    console.error(`Org "${orgSlug}" not found.`);
-    process.exit(1);
-  }
+  if (!org) { console.error(`Org "${orgSlug}" not found.`); process.exit(1); }
 
   console.log(`Cleaning: ${org.name} (${org.slug})\n`);
 
-  // Delete in FK-safe order
-  const versions = await prisma.workflowVersion.findMany({
-    where: { workflow: { organizationId: org.id } },
-    select: { id: true },
-  });
-  const versionIds = versions.map((v) => v.id);
+  // FK-safe deletion order
+  await prisma.campaignRun.deleteMany({ where: { campaign: { organizationId: org.id } } });
+  const campDeleted = await prisma.campaign.deleteMany({ where: { organizationId: org.id } });
+  console.log(`Deleted ${campDeleted.count} campaign(s)`);
 
-  if (versionIds.length > 0) {
-    await prisma.workflowRunEvent.deleteMany({ where: { workflowRun: { versionId: { in: versionIds } } } });
-    await prisma.workflowRun.deleteMany({ where: { versionId: { in: versionIds } } });
-    await prisma.workflowNode.deleteMany({ where: { versionId: { in: versionIds } } });
-    await prisma.workflowEdge.deleteMany({ where: { versionId: { in: versionIds } } });
-    await prisma.workflowVersion.deleteMany({ where: { id: { in: versionIds } } });
-  }
+  await prisma.message.deleteMany({ where: { conversation: { organizationId: org.id } } });
+  const convDeleted = await prisma.conversation.deleteMany({ where: { organizationId: org.id } });
+  console.log(`Deleted ${convDeleted.count} conversation(s)`);
 
-  const wfDeleted = await prisma.workflow.deleteMany({ where: { organizationId: org.id } });
-  console.log(`Deleted ${wfDeleted.count} workflow(s)`);
+  const scriptDeleted = await prisma.script.deleteMany({ where: { organizationId: org.id } });
+  console.log(`Deleted ${scriptDeleted.count} script(s)`);
 
-  // Cascade deletes LeadActivity via onDelete: Cascade
+  const agentDeleted = await prisma.agent.deleteMany({ where: { organizationId: org.id } });
+  console.log(`Deleted ${agentDeleted.count} agent(s)`);
+
+  const activityDeleted = await prisma.leadActivity.deleteMany({ where: { organizationId: org.id } });
+  console.log(`Deleted ${activityDeleted.count} lead activity/ies`);
+
   const leadDeleted = await prisma.lead.deleteMany({ where: { organizationId: org.id } });
   console.log(`Deleted ${leadDeleted.count} lead(s)`);
+
+  const auditDeleted = await prisma.auditLog.deleteMany({ where: { organizationId: org.id } });
+  console.log(`Deleted ${auditDeleted.count} audit log(s)`);
 
   console.log("\nDone cleaning.");
 }

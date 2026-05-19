@@ -4,7 +4,7 @@ test.describe("RBAC UI guards", () => {
   test("viewer cannot see New Workflow button", async ({ page }) => {
     // Login as viewer
     await page.goto("/login");
-    await page.fill('input[type="email"]', "viewer@opsflow.test");
+    await page.fill('input[type="email"]', "viewer@salesagent.test");
     await page.fill('input[type="password"]', "test123456");
     await page.click('button[type="submit"]');
     await page.waitForURL("/", { timeout: 15000 });
@@ -18,7 +18,7 @@ test.describe("RBAC UI guards", () => {
   test("operator can see New Workflow but cannot see Delete on detail", async ({ page }) => {
     // Login as operator
     await page.goto("/login");
-    await page.fill('input[type="email"]', "operator@opsflow.test");
+    await page.fill('input[type="email"]', "operator@salesagent.test");
     await page.fill('input[type="password"]', "test123456");
     await page.click('button[type="submit"]');
     await page.waitForURL("/", { timeout: 15000 });
@@ -32,7 +32,7 @@ test.describe("RBAC UI guards", () => {
   test("admin can see Settings in sidebar", async ({ page }) => {
     // Login as admin
     await page.goto("/login");
-    await page.fill('input[type="email"]', "admin@opsflow.test");
+    await page.fill('input[type="email"]', "admin@salesagent.test");
     await page.fill('input[type="password"]', "test123456");
     await page.click('button[type="submit"]');
     await page.waitForURL("/", { timeout: 15000 });

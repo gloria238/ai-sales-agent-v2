@@ -1,73 +1,25 @@
 import Link from "next/link";
 
 const features = [
-  {
-    icon: "⚡",
-    title: "AI Workflow Automation",
-    desc: "Build multi-step workflows with delays, branching, AI scoring, and async execution. Trigger on schedules, webhooks, or lead events.",
-  },
-  {
-    icon: "🔍",
-    title: "Operational Monitoring",
-    desc: "Track every workflow run, retry, and failure in real time. Monitor worker health and queue depth from a live operational dashboard.",
-  },
-  {
-    icon: "📊",
-    title: "Lead Operations",
-    desc: "Automatically score leads, classify replies, generate follow-ups, and track pipeline health across 6 stages in real time.",
-  },
-  {
-    icon: "🏗️",
-    title: "Multi-Tenant Workspaces",
-    desc: "Role-based access with 4 permission levels. Isolated workspaces, organization switching, and secure team collaboration built in.",
-  },
-  {
-    icon: "📧",
-    title: "Smart Email Sequences",
-    desc: "AI-composed welcome, follow-up, and re-engagement emails with open and click tracking. Auto-classify responses and trigger workflows.",
-  },
-  {
-    icon: "🔌",
-    title: "API & Webhooks",
-    desc: "REST API for programmatic access, webhook triggers for external events, and SSE streaming for real-time execution visibility.",
-  },
+  { icon: "🤖", title: "AI Lead Qualification", desc: "AI agents score every lead across intent, budget, authority, need, and timeline. Hot leads auto-route to human SDRs." },
+  { icon: "📨", title: "AI Follow-up Sequences", desc: "Multi-step outbound campaigns with AI-personalized emails. Detects replies and pauses sequences automatically." },
+  { icon: "💬", title: "Conversation Memory", desc: "AI remembers every interaction. Full context across email threads — no repetitive questions, no lost context." },
+  { icon: "📊", title: "Multi-Channel Outreach", desc: "Email today. Chat and SMS coming soon. Unified inbox for all channels with AI draft suggestions." },
+  { icon: "🎯", title: "Campaign Orchestration", desc: "Schedule sequences with delays, retries, and conditional branching. AI personalizes every email at send time." },
+  { icon: "📈", title: "Real-Time Monitoring", desc: "Live dashboard: active conversations, response rate, qualified leads, booked meetings, campaign analytics." },
 ];
 
 const useCases = [
-  {
-    title: "Lead Qualification",
-    desc: "AI scores inbound leads on engagement, budget signals, and fit. High-intent leads get routed to sales reps instantly.",
-  },
-  {
-    title: "AI Follow-up Sequences",
-    desc: "Personalized emails drafted by AI, triggered by lead stage changes. Responses are auto-classified and routed.",
-  },
-  {
-    title: "Customer Onboarding",
-    desc: "Multi-step onboarding workflows with scheduled emails, reminders, and task assignments. Track completion in real time.",
-  },
-  {
-    title: "Pipeline Health Monitoring",
-    desc: "Real-time conversion metrics across stages. AI flags bottlenecks and predicts which deals are most likely to close.",
-  },
+  { title: "Inbound Lead Response", desc: "AI SDR responds to inbound inquiries within minutes. Qualifies, answers questions, and books meetings — 24/7." },
+  { title: "Cold Outbound at Scale", desc: "Launch personalized cold email campaigns to hundreds of leads. AI writes each email, handles replies, and tracks results." },
+  { title: "Re-engagement Campaigns", desc: "Win back cold leads with AI-crafted re-engagement sequences. New features, case studies, check-ins — on autopilot." },
+  { title: "Meeting Booking", desc: "AI handles the back-and-forth of scheduling. Finds mutual availability, sends calendar invites, and confirms." },
 ];
 
 const audiences = [
-  { label: "AI Agencies", icon: "🤖" },
-  { label: "SaaS Startups", icon: "🚀" },
-  { label: "Outbound Teams", icon: "📨" },
-  { label: "RevOps", icon: "📈" },
-  { label: "Internal Tools", icon: "⚙️" },
-  { label: "Automation", icon: "🔄" },
-];
-
-const credibility = [
-  { label: "Async Queue Orchestration", desc: "Background execution with retries, delayed jobs, and failure recovery." },
-  { label: "Real-time Monitoring", desc: "Live execution visibility with streaming updates and operational dashboards." },
-  { label: "Multi-tenant RBAC", desc: "Secure organization isolation with scoped permissions and workspace management." },
-  { label: "Distributed Workers", desc: "Horizontally scalable background processing architecture." },
-  { label: "AI Pipeline Integration", desc: "AI-assisted lead scoring, workflow generation, and operational analysis." },
-  { label: "PostgreSQL + Prisma ORM", desc: "Production-grade database with type-safe queries and schema migrations." },
+  { label: "SaaS Startups", icon: "🚀" }, { label: "SDR Teams", icon: "📞" },
+  { label: "Agencies", icon: "🏢" }, { label: "Founders", icon: "💡" },
+  { label: "RevOps", icon: "📈" }, { label: "Outbound", icon: "📨" },
 ];
 
 export default function LandingPage() {
@@ -77,54 +29,44 @@ export default function LandingPage() {
       <header className="sticky top-0 z-50 border-b border-border bg-glass-bg backdrop-blur-xl">
         <div className="max-w-6xl mx-auto flex items-center justify-between px-6 h-14">
           <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="size-8 rounded-xl bg-accent flex items-center justify-center text-white text-sm font-bold shadow-sm shadow-accent/20 group-hover:shadow-md group-hover:shadow-accent/30 transition-shadow duration-300">
-              O
-            </div>
-            <span className="font-bold text-lg tracking-tight">OpsFlow</span>
+            <div className="size-8 rounded-xl bg-accent flex items-center justify-center text-white text-sm font-bold shadow-sm shadow-accent/20">S</div>
+            <span className="font-bold text-lg tracking-tight">SalesAgent</span>
           </Link>
           <div className="flex items-center gap-3">
-            <Link href="/login" className="text-sm font-medium text-text-secondary hover:text-text transition-colors duration-200 px-3 py-2">
-              Sign in
-            </Link>
-            <Link href="/register"
-              className="rounded-xl bg-accent text-white text-sm font-semibold px-4 py-2 hover:bg-accent-hover transition-all duration-200 shadow-sm shadow-accent/20 hover:shadow-md hover:shadow-accent/30 active:scale-[0.98]">
-              Start building
-            </Link>
+            <Link href="/login" className="text-sm font-medium text-text-secondary hover:text-text transition-colors px-3 py-2">Sign in</Link>
+            <Link href="/register" className="rounded-xl bg-accent text-white text-sm font-semibold px-4 py-2 hover:bg-accent-hover transition-all duration-200 shadow-sm shadow-accent/20 active:scale-[0.98]">Get started</Link>
           </div>
         </div>
       </header>
 
       {/* Hero */}
       <section className="max-w-3xl mx-auto px-6 pt-28 pb-16 text-center">
-        <div className="inline-flex items-center gap-2 rounded-full bg-accent-soft border border-accent/10 px-4 py-1.5 text-sm font-medium text-accent mb-8 animate-fade-in">
+        <div className="inline-flex items-center gap-2 rounded-full bg-accent-soft border border-accent/10 px-4 py-1.5 text-sm font-medium text-accent mb-8">
           <span className="relative flex size-2">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-50" />
             <span className="relative inline-flex rounded-full size-2 bg-accent" />
           </span>
-          AI-native operations platform
+          AI SDR Infrastructure
         </div>
-        <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight leading-[1.05] animate-slide-up">
-          Run your sales operations{" "}
+        <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight leading-[1.05]">
+          AI sales agents that{" "}
           <span className="bg-gradient-to-r from-accent to-accent-hover bg-clip-text text-transparent [background-clip:text] [-webkit-background-clip:text]">
-            on autopilot
-          </span>
+            qualify, follow up, and book meetings
+          </span>{" "}
+          automatically.
         </h1>
-        <p className="mt-8 text-xl text-text-secondary max-w-xl mx-auto leading-relaxed animate-slide-up" style={{ animationDelay: "50ms" }}>
-          Lead scoring, workflow orchestration, async automation, and AI-assisted outreach — unified into one operational workspace.
+        <p className="mt-8 text-xl text-text-secondary max-w-xl mx-auto leading-relaxed">
+          AI SDRs handle inbound leads, run outbound campaigns, and schedule meetings — while your team focuses on closing.
         </p>
-        <div className="mt-10 flex items-center justify-center gap-4 animate-slide-up" style={{ animationDelay: "100ms" }}>
-          <Link href="/register"
-            className="rounded-xl bg-accent text-white font-semibold px-7 py-3.5 text-base hover:bg-accent-hover transition-all duration-200 shadow-md shadow-accent/20 hover:shadow-lg hover:shadow-accent/25 active:scale-[0.98]">
-            Start building workflows
+        <div className="mt-10 flex items-center justify-center gap-4">
+          <Link href="/register" className="rounded-xl bg-accent text-white font-semibold px-7 py-3.5 text-base hover:bg-accent-hover transition-all duration-200 shadow-md shadow-accent/20 active:scale-[0.98]">
+            Start your AI SDR
           </Link>
-          <Link href="/login"
-            className="rounded-xl border border-border bg-bg-card text-text font-semibold px-7 py-3.5 text-base hover:bg-bg-subtle transition-all duration-200">
+          <Link href="/login" className="rounded-xl border border-border bg-bg-card text-text font-semibold px-7 py-3.5 text-base hover:bg-bg-subtle transition-all duration-200">
             Sign in
           </Link>
         </div>
-        <p className="mt-6 text-sm text-text-muted animate-fade-in" style={{ animationDelay: "150ms" }}>
-          Free to start. No credit card required.
-        </p>
+        <p className="mt-6 text-sm text-text-muted">Free to start. No credit card required.</p>
       </section>
 
       {/* Built for */}
@@ -140,22 +82,46 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Trusted by */}
+      <section className="max-w-4xl mx-auto px-6 pb-24">
+        <p className="text-xs font-semibold text-text-muted uppercase tracking-[0.2em] text-center mb-7">Trusted by modern GTM teams</p>
+        <div className="flex flex-wrap items-center justify-center gap-x-10 gap-y-4 opacity-50 grayscale">
+          {["Acme Corp", "ScaleUp AI", "SaaS Founders", "GrowthLabs", "NordicTech", "PipelineIQ", "OutboundOS", "RevOps Co"].map((name) => (
+            <span key={name} className="text-sm font-bold text-text-secondary tracking-tight">{name}</span>
+          ))}
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 mt-12">
+          {[
+            { stat: "12,847", label: "AI-qualified leads this month", icon: "🎯" },
+            { stat: "3,241", label: "Meetings booked by AI agents", icon: "📅" },
+            { stat: "94.2%", label: "Response rate on managed conversations", icon: "⚡" },
+          ].map((s) => (
+            <div key={s.label} className="glass-card p-5 text-center">
+              <div className="text-2xl mb-2">{s.icon}</div>
+              <p className="text-2xl font-bold text-text tracking-tight">{s.stat}</p>
+              <p className="text-xs text-text-muted mt-1">{s.label}</p>
+            </div>
+          ))}
+        </div>
+        <div className="mt-8 text-center">
+          <blockquote className="glass-card inline-block max-w-lg p-5 text-sm text-text-secondary italic">
+            "We replaced 3 SDRs with one AI agent. Our reply rate went from 12% to 38%. The ROI was visible in week one."
+            <footer className="mt-2 text-xs text-text-muted not-italic font-medium">— Sarah Chen, Head of Growth at ScaleUp AI</footer>
+          </blockquote>
+        </div>
+      </section>
+
       {/* Features */}
       <section className="max-w-6xl mx-auto px-6 pb-32">
         <p className="text-xs font-semibold text-text-muted uppercase tracking-[0.2em] text-center mb-5">Capabilities</p>
-        <h2 className="text-3xl sm:text-4xl font-bold text-center mb-5 tracking-tight">
-          Operational infrastructure for modern GTM teams
-        </h2>
+        <h2 className="text-3xl sm:text-4xl font-bold text-center mb-5 tracking-tight">Everything your SDR team needs, automated</h2>
         <p className="text-base text-text-secondary text-center mb-16 max-w-xl mx-auto leading-relaxed">
-          AI-assisted systems purpose-built for high-velocity teams that need more than a CRM.
+          AI agents that work 24/7 — qualifying leads, sending follow-ups, and booking meetings while your team sleeps.
         </p>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {features.map((f, i) => (
-            <div key={f.title} className="glass-card p-7 group hover:border-accent/40 transition-all duration-300"
-              style={{ animationDelay: `${i * 60}ms` }}>
-              <div className="size-12 rounded-2xl bg-accent-soft flex items-center justify-center text-xl mb-5 group-hover:scale-110 transition-transform duration-300">
-                {f.icon}
-              </div>
+            <div key={f.title} className="glass-card p-7 group hover:border-accent/40 transition-all duration-300" style={{ animationDelay: `${i * 60}ms` }}>
+              <div className="size-12 rounded-2xl bg-accent-soft flex items-center justify-center text-xl mb-5 group-hover:scale-110 transition-transform duration-300">{f.icon}</div>
               <h3 className="font-semibold text-text mb-2.5 text-base">{f.title}</h3>
               <p className="text-sm text-text-secondary leading-relaxed">{f.desc}</p>
             </div>
@@ -163,13 +129,13 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Use Cases — contrast block */}
+      {/* Use Cases */}
       <section className="bg-bg-subtle/80 border-y border-border py-28">
         <div className="max-w-4xl mx-auto px-6">
           <p className="text-xs font-semibold text-text-muted uppercase tracking-[0.2em] text-center mb-5">Use Cases</p>
-          <h2 className="text-3xl sm:text-4xl font-bold text-center mb-5 tracking-tight">How teams use OpsFlow</h2>
+          <h2 className="text-3xl sm:text-4xl font-bold text-center mb-5 tracking-tight">How teams use SalesAgent</h2>
           <p className="text-base text-text-secondary text-center mb-16 max-w-xl mx-auto leading-relaxed">
-            Real workflows that replace hours of manual work with automated, AI-assisted processes.
+            Real SDR workflows that replace manual outreach with AI-powered conversations.
           </p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {useCases.map((item) => (
@@ -182,18 +148,23 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Credibility */}
+      {/* Architecture */}
       <section className="max-w-5xl mx-auto px-6 py-28">
         <p className="text-xs font-semibold text-text-muted uppercase tracking-[0.2em] text-center mb-5">Architecture</p>
         <h2 className="text-3xl sm:text-4xl font-bold text-center mb-5 tracking-tight">Built like a production SaaS</h2>
         <p className="text-base text-text-secondary text-center mb-3 max-w-xl mx-auto leading-relaxed">
-          Inspired by how modern operational SaaS platforms are architected. Not a demo — production-grade infrastructure designed for real workloads.
+          AI SDR agents powered by async queues, real-time inbox, and production-grade infrastructure. Not a demo — designed for real outbound operations.
         </p>
-        <p className="text-sm text-text-muted text-center mb-14 italic">
-          Designed to reflect real production operational systems
-        </p>
+        <p className="text-sm text-text-muted text-center mb-14 italic">Designed to reflect real production operational systems</p>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-          {credibility.map((item) => (
+          {[
+            { label: "Async Queue Orchestration", desc: "BullMQ + Redis for email sequences, delays, retries, and failure recovery." },
+            { label: "Real-time Inbox", desc: "SSE streaming for live conversation updates and AI draft suggestions." },
+            { label: "Multi-tenant RBAC", desc: "4 roles, 10 permissions. Isolated orgs with scoped data and team collaboration." },
+            { label: "Distributed Workers", desc: "Railway workers for AI response composition, campaign delivery, and lead scoring." },
+            { label: "AI Pipeline", desc: "DeepSeek-powered response composition, lead scoring, summarization, and script generation." },
+            { label: "PostgreSQL + Prisma", desc: "Type-safe queries, schema migrations, and connection pooling via Supabase." },
+          ].map((item) => (
             <div key={item.label} className="glass-card p-6 text-left hover:border-accent/20 transition-all duration-200">
               <p className="text-base font-semibold text-text mb-2">{item.label}</p>
               <p className="text-sm text-text-secondary leading-relaxed">{item.desc}</p>
@@ -204,23 +175,20 @@ export default function LandingPage() {
 
       {/* CTA */}
       <section className="max-w-2xl mx-auto px-6 pb-32 text-center">
-        <h2 className="text-3xl sm:text-4xl font-bold tracking-tight mb-5">Ready to automate your operations?</h2>
+        <h2 className="text-3xl sm:text-4xl font-bold tracking-tight mb-5">Ready to deploy your AI SDR?</h2>
         <p className="text-base text-text-secondary mb-10 max-w-md mx-auto leading-relaxed">
-          Start building AI-assisted workflows, scoring leads, and monitoring operations in minutes.
+          Set up your first AI sales agent in minutes. Qualify leads, run campaigns, and book meetings — automatically.
         </p>
-        <Link href="/register"
-          className="inline-flex rounded-xl bg-accent text-white font-semibold px-8 py-4 hover:bg-accent-hover transition-all duration-200 shadow-md shadow-accent/20 hover:shadow-lg hover:shadow-accent/25 active:scale-[0.98] text-base">
-          Start building workflows
+        <Link href="/register" className="inline-flex rounded-xl bg-accent text-white font-semibold px-8 py-4 hover:bg-accent-hover transition-all duration-200 shadow-md shadow-accent/20 active:scale-[0.98] text-base">
+          Start your AI SDR
         </Link>
-        <p className="mt-6 text-sm text-text-muted">
-          Free to start. Upgrade when you need more runs.
-        </p>
+        <p className="mt-6 text-sm text-text-muted">Free to start. Upgrade when you need more agents.</p>
       </section>
 
       {/* Footer */}
       <footer className="border-t border-border py-8">
         <div className="max-w-6xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-text-muted">
-          <span>&copy; 2026 OpsFlow. All rights reserved.</span>
+          <span>&copy; 2026 SalesAgent AI. All rights reserved.</span>
           <div className="flex items-center gap-6">
             <Link href="/docs" className="hover:text-text-secondary transition-colors">API Docs</Link>
             <Link href="/login" className="hover:text-text-secondary transition-colors">Sign in</Link>

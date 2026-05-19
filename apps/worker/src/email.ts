@@ -1,7 +1,7 @@
 import { Resend } from "resend";
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
-const DEFAULT_FROM = process.env.EMAIL_FROM || "OpsFlow <noreply@opsflow.ai>";
+const DEFAULT_FROM = process.env.EMAIL_FROM || "SalesAgent <noreply@salesagent.ai>";
 
 let resend: Resend | null = null;
 function getResend(): Resend {

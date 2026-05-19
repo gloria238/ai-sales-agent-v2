@@ -3,7 +3,7 @@ datasource db {
   provider  = "postgresql"
   url       = env("DATABASE_URL")    // Pooled connection for serverless (IPv4)
   directUrl = env("DIRECT_URL")      // Direct connection for migrations
-  schemas   = ["opsflow"]
+  schemas   = ["sales_agent"]
 }
 
 generator client {
@@ -17,7 +17,7 @@ enum MembershipRole {
   operator
   viewer
 
-  @@schema("opsflow")
+  @@schema("sales_agent")
 }
 
 model User {
@@ -30,48 +30,77 @@ model User {
   loginTokenExpires DateTime?
   memberships      Membership[]
   createdAt        DateTime     @default(now())
-  @@schema("opsflow")
+  @@schema("sales_agent")
 }
 
 model Organization {
-  id          String       @id @default(uuid())
-  name        String
-  slug        String       @unique
-  apiKeys     Json?
-  memberships Membership[]
-  leads       Lead[]
+  id            String         @id @default(uuid())
+  name          String
+  slug          String         @unique
+  apiKeys       Json?
+  memberships   Membership[]
+  leads         Lead[]
   leadActivities LeadActivity[]
-  workflows   Workflow[]
-  auditLogs   AuditLog[]
-  createdAt   DateTime     @default(now())
-  @@schema("opsflow")
+  agents        Agent[]
+  conversations Conversation[]
+  campaigns     Campaign[]
+  scripts       Script[]
+  auditLogs     AuditLog[]
+  createdAt     DateTime       @default(now())
+  @@schema("sales_agent")
 }
 
 model Membership {
-  id             String       @id @default(uuid())
+  id             String         @id @default(uuid())
   organizationId String
   userId         String
-  role           MembershipRole       @default(admin)
-  organization   Organization @relation(fields: [organizationId], references: [id])
-  user           User         @relation(fields: [userId], references: [id])
-  createdAt      DateTime     @default(now())
+  role           MembershipRole @default(admin)
+  organization   Organization   @relation(fields: [organizationId], references: [id])
+  user           User           @relation(fields: [userId], references: [id])
+  createdAt      DateTime       @default(now())
   @@unique([organizationId, userId])
-  @@schema("opsflow")
+  @@schema("sales_agent")
 }
+
+// ── AI SDR Agent ───────────────────────────────────────────────────
+
+model Agent {
+  id             String         @id @default(uuid())
+  organizationId String
+  name           String
+  description    String?
+  personality    String?        // tone, voice, style (e.g. "Friendly, consultative, SPIN methodology")
+  goals          Json?          // [{ type: "qualify_lead"|"book_meeting"|"handle_objection"|"nurture"|"follow_up", priority: 1, successCriteria: "..." }]
+  knowledgeBase  Json?          // { productDescription, pricing, faq: [{q,a}], competitors: [{name, strengths, weaknesses}], caseStudies }
+  isActive       Boolean        @default(true)
+  organization   Organization   @relation(fields: [organizationId], references: [id])
+  conversations  Conversation[]
+  campaigns      Campaign[]
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  @@schema("sales_agent")
+}
+
+// ── CRM Lead ───────────────────────────────────────────────────────
 
 model Lead {
   id             String         @id @default(uuid())
   organizationId String
   name           String
   email          String?
-  stage          String?
-  ownerId        String?
+  company        String?
+  phone          String?
+  stage          String?        // new | contacted | qualified | proposal | negotiation | closed_won | closed_lost
+  score          Int?           // AI score 0-100
+  source         String?        // website | referral | outbound | linkedin | other
+  assignedTo     String?
   tags           Json?
   organization   Organization   @relation(fields: [organizationId], references: [id])
   activities     LeadActivity[]
+  conversations  Conversation[]
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
-  @@schema("opsflow")
+  @@schema("sales_agent")
 }
 
 model LeadActivity {
@@ -80,99 +109,116 @@ model LeadActivity {
   organizationId String
   userId         String?
   userName       String?
-  type           String       // note | stage_change | assignment | created | updated
+  type           String       // note | stage_change | email_sent | email_received | meeting_booked | assignment | created | updated
   content        String?
-  metadata       Json?        // { fromStage, toStage } etc.
+  metadata       Json?        // { fromStage, toStage, emailId, meetingDate } etc.
   createdAt      DateTime     @default(now())
 
   lead           Lead         @relation(fields: [leadId], references: [id], onDelete: Cascade)
   organization   Organization @relation(fields: [organizationId], references: [id])
 
   @@index([leadId, createdAt(sort: Desc)])
-  @@schema("opsflow")
+  @@schema("sales_agent")
 }
 
-model Workflow {
-  id             String            @id @default(uuid())
+// ── Conversation & Messages ────────────────────────────────────────
+
+model Conversation {
+  id             String       @id @default(uuid())
+  organizationId String
+  leadId         String
+  agentId        String?
+  channel        String       @default("email") // email | chat | sms
+  subject        String?
+  status         String       @default("active") // active | closed | archived
+  lead           Lead         @relation(fields: [leadId], references: [id])
+  agent          Agent?       @relation(fields: [agentId], references: [id])
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  messages       Message[]
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@index([organizationId, status, updatedAt(sort: Desc)])
+  @@schema("sales_agent")
+}
+
+model Message {
+  id             String       @id @default(uuid())
+  conversationId String
+  direction      String       // inbound | outbound
+  content        String
+  channel        String       @default("email")
+  aiMetadata     Json?        // { sentiment, intent, confidence, suggested_action } — AI analysis
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  createdAt      DateTime     @default(now())
+
+  @@index([conversationId, createdAt(sort: Asc)])
+  @@schema("sales_agent")
+}
+
+// ── Script Playbooks ───────────────────────────────────────────────
+
+model Script {
+  id             String       @id @default(uuid())
   organizationId String
   name           String
   description    String?
-  versions       WorkflowVersion[]
-  organization   Organization      @relation(fields: [organizationId], references: [id])
-  createdAt      DateTime          @default(now())
-  @@schema("opsflow")
+  category       String?      // cold_outreach | follow_up | re_engagement | demo_request | objection_handling
+  steps          Json         // [{ order, type: "email"|"ai_email"|"delay"|"condition", template, delay, condition }]
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  campaigns      Campaign[]
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  @@schema("sales_agent")
 }
 
-model WorkflowVersion {
-  id         String          @id @default(uuid())
-  workflowId String
-  version    Int
-  nodes      WorkflowNode[]
-  edges      WorkflowEdge[]
-  runs       WorkflowRun[]
-  workflow   Workflow        @relation(fields: [workflowId], references: [id])
-  createdAt  DateTime        @default(now())
-  @@schema("opsflow")
+// ── Outbound Campaign ──────────────────────────────────────────────
+
+model Campaign {
+  id             String        @id @default(uuid())
+  organizationId String
+  name           String
+  description    String?
+  scriptId       String?
+  agentId        String?
+  status         String        @default("draft") // draft | active | paused | completed
+  targetAudience Json?         // { stage, scoreMin, scoreMax, tags, source }
+  schedule       Json?         // { timezone, workingHours, maxPerDay }
+  stats          Json?         // { sent, delivered, opened, clicked, replied, booked, unsubscribed }
+  script         Script?       @relation(fields: [scriptId], references: [id])
+  agent          Agent?        @relation(fields: [agentId], references: [id])
+  organization   Organization  @relation(fields: [organizationId], references: [id])
+  runs           CampaignRun[]
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@index([organizationId, status])
+  @@schema("sales_agent")
 }
 
-model WorkflowNode {
-  id        String          @id @default(uuid())
-  versionId String
-  type      String
-  label     String?
-  config    Json
-  positionX Float
-  positionY Float
-  version   WorkflowVersion @relation(fields: [versionId], references: [id])
-  createdAt DateTime        @default(now())
-  @@schema("opsflow")
+model CampaignRun {
+  id             String       @id @default(uuid())
+  campaignId     String
+  status         String       @default("queued") // queued | running | completed | failed
+  recipientCount Int?
+  stats          Json?        // per-lead delivery tracking
+  campaign       Campaign     @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  startedAt      DateTime?
+  finishedAt     DateTime?
+  createdAt      DateTime     @default(now())
+
+  @@schema("sales_agent")
 }
 
-model WorkflowEdge {
-  id           String          @id @default(uuid())
-  versionId    String
-  sourceNodeId String
-  targetNodeId String
-  sourceHandle String?
-  version      WorkflowVersion @relation(fields: [versionId], references: [id])
-  @@schema("opsflow")
-}
-
-model WorkflowRun {
-  id              String            @id @default(uuid())
-  versionId       String
-  status          String            @default("queued")
-  input           Json?
-  output          Json?
-  triggerEventId  String?
-  idempotencyKey  String?
-  startedAt       DateTime?
-  finishedAt      DateTime?
-  createdAt       DateTime          @default(now())
-  events          WorkflowRunEvent[]
-  workflowVersion WorkflowVersion   @relation(fields: [versionId], references: [id])
-  @@schema("opsflow")
-}
-
-model WorkflowRunEvent {
-  id          String      @id @default(uuid())
-  runId       String
-  nodeId      String
-  status      String
-  input       Json
-  output      Json?
-  createdAt   DateTime    @default(now())
-  workflowRun WorkflowRun @relation(fields: [runId], references: [id])
-  @@schema("opsflow")
-}
+// ── Audit Log ──────────────────────────────────────────────────────
 
 model AuditLog {
   id             String       @id @default(uuid())
   organizationId String
   userId         String?
   userName       String?
-  action         String       // e.g. "workflow.created", "lead.updated", "member.removed"
-  targetType     String       // e.g. "Workflow", "Lead", "Membership"
+  action         String       // e.g. "agent.created", "campaign.started", "lead.qualified", "conversation.closed"
+  targetType     String       // e.g. "Agent", "Lead", "Campaign", "Script", "Conversation"
   targetId       String?
   metadata       Json?
   createdAt      DateTime     @default(now())
@@ -180,5 +226,5 @@ model AuditLog {
   organization   Organization @relation(fields: [organizationId], references: [id])
 
   @@index([organizationId, createdAt(sort: Desc)])
-  @@schema("opsflow")
+  @@schema("sales_agent")
 }

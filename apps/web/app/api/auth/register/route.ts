@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@opsflow/db";
+import { prisma } from "@salesagent/db";
 import { hashPassword } from "@/lib/password";
 import { getRequestContext, logInfo, logError, logWarn } from "@/lib/logger";
 import { registerSchema } from "@/lib/validation";
@@ -76,7 +76,7 @@ export async function POST(request: Request) {
         await resend.emails.send({
           from: process.env.EMAIL_FROM,
           to: email,
-          subject: "Verify your OpsFlow account",
+          subject: "Verify your SalesAgent account",
           html: `<p>Hi ${name},</p><p>Click the link below to verify your account and get started:</p><p><a href="${baseUrl}${verifyUrl}">${baseUrl}${verifyUrl}</a></p><p>This link expires in 10 minutes.</p>`,
         });
         logInfo(ctx, "Verification email sent", { userId: user.id, email });

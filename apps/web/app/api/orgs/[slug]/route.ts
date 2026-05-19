@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@opsflow/db";
+import { prisma } from "@salesagent/db";
 import { getSession } from "@/lib/session";
 import { requirePermission } from "@/lib/permissions";
 import { signToken } from "@/lib/auth";

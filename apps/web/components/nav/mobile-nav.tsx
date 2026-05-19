@@ -3,15 +3,16 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { LayoutDashboard, Users, Workflow, PlayCircle, Settings, History, LayoutTemplate, Menu, X } from "lucide-react";
+import { LayoutDashboard, Users, MessageSquare, Bot, Send, ScrollText, Settings, History, Menu, X } from "lucide-react";
 import { ThemeToggle } from "@/components/providers/theme-toggle";
 
 const navItems = [
-  { href: "/", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/home", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/inbox", label: "Inbox", icon: MessageSquare },
   { href: "/leads", label: "Leads", icon: Users },
-  { href: "/workflows", label: "Workflows", icon: Workflow },
-  { href: "/templates", label: "Templates", icon: LayoutTemplate },
-  { href: "/runs", label: "Runs", icon: PlayCircle },
+  { href: "/agents", label: "Agents", icon: Bot },
+  { href: "/campaigns", label: "Campaigns", icon: Send },
+  { href: "/scripts", label: "Scripts", icon: ScrollText },
   { href: "/settings", label: "Settings", icon: Settings },
   { href: "/audit-log", label: "Audit Log", icon: History },
   { href: "/docs", label: "API Docs", icon: History },

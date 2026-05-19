@@ -4,15 +4,15 @@ export type Role = (typeof ROLES)[number];
 export const PERMISSION_MAP: Record<string, Role[]> = {
   manage_org: ["owner"],
   manage_members: ["owner", "admin"],
-  manage_workflows: ["owner", "admin", "operator"],
+  manage_agents: ["owner", "admin", "operator"],
   manage_leads: ["owner", "admin", "operator"],
-  delete_workflows: ["owner", "admin"],
   delete_leads: ["owner", "admin"],
-  view_workflows: ["owner", "admin", "operator", "viewer"],
+  manage_campaigns: ["owner", "admin", "operator"],
+  view_agents: ["owner", "admin", "operator", "viewer"],
   view_leads: ["owner", "admin", "operator", "viewer"],
   view_members: ["owner", "admin", "operator", "viewer"],
   view_audit_log: ["owner", "admin", "operator", "viewer"],
-  run_workflows: ["owner", "admin", "operator"],
+  run_campaigns: ["owner", "admin", "operator"],
 };
 
 export type Permission = keyof typeof PERMISSION_MAP;

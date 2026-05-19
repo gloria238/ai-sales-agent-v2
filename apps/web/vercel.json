@@ -1,5 +1,5 @@
 {
-  "buildCommand": "pnpm --filter @opsflow/db generate && pnpm --filter @opsflow/web build",
+  "buildCommand": "pnpm --filter @salesagent/db generate && pnpm --filter @salesagent/web build",
   "installCommand": "pnpm install --frozen-lockfile",
   "framework": "nextjs"
 }

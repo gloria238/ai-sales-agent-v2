@@ -2,9 +2,9 @@
 // Usage: pnpm tsx packages/db/seed-members.ts <org-slug>
 //
 // Creates 3 users if they don't exist and adds them to the org:
-//   admin@opsflow.test    — admin role
-//   operator@opsflow.test — operator role
-//   viewer@opsflow.test   — viewer role
+//   admin@salesagent.test    — admin role
+//   operator@salesagent.test — operator role
+//   viewer@salesagent.test   — viewer role
 // All have password: test123456
 
 import { config } from "dotenv";
@@ -17,9 +17,9 @@ import bcrypt from "bcryptjs";
 const prisma = new PrismaClient();
 
 const TEST_USERS = [
-  { email: "admin@opsflow.test", name: "Test Admin", role: "admin" as const },
-  { email: "operator@opsflow.test", name: "Test Operator", role: "operator" as const },
-  { email: "viewer@opsflow.test", name: "Test Viewer", role: "viewer" as const },
+  { email: "admin@salesagent.test", name: "Test Admin", role: "admin" as const },
+  { email: "operator@salesagent.test", name: "Test Operator", role: "operator" as const },
+  { email: "viewer@salesagent.test", name: "Test Viewer", role: "viewer" as const },
 ];
 
 const PASSWORD = "test123456";

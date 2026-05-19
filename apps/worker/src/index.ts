@@ -1,522 +1,272 @@
 import http from "node:http";
 import { Worker, Job } from "bullmq";
-import { prisma } from "@opsflow/db";
-import { connection, workflowQueue } from "./queue";
+import { prisma } from "@salesagent/db";
+import { connection, conversationQueue, emailQueue, campaignQueue, scoringQueue } from "./queue";
 import { sendEmail } from "./email";
 import { callDeepSeekJSON } from "./ai";
 
-interface NodeShape {
-  id: string;
-  type: string;
-  config: Record<string, unknown>;
+const Q_PREFIX = "sales-agent";
+
+// ── AI Response Composition ───────────────────────────────────────
+interface ComposeResult {
+  subject: string; body: string; tone: string; suggestedAction: string;
 }
 
-interface EdgeShape {
-  id: string;
-  sourceNodeId: string;
-  targetNodeId: string;
-  sourceHandle: string | null;
-}
-
-// ── Topological sort (Kahn's algorithm) ──────────────────────────────
-function topologicalSort(nodes: NodeShape[], edges: EdgeShape[]): NodeShape[] {
-  const ids = new Set(nodes.map((n) => n.id));
-  const inDeg = new Map<string, number>();
-  const adj = new Map<string, string[]>();
-
-  for (const n of nodes) {
-    inDeg.set(n.id, 0);
-    adj.set(n.id, []);
-  }
-  for (const e of edges) {
-    if (!ids.has(e.sourceNodeId) || !ids.has(e.targetNodeId)) continue;
-    adj.get(e.sourceNodeId)!.push(e.targetNodeId);
-    inDeg.set(e.targetNodeId, (inDeg.get(e.targetNodeId) ?? 0) + 1);
-  }
-
-  const queue: string[] = [];
-  for (const [id, d] of inDeg) if (d === 0) queue.push(id);
-
-  const sorted: string[] = [];
-  while (queue.length) {
-    const id = queue.shift()!;
-    sorted.push(id);
-    for (const nb of adj.get(id) ?? []) {
-      const nd = (inDeg.get(nb) ?? 1) - 1;
-      inDeg.set(nb, nd);
-      if (nd === 0) queue.push(nb);
-    }
-  }
-
-  const map = new Map(nodes.map((n) => [n.id, n]));
-  return sorted.map((id) => map.get(id)!).filter(Boolean);
-}
-
-// ── Condition evaluation ─────────────────────────────────────────────
-function evaluateCondition(
-  config: Record<string, unknown>,
-  input: Record<string, unknown>,
-): "true" | "false" {
-  const field = config.field as string | undefined;
-  const operator = config.operator as string | undefined;
-  const value = config.value as string | undefined;
-  if (!field || !operator) return "true";
-
-  let fieldValue: unknown = input;
-  for (const key of field.split(".")) {
-    if (fieldValue && typeof fieldValue === "object") {
-      fieldValue = (fieldValue as Record<string, unknown>)[key];
-    } else {
-      fieldValue = undefined;
-      break;
-    }
-  }
-
-  const actual = fieldValue !== undefined ? String(fieldValue) : "";
-  const expected = value ?? "";
-
-  switch (operator) {
-    case "equals":
-      return actual === expected ? "true" : "false";
-    case "not_equals":
-      return actual !== expected ? "true" : "false";
-    case "contains":
-      return actual.toLowerCase().includes(expected.toLowerCase()) ? "true" : "false";
-    case "greater_than":
-      return Number(actual) > Number(expected) ? "true" : "false";
-    case "less_than":
-      return Number(actual) < Number(expected) ? "true" : "false";
-    default:
-      return "true";
-  }
-}
-
-// ── Determine which nodes are reachable after condition branching ────
-function getActiveNodeIds(
-  sorted: NodeShape[],
-  edges: EdgeShape[],
-  input: Record<string, unknown>,
-): Set<string> {
-  const active = new Set<string>();
-  const edgeMap = new Map<string, EdgeShape[]>();
-  for (const e of edges) {
-    const list = edgeMap.get(e.sourceNodeId) ?? [];
-    list.push(e);
-    edgeMap.set(e.sourceNodeId, list);
-  }
-
-  if (sorted.length > 0) active.add(sorted[0].id);
-
-  for (const node of sorted) {
-    if (!active.has(node.id)) continue;
-    const outgoing = edgeMap.get(node.id) ?? [];
-
-    if (node.type === "condition") {
-      const result = evaluateCondition(node.config, input);
-      for (const e of outgoing) {
-        if (e.sourceHandle === result || (!e.sourceHandle && result === "true")) {
-          active.add(e.targetNodeId);
-        }
-      }
-    } else {
-      for (const e of outgoing) active.add(e.targetNodeId);
-    }
-  }
-  return active;
-}
-
-// ── Unit → ms conversion for delay ───────────────────────────────────
-function unitToMs(duration: number, unit: string): number {
-  switch (unit) {
-    case "minutes": return duration * 60_000;
-    case "hours":   return duration * 3_600_000;
-    case "days":    return duration * 86_400_000;
-    default:        return duration * 60_000;
-  }
-}
-
-// ── Execute a single node ────────────────────────────────────────────
-async function executeNode(
-  node: NodeShape,
-  input: Record<string, unknown>,
-): Promise<Record<string, unknown>> {
-  switch (node.type) {
-    case "trigger":
-      return { triggeredAt: new Date().toISOString(), type: node.config.type ?? "manual" };
-
-    case "action": {
-      const action = (node.config.action as string) ?? "unknown";
-
-      // ── send_email: real Resend delivery ──────────────────────────
-      if (action === "send_email") {
-        if (!process.env.RESEND_API_KEY) {
-          console.warn("send_email skipped: RESEND_API_KEY not configured");
-          return { action: "send_email", skipped: true, reason: "RESEND_API_KEY not configured" };
-        }
-        const result = await sendEmail(node.config as unknown as Parameters<typeof sendEmail>[0], input);
-        return {
-          action: "send_email",
-          messageId: result.messageId,
-          to: result.to,
-          executedAt: new Date().toISOString(),
-        };
-      }
-
-      // ── score_lead: call DeepSeek to score a lead ─────────────────
-      if (action === "score_lead") {
-        const lead = (input.lead as Record<string, unknown>) || input;
-        const prompt = `Score this lead for conversion likelihood:\nName: ${lead.name || "Unknown"}\nEmail: ${lead.email || "N/A"}\nStage: ${lead.stage || "new"}\nTags: ${lead.tags ? JSON.stringify(lead.tags) : "none"}\n\nPipeline: new → qualified → proposal → negotiation → closed-won / closed-lost. Return a JSON object with score (0-100), label ("hot"|"warm"|"cold"), reason (1-2 sentences), nextAction (string).`;
-        const scoring = await callDeepSeekJSON<{ score: number; label: string; reason: string; nextAction: string }>(
-          prompt,
-          "You are a lead scoring AI. Respond with JSON only.",
-          { temperature: 0.3 },
-        );
-        return {
-          action: "score_lead",
-          score: Math.max(0, Math.min(100, Math.round(scoring.score ?? 0))),
-          label: scoring.label || "warm",
-          reason: scoring.reason || "No analysis available",
-          nextAction: scoring.nextAction || "Review lead",
-        };
-      }
-
-      // ── update_lead: update stage/tags in DB ─────────────────────
-      if (action === "update_lead") {
-        const leadId = (input.leadId as string) || ((input.lead as Record<string, unknown>)?.id as string);
-        if (!leadId) return { action: "update_lead", skipped: true, reason: "No leadId in run input" };
-
-        const updates: Record<string, unknown> = {};
-        if (node.config.stage) updates.stage = node.config.stage;
-        if (node.config.tags) {
-          // Support both array ["tag1"] and comma-separated string "tag1, tag2"
-          updates.tags = Array.isArray(node.config.tags)
-            ? node.config.tags
-            : String(node.config.tags).split(",").map((t: string) => t.trim()).filter(Boolean);
-        }
-
-        if (Object.keys(updates).length === 0) {
-          return { action: "update_lead", skipped: true, reason: "No stage or tags specified in config" };
-        }
-
-        const updated = await prisma.lead.update({
-          where: { id: leadId as string },
-          data: updates,
-        });
-        return {
-          action: "update_lead",
-          leadId: updated.id,
-          stage: updated.stage,
-          tags: updated.tags,
-        };
-      }
-
-      // ── create_lead: create a new lead in the org ────────────────
-      if (action === "create_lead") {
-        const orgId = (input._orgId as string) || (input.organizationId as string);
-        if (!orgId) return { action: "create_lead", skipped: true, reason: "No _orgId in run input" };
-
-        const lead = await prisma.lead.create({
-          data: {
-            organizationId: orgId,
-            name: (node.config.name as string) || "New Lead",
-            email: (node.config.email as string) || null,
-            stage: (node.config.stage as string) || "new",
-            tags: Array.isArray(node.config.tags)
-              ? (node.config.tags as string[])
-              : node.config.tags
-                ? String(node.config.tags).split(",").map((t: string) => t.trim()).filter(Boolean)
-                : [],
-          },
-        });
-        return {
-          action: "create_lead",
-          leadId: lead.id,
-          name: lead.name,
-          email: lead.email,
-          stage: lead.stage,
-        };
-      }
-
-      // ── compose_email: AI generates email, optionally sends ──────
-      if (action === "compose_email") {
-        const emailType = (node.config.emailType as string) || "follow-up";
-        const lead = (input.lead as Record<string, unknown>) || input;
-
-        const composePrompt = `Compose a "${emailType}" email for:\nName: ${lead.name || "there"}\nEmail: ${lead.email || "N/A"}\nStage: ${lead.stage || "new"}\nTags: ${lead.tags ? JSON.stringify(lead.tags) : "none"}\n\nWrite a personalized ${emailType} B2B sales email with subject line and body (plain text, greeting + 2-3 paragraphs + sign-off). Return JSON: { "subject": "...", "body": "..." }`;
-        const composed = await callDeepSeekJSON<{ subject: string; body: string }>(
-          composePrompt,
-          "You are an expert B2B sales email copywriter. Respond with JSON only.",
-          { temperature: 0.7 },
-        );
-
-        let sent = false;
-        if (node.config.send === true || node.config.send === "true") {
-          if (!process.env.RESEND_API_KEY) {
-            console.warn("compose_email: send=true but RESEND_API_KEY not configured");
-          } else {
-            const to = (node.config.to as string) || (lead.email as string);
-            if (to) {
-              await sendEmail({ action: "send_email", to, subject: composed.subject, body: composed.body }, input);
-              sent = true;
-            }
-          }
-        }
-
-        return {
-          action: "compose_email",
-          emailType,
-          subject: composed.subject,
-          body: composed.body,
-          sent,
-        };
-      }
-
-      // ── slack_notify / http_request: not configured ──────────────
-      if (action === "slack_notify" || action === "http_request") {
-        console.warn(`${action} skipped: integration not configured`);
-        return { action, skipped: true, reason: `${action} integration not configured` };
-      }
-
-      // Unknown action — log and return
-      return { action, result: `executed ${action}`, executedAt: new Date().toISOString() };
-    }
-
-    case "condition":
-      return {
-        field: node.config.field,
-        operator: node.config.operator,
-        value: node.config.value,
-        result: evaluateCondition(node.config, input),
-      };
-
-    case "delay":
-      return { delayed: true, duration: node.config.duration, unit: node.config.unit };
-
-    default:
-      return { result: `executed ${node.type}` };
-  }
-}
-
-// ── Create a workflow run event ──────────────────────────────────────
-async function createEvent(
-  runId: string,
-  nodeId: string,
-  status: string,
-  input: object,
-  output: object,
-) {
-  return prisma.workflowRunEvent.create({
-    data: { runId, nodeId, status, input, output },
+async function composeAiResponse(conversationId: string, agentId?: string): Promise<ComposeResult> {
+  const conversation = await prisma.conversation.findUnique({
+    where: { id: conversationId },
+    include: { lead: true, agent: true, messages: { orderBy: { createdAt: "asc" }, take: 20 } },
   });
+  if (!conversation) throw new Error(`Conversation ${conversationId} not found`);
+
+  const effectiveAgent = agentId
+    ? await prisma.agent.findUnique({ where: { id: agentId } })
+    : conversation.agent;
+
+  const latestInbound = [...conversation.messages].reverse().find((m) => m.direction === "inbound");
+
+  const prompt = `Compose a reply for this sales conversation:
+
+LEAD:
+  Name: ${conversation.lead.name}
+  Email: ${conversation.lead.email || "N/A"}
+  Company: ${conversation.lead.company || "Unknown"}
+  Stage: ${conversation.lead.stage || "new"}
+  Score: ${conversation.lead.score ?? "Not scored"}
+
+AGENT:
+  Personality: ${effectiveAgent?.personality || "Professional, friendly B2B SDR"}
+  Goals: ${JSON.stringify(effectiveAgent?.goals || [{ type: "qualify_lead" }])}
+  Knowledge: ${JSON.stringify(effectiveAgent?.knowledgeBase || {})}
+
+CONVERSATION:
+${conversation.messages.map((m) => `[${m.direction.toUpperCase()}] ${m.createdAt.toISOString()}: ${m.content.substring(0, 400)}`).join("\n")}
+
+${latestInbound ? `LATEST INBOUND: ${latestInbound.content}` : ""}
+
+Return JSON: { "subject": "...", "body": "...", "tone": "friendly|professional|direct|consultative", "suggestedAction": "send_now|review|escalate_to_human" }`;
+
+  return callDeepSeekJSON<ComposeResult>(
+    prompt,
+    "You are an expert B2B SDR. Compose personalized, helpful sales emails matching the agent's personality. Never fabricate facts. Return JSON only.",
+    { temperature: 0.7 },
+  );
 }
 
-// ── Process a single run ─────────────────────────────────────────────
-async function processRun(run: {
-  id: string;
-  status: string;
-  input: unknown;
-  workflowVersion: {
-    nodes: NodeShape[];
-    edges: EdgeShape[];
-  };
-  events?: Array<{
-    nodeId: string;
-    status: string;
-    createdAt: Date;
-  }>;
-}): Promise<{ requeued?: boolean } | void> {
-  // Skip runs that are no longer active (cancelled, completed, etc.)
-  if (run.status !== "queued" && run.status !== "running") return;
+// ── Lead Scoring ──────────────────────────────────────────────────
+interface ScoreResult {
+  score: number; label: string; breakdown: Record<string, number>;
+  signals: string[]; concerns: string[]; recommendedAction: string;
+}
 
-  const nodes = run.workflowVersion.nodes;
-  const edges = run.workflowVersion.edges;
-  if (!nodes.length) return;
+async function scoreLead(leadId: string): Promise<ScoreResult> {
+  const lead = await prisma.lead.findUnique({
+    where: { id: leadId },
+    include: { activities: { orderBy: { createdAt: "desc" }, take: 10 } },
+  });
+  if (!lead) throw new Error(`Lead ${leadId} not found`);
 
-  // ── Mark queued → running ────────────────────────────────────────
-  if (run.status === "queued") {
-    await prisma.workflowRun.update({
-      where: { id: run.id },
-      data: { status: "running", startedAt: new Date() },
-    });
-  }
+  const activities = lead.activities.map((a) =>
+    `  - ${a.type}: ${a.content?.substring(0, 200) || "(no content)"} (${a.createdAt.toISOString()})`
+  ).join("\n");
 
-  const input = (run.input as Record<string, unknown>) ?? {};
-  const events = run.events ?? [];
+  const prompt = `Score this lead for conversion likelihood:
 
-  // ── Topological sort ─────────────────────────────────────────────
-  const sorted = topologicalSort(nodes, edges);
-  const activeIds = getActiveNodeIds(sorted, edges, input);
+Name: ${lead.name}
+Email: ${lead.email || "N/A"}
+Company: ${lead.company || "Unknown"}
+Stage: ${lead.stage || "new"}
+Source: ${lead.source || "unknown"}
+Tags: ${lead.tags ? JSON.stringify(lead.tags) : "none"}
+Created: ${lead.createdAt.toISOString()}
 
-  // ── Fast-forward past already-completed nodes ────────────────────
-  const succeededIds = new Set(
-    events.filter((e) => e.status === "success").map((e) => e.nodeId),
+Recent Activity:
+${activities || "(none)"}
+
+Score across BANT dimensions. Return JSON: { "score": 0-100, "label": "hot|warm|cold", "breakdown": { "intent": 0-100, "budget": 0-100, "authority": 0-100, "need": 0-100, "timeline": 0-100 }, "signals": ["..."], "concerns": ["..."], "recommendedAction": "..." }`;
+
+  const result = await callDeepSeekJSON<ScoreResult>(
+    prompt,
+    "You are a B2B lead qualification AI. Score leads realistically across BANT dimensions. Return JSON only.",
+    { temperature: 0.3 },
   );
 
-  // ── Execute pending active nodes in order ────────────────────────
-  for (const node of sorted) {
-    if (!activeIds.has(node.id)) continue;
-    if (succeededIds.has(node.id)) continue;
+  const score = Math.max(0, Math.min(100, Math.round(result.score ?? 0)));
 
-    // ── Handle delay: re-queue with BullMQ delay ───────────────────
-    if (node.type === "delay") {
-      const delayEvent = events.find((e) => e.nodeId === node.id);
-      if (delayEvent) {
-        // BullMQ handled the timing — delay is elapsed, proceed
-        await createEvent(run.id, node.id, "success", node.config as object, {});
-        continue;
-      }
+  await prisma.lead.update({ where: { id: leadId }, data: { score } });
 
-      const duration = parseInt(String(node.config.duration ?? "0"), 10);
-      const unit = String(node.config.unit ?? "minutes");
-      await createEvent(run.id, node.id, "delayed", node.config as object, {});
-      await workflowQueue.add("execute", { runId: run.id }, {
-        delay: unitToMs(duration, unit),
-      });
-      return { requeued: true };
-    }
+  return { ...result, score, label: result.label || (score >= 70 ? "hot" : score >= 40 ? "warm" : "cold") };
+}
 
-    // ── Execute with retry support ─────────────────────────────────
-    const maxRetries = (node.config.maxRetries as number) ?? 0;
-    const failedCount = events.filter(
-      (e) => e.nodeId === node.id && e.status === "failed",
-    ).length;
-
-    let attempt = 0;
-    let lastError: unknown;
-
-    while (attempt <= maxRetries) {
-      try {
-        if (attempt > 0) {
-          await new Promise((r) => setTimeout(r, attempt * 1000));
-        }
-        const output = await executeNode(node, input);
-        await createEvent(run.id, node.id, "success", node.config as object, output);
-        break; // success – move to next node
-      } catch (err) {
-        lastError = err;
-        attempt++;
-        if (attempt <= maxRetries) {
-          await createEvent(run.id, node.id, "failed", node.config as object, {
-            error: String(err),
-            attempt,
-          });
-        }
-      }
-    }
-
-    if (attempt > maxRetries) {
-      // All retries exhausted
-      await createEvent(run.id, node.id, "failed", node.config as object, {
-        error: String(lastError),
-        maxRetries,
-      });
-      await prisma.workflowRun.update({
-        where: { id: run.id },
-        data: { status: "dead_letter", finishedAt: new Date() },
-      });
-      return;
-    }
+// ── Campaign Step Execution ───────────────────────────────────────
+function parseDelay(d: string): number {
+  const match = d.match(/^(\d+)\s*(m|min|h|d)$/i);
+  if (!match) return 3 * 86400_000;
+  const n = parseInt(match[1]);
+  switch (match[2].toLowerCase()) {
+    case "m": case "min": return n * 60_000;
+    case "h": return n * 3600_000;
+    case "d": return n * 86400_000;
+    default: return 3 * 86400_000;
   }
+}
 
-  // ── All active nodes completed ───────────────────────────────────
-  await prisma.workflowRun.update({
-    where: { id: run.id },
-    data: { status: "completed", finishedAt: new Date() },
+function resolveTemplate(template: string, context: Record<string, unknown>): string {
+  return template.replace(/\{\{([\w.]+)\}\}/g, (_: string, path: string) => {
+    let value: unknown = context;
+    for (const key of path.split(".")) {
+      if (value && typeof value === "object") value = (value as Record<string, unknown>)[key];
+      else return `{{${path}}}`;
+    }
+    return value !== undefined && value !== null ? String(value) : `{{${path}}}`;
   });
 }
 
-// ── Health file ─────────────────────────────────────────────────────
-async function writeHealth(state: { status: string; activeRuns: number }) {
+async function executeCampaignStep(campaignId: string, leadId: string, stepIndex: number) {
+  const campaign = await prisma.campaign.findUnique({
+    where: { id: campaignId },
+    include: { script: true, agent: true },
+  });
+  if (!campaign) throw new Error(`Campaign ${campaignId} not found`);
+
+  const lead = await prisma.lead.findUnique({ where: { id: leadId } });
+  if (!lead) throw new Error(`Lead ${leadId} not found`);
+
+  const steps = (campaign.script?.steps as any[]) || [];
+  if (stepIndex >= steps.length) {
+    console.log(`Campaign ${campaignId}: lead ${leadId} sequence complete`);
+    return;
+  }
+
+  const step = steps[stepIndex];
+
+  if (step.type === "delay") {
+    const delayMs = step.delay ? parseDelay(step.delay) : 86400_000;
+    await campaignQueue.add("send-email", { campaignId, leadId, stepIndex: stepIndex + 1 }, { delay: delayMs });
+    return;
+  }
+
+  let subject = step.subject || "Following up";
+  let body = step.template || "Hi {{lead.name}},\n\n...";
+
+  if (step.type === "ai_email") {
+    try {
+      const aiPrompt = `Personalize this sales email:\nLead: ${lead.name} (${lead.company || "N/A"}), Stage: ${lead.stage || "new"}\nGuidance: ${step.template}\nAgent: ${campaign.agent?.personality || "Professional SDR"}\n\nReturn JSON: { "subject": "...", "body": "..." }`;
+      const composed = await callDeepSeekJSON<{ subject: string; body: string }>(
+        aiPrompt, "You personalize outbound sales emails. Return JSON only.", { temperature: 0.7 },
+      );
+      subject = composed.subject || subject;
+      body = composed.body || body;
+    } catch (err) {
+      console.warn(`AI personalization failed for lead ${leadId}, using template`);
+    }
+  }
+
+  const ctx = { lead: { name: lead.name, email: lead.email, company: lead.company } };
+  body = resolveTemplate(body, ctx);
+  subject = resolveTemplate(subject, ctx);
+
+  if (process.env.RESEND_API_KEY) {
+    await sendEmail({ action: "send_email", to: lead.email || "", subject, body }, { lead });
+  }
+
+  const currentStats = (campaign.stats as any) || {};
+  await prisma.campaign.update({
+    where: { id: campaignId },
+    data: { stats: { ...currentStats, sent: (currentStats.sent || 0) + 1 } },
+  });
+
+  await prisma.leadActivity.create({
+    data: { leadId, organizationId: campaign.organizationId, type: "email_sent", content: `Campaign: ${subject}` },
+  });
+
+  if (stepIndex + 1 < steps.length) {
+    const nextDelay = step.delay ? parseDelay(step.delay) : 3 * 86400_000;
+    await campaignQueue.add("send-email", { campaignId, leadId, stepIndex: stepIndex + 1 }, { delay: nextDelay });
+  }
+}
+
+// ── Health tracking ──────────────────────────────────────────────
+let activeJobs = 0;
+async function writeHealth(status: string) {
   try {
     const fs = await import("fs");
     const path = await import("path");
-    // Write to monorepo root so web API can read it
-    const healthFile = path.resolve(process.cwd(), "../../.worker-health.json");
-    fs.writeFileSync(healthFile, JSON.stringify({ ...state, lastPoll: new Date().toISOString(), pid: process.pid }));
-  } catch {
-    // Non-critical
-  }
+    fs.writeFileSync(
+      path.resolve(process.cwd(), "../../.worker-health.json"),
+      JSON.stringify({ status, activeJobs, lastPoll: new Date().toISOString(), pid: process.pid }),
+    );
+  } catch { /* non-critical */ }
 }
+function incr() { activeJobs++; writeHealth("running"); }
+function decr() { activeJobs = Math.max(0, activeJobs - 1); writeHealth(activeJobs > 0 ? "running" : "waiting"); }
 
-// ── BullMQ Worker setup ─────────────────────────────────────────────
-// ── Track active job count for health reporting ──────────────────────
-let activeJobCount = 0;
-
-const worker = new Worker(
-  "workflow-runs",
-  async (job: Job<{ runId: string }>) => {
-    const run = await prisma.workflowRun.findUnique({
-      where: { id: job.data.runId },
-      include: {
-        workflowVersion: { include: { nodes: true, edges: true } },
-        events: { orderBy: { createdAt: "asc" } },
-      },
-    });
-
-    if (!run) throw new Error(`Run ${job.data.runId} not found`);
-
-    // Cast Prisma JSON fields to match NodeShape/processRun expectations
-    const result = await processRun(run as unknown as Parameters<typeof processRun>[0]);
-    if (result?.requeued) {
-      console.log(`Run ${run.id}: delay node encountered, requeued`);
+// ── 4 BullMQ Workers ─────────────────────────────────────────────
+const conversationWorker = new Worker("conversation-jobs", async (job: Job<{ conversationId: string; agentId?: string }>) => {
+  const result = await composeAiResponse(job.data.conversationId, job.data.agentId);
+  await prisma.message.create({
+    data: {
+      conversationId: job.data.conversationId,
+      direction: "outbound", content: result.body, channel: "email",
+      aiMetadata: { tone: result.tone, suggestedAction: result.suggestedAction },
+    },
+  });
+  if (process.env.RESEND_API_KEY && result.suggestedAction === "send_now") {
+    const conv = await prisma.conversation.findUnique({ where: { id: job.data.conversationId }, include: { lead: true } });
+    if (conv?.lead.email) {
+      await sendEmail({ action: "send_email", to: conv.lead.email, subject: result.subject, body: result.body }, { lead: conv.lead });
     }
-  },
-  { connection, concurrency: 5 },
-);
+  }
+  await prisma.conversation.update({ where: { id: job.data.conversationId }, data: { updatedAt: new Date() } });
+}, { connection, prefix: Q_PREFIX, concurrency: 5 });
 
-worker.on("ready", () => {
-  console.log("BullMQ Worker ready — listening for workflow-runs jobs");
-  writeHealth({ status: "running", activeRuns: 0 });
-});
+const emailWorker = new Worker("email-jobs", async (job: Job<{ leadId: string; subject?: string; body?: string; to?: string }>) => {
+  const lead = await prisma.lead.findUnique({ where: { id: job.data.leadId } });
+  if (!lead?.email) throw new Error(`Lead has no email`);
+  await sendEmail({
+    action: "send_email",
+    to: job.data.to || lead.email,
+    subject: job.data.subject || "Following up",
+    body: job.data.body || "Hi {{lead.name}},\n\n...",
+  }, { lead });
+}, { connection, prefix: Q_PREFIX, concurrency: 5 });
 
-worker.on("active", () => {
-  activeJobCount++;
-  writeHealth({ status: "running", activeRuns: activeJobCount });
-});
+const campaignWorker = new Worker("campaign-jobs", async (job: Job<{ campaignId: string; leadId: string; stepIndex: number }>) => {
+  await executeCampaignStep(job.data.campaignId, job.data.leadId, job.data.stepIndex);
+}, { connection, prefix: Q_PREFIX, concurrency: 3 });
 
-worker.on("completed", () => {
-  activeJobCount = Math.max(0, activeJobCount - 1);
-  writeHealth({ status: activeJobCount > 0 ? "running" : "waiting", activeRuns: activeJobCount });
-});
+const scoringWorker = new Worker("scoring-jobs", async (job: Job<{ leadId: string }>) => {
+  await scoreLead(job.data.leadId);
+}, { connection, prefix: Q_PREFIX, concurrency: 3 });
 
-worker.on("failed", (job, err) => {
-  console.error(`Job ${job?.id} failed:`, err);
-  writeHealth({ status: "error", activeRuns: 0 });
-});
-
-worker.on("error", (err) => {
-  console.error("Worker error:", err);
-  writeHealth({ status: "error", activeRuns: 0 });
-});
-
-worker.on("drained", () => {
-  console.log("Worker drained — no pending jobs");
-  writeHealth({ status: "running", activeRuns: 0 });
-});
-
-// ── Healthcheck HTTP server (for Railway/container probes) ──────────
-const healthPort = parseInt(process.env.PORT ?? "8080", 10);
-
-function startHealthServer() {
-  const server = http.createServer((_req, res) => {
-    res.writeHead(200, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ status: "ok", activeRuns: activeJobCount }));
-  });
-  server.listen(healthPort, "0.0.0.0", () => {
-    console.log(`Healthcheck server listening on 0.0.0.0:${healthPort}`);
-  });
-  server.on("error", (err) => console.error("Healthcheck server error:", err));
+// ── Event handlers ───────────────────────────────────────────────
+for (const w of [conversationWorker, emailWorker, campaignWorker, scoringWorker]) {
+  w.on("active", incr);
+  w.on("completed", decr);
+  w.on("failed", (job, err) => { console.error(`Job ${job?.id} failed:`, err); decr(); });
+  w.on("error", (err) => console.error("Worker error:", err));
 }
-startHealthServer();
+conversationWorker.on("ready", () => console.log("Conversation worker ready"));
+emailWorker.on("ready", () => console.log("Email worker ready"));
+campaignWorker.on("ready", () => console.log("Campaign worker ready"));
+scoringWorker.on("ready", () => { console.log("All 4 workers listening (prefix: sales-agent)"); writeHealth("running"); });
 
-// ── Graceful shutdown ───────────────────────────────────────────────
+// ── Healthcheck ──────────────────────────────────────────────────
+const port = parseInt(process.env.PORT ?? "8080", 10);
+const server = http.createServer((_req, res) => {
+  res.writeHead(200, { "Content-Type": "application/json" });
+  res.end(JSON.stringify({ status: "ok", activeJobs, uptime: process.uptime() }));
+});
+server.listen(port, "0.0.0.0", () => console.log(`Healthcheck on 0.0.0.0:${port}`));
+
+// ── Shutdown ─────────────────────────────────────────────────────
 async function shutdown() {
-  console.log("Shutting down worker...");
-  await worker.close();
-  await workflowQueue.close();
+  console.log("Shutting down...");
+  await Promise.all([conversationWorker.close(), emailWorker.close(), campaignWorker.close(), scoringWorker.close()]);
+  await Promise.all([conversationQueue.close(), emailQueue.close(), campaignQueue.close(), scoringQueue.close()]);
   await connection.quit();
+  server.close();
   process.exit(0);
 }
-
 process.on("SIGINT", shutdown);
 process.on("SIGTERM", shutdown);

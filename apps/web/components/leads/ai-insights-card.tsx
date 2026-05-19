@@ -1,6 +1,9 @@
 "use client";
 import { useEffect, useState, useCallback } from "react";
-import type { AIScoreResponse } from "@/components/workflow/types";
+
+interface AIScoreResponse {
+  score: number; label: string; reason: string; nextAction: string;
+}
 
 interface Props {
   leadId: string;

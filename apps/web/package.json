@@ -1,5 +1,5 @@
 {
-  "name": "@opsflow/web",
+  "name": "@salesagent/web",
   "version": "1.0.0",
   "private": true,
   "scripts": {
@@ -12,8 +12,8 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
-    "@opsflow/db": "workspace:*",
-    "@opsflow/worker": "workspace:*",
+    "@salesagent/db": "workspace:*",
+    "@salesagent/worker": "workspace:*",
     "@radix-ui/react-slot": "^1.0.0",
     "@tanstack/react-query": "^5.100.10",
     "@upstash/ratelimit": "^2.0.8",

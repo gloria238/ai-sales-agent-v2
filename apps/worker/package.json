@@ -1,5 +1,5 @@
 {
-  "name": "@opsflow/worker",
+  "name": "@salesagent/worker",
   "version": "1.0.0",
   "private": true,
   "scripts": {
@@ -12,7 +12,7 @@
     "./queue": "./src/queue.ts"
   },
   "dependencies": {
-    "@opsflow/db": "workspace:*",
+    "@salesagent/db": "workspace:*",
     "bullmq": "^5.76.8",
     "ioredis": "^5.10.1",
     "resend": "^6.12.3"

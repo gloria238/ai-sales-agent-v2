@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll } from "vitest";
 import { BASE, fetchJSON, getTestUser, getOrgSlug } from "./helpers";
 
 // These tests require: pnpm seed-members <org-slug> and pnpm dev
-// Run with: pnpm --filter @opsflow/web test:integration
+// Run with: pnpm --filter @salesagent/web test:integration
 
 let adminCookie = "";
 let viewerCookie = "";

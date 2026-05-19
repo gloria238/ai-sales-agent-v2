@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  transpilePackages: ["@opsflow/worker"],
+  transpilePackages: ["@salesagent/worker"],
   experimental: {
     serverComponentsExternalPackages: ["@prisma/client"],
   },

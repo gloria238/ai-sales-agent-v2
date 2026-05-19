@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@opsflow/db";
+import { prisma } from "@salesagent/db";
 import { getSession } from "@/lib/session";
 import { requirePermission } from "@/lib/permissions";
 
@@ -15,36 +15,32 @@ export async function GET(_request: Request, { params }: { params: { slug: strin
     });
     if (!membership) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-    try { requirePermission(membership.role, "view_workflows"); }
-    catch { return NextResponse.json({ error: "Forbidden" }, { status: 403 }); }
+    requirePermission(membership.role, "view_agents");
 
     const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000);
-    const [recentEvent, activeRuns] = await Promise.all([
-      prisma.workflowRunEvent.findFirst({
+    const [recentEvent, activeJobs] = await Promise.all([
+      prisma.message.findFirst({
         where: { createdAt: { gte: fiveMinAgo } },
         orderBy: { createdAt: "desc" },
         select: { createdAt: true },
       }),
-      prisma.workflowRun.count({ where: { status: "running" } }),
+      prisma.campaignRun.count({ where: { status: "running" } }),
     ]);
 
     const worker = {
       status: recentEvent ? "running" : "idle",
       lastPoll: recentEvent?.createdAt?.toISOString() ?? null,
-      activeRuns,
+      activeJobs,
     };
 
-    const orgFilter = { workflowVersion: { workflow: { organizationId: membership.organizationId } } };
-    const [queued, running, dead] = await Promise.all([
-      prisma.workflowRun.count({ where: { status: "queued", ...orgFilter } }),
-      prisma.workflowRun.count({ where: { status: "running", ...orgFilter } }),
-      prisma.workflowRun.count({ where: { status: "dead_letter", ...orgFilter } }),
+    const orgFilter = { campaign: { organizationId: membership.organizationId } };
+    const [queued, running, completed] = await Promise.all([
+      prisma.campaignRun.count({ where: { status: "queued", ...orgFilter } }),
+      prisma.campaignRun.count({ where: { status: "running", ...orgFilter } }),
+      prisma.campaignRun.count({ where: { status: "completed", ...orgFilter } }),
     ]);
 
-    return NextResponse.json({
-      worker,
-      queue: { queued, running, dead_letter: dead },
-    });
+    return NextResponse.json({ worker, queue: { queued, running, completed } });
   } catch (error) {
     console.error("Worker health error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

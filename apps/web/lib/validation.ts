@@ -4,51 +4,88 @@ import { z } from "zod";
 const email = z.string().email("Invalid email format").max(320, "Email too long");
 const slug = z.string().min(1).max(60).regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, "Slug must be lowercase alphanumeric with hyphens");
 const name = z.string().min(1, "Name is required").max(255, "Name too long");
-const stage = z.enum(["new", "qualified", "proposal", "negotiation", "closed-won", "closed-lost"]);
+const stage = z.enum(["new", "contacted", "qualified", "proposal", "negotiation", "closed_won", "closed_lost"]);
 
 // ── Lead input ───────────────────────────────────────────────────
 export const createLeadSchema = z.object({
   name: name,
   email: email.optional().nullable(),
+  company: z.string().max(255).optional(),
+  phone: z.string().max(50).optional(),
   stage: stage.optional().default("new"),
+  source: z.enum(["website", "referral", "outbound", "linkedin", "other"]).optional(),
   tags: z.array(z.string().max(100)).max(20).optional(),
 });
 
 export const updateLeadSchema = z.object({
   name: name.optional(),
   email: email.optional().nullable(),
+  company: z.string().max(255).optional(),
+  phone: z.string().max(50).optional(),
   stage: stage.optional(),
+  source: z.enum(["website", "referral", "outbound", "linkedin", "other"]).optional(),
+  score: z.number().int().min(0).max(100).optional(),
+  assignedTo: z.string().uuid().optional(),
   tags: z.array(z.string().max(100)).max(20).optional(),
 });
 
-// ── Workflow input ───────────────────────────────────────────────
-export const createWorkflowSchema = z.object({
+// ── Agent input ──────────────────────────────────────────────────
+export const createAgentSchema = z.object({
   name: name,
   description: z.string().max(1000).optional(),
+  personality: z.string().max(2000).optional(),
+  goals: z.array(z.object({
+    type: z.enum(["qualify_lead", "book_meeting", "handle_objection", "nurture", "follow_up"]),
+    priority: z.number().int().min(1).max(10),
+    successCriteria: z.string().max(500),
+  })).max(20).optional(),
+  knowledgeBase: z.object({
+    productDescription: z.string().max(5000).optional(),
+    pricing: z.string().max(2000).optional(),
+    faq: z.array(z.object({ question: z.string(), answer: z.string() })).max(50).optional(),
+    competitors: z.array(z.object({
+      name: z.string(),
+      strengths: z.string().optional(),
+      weaknesses: z.string().optional(),
+    })).max(20).optional(),
+  }).optional(),
+  isActive: z.boolean().optional(),
 });
 
-const nodeConfigSchema = z.record(z.string(), z.unknown());
+export const updateAgentSchema = createAgentSchema.partial();
 
-export const saveWorkflowSchema = z.object({
-  nodes: z.array(z.object({
-    id: z.string().min(1).max(100),
-    type: z.enum(["trigger", "action", "condition", "delay"]),
-    label: z.string().max(200).optional(),
-    config: nodeConfigSchema,
-    positionX: z.number().finite(),
-    positionY: z.number().finite(),
-  })).max(200),
-  edges: z.array(z.object({
-    id: z.string().min(1).max(100),
-    sourceNodeId: z.string().min(1).max(100),
-    targetNodeId: z.string().min(1).max(100),
-    sourceHandle: z.enum(["true", "false"]).nullable().optional(),
-  })).max(400),
+// ── Conversation / Message input ─────────────────────────────────
+export const sendMessageSchema = z.object({
+  conversationId: z.string().uuid(),
+  content: z.string().min(1, "Message is required").max(10000, "Message too long"),
+  channel: z.enum(["email", "chat"]).default("email"),
 });
 
-export const triggerWorkflowSchema = z.object({
-  input: z.record(z.string(), z.unknown()).optional(),
+export const generateAiDraftSchema = z.object({
+  conversationId: z.string().uuid(),
 });
+
+// ── Campaign input ───────────────────────────────────────────────
+export const createCampaignSchema = z.object({
+  name: name,
+  description: z.string().max(2000).optional(),
+  scriptId: z.string().uuid().optional(),
+  agentId: z.string().uuid().optional(),
+  targetAudience: z.object({
+    stage: z.array(stage).optional(),
+    scoreMin: z.number().int().min(0).max(100).optional(),
+    scoreMax: z.number().int().min(0).max(100).optional(),
+    tags: z.array(z.string()).optional(),
+    source: z.array(z.string()).optional(),
+  }).optional(),
+  schedule: z.object({
+    timezone: z.string().optional(),
+    workingHours: z.object({ start: z.string(), end: z.string() }).optional(),
+    maxPerDay: z.number().int().min(1).max(1000).optional(),
+  }).optional(),
+});
+
+export const updateCampaignSchema = createCampaignSchema.partial();
 
 // ── Organization input ──────────────────────────────────────────
 export const createOrgSchema = z.object({
@@ -82,6 +119,8 @@ export const leadImportRowSchema = z.object({
   name: z.string().min(1).max(255).optional(),
   Email: email.optional(),
   email: email.optional(),
+  Company: z.string().max(255).optional(),
+  company: z.string().max(255).optional(),
   Stage: stage.optional(),
   stage: stage.optional(),
   Tags: z.string().max(500).optional(),
@@ -93,53 +132,30 @@ export const leadImportSchema = z.object({
 });
 
 // ── AI inputs ────────────────────────────────────────────────────
-export const generateWorkflowSchema = z.object({
-  description: z.string().min(1, "Description required").max(2000, "Description too long"),
-});
-
-export const suggestNodesSchema = z.object({
-  nodes: z.array(z.object({
-    type: z.enum(["trigger", "action", "condition", "delay"]),
-    label: z.string().max(200).optional(),
-    config: z.record(z.string(), z.unknown()).optional(),
-  })),
-  edges: z.array(z.object({
-    source: z.string(),
-    target: z.string(),
-    sourceHandle: z.string().nullable().optional(),
-  })),
-  nodeConfig: z.object({ type: z.string() }).optional(),
+export const composeResponseSchema = z.object({
+  conversationId: z.string().uuid(),
+  agentId: z.string().uuid().optional(),
 });
 
 export const scoreLeadSchema = z.object({
-  leadId: z.string().uuid().optional(),
-  name: name.optional(),
-  email: email.optional(),
-  stage: stage.optional(),
-  tags: z.record(z.string(), z.unknown()).nullable().optional(),
-  createdAt: z.string().optional(),
+  leadId: z.string().uuid(),
 });
 
-export const analyzeRunSchema = z.object({
-  runId: z.string().min(1, "runId required"),
+export const summarizeConversationSchema = z.object({
+  conversationId: z.string().uuid(),
 });
 
-export const composeEmailSchema = z.object({
-  emailType: z.enum(["welcome", "follow-up", "cold-outreach", "re-engagement", "proposal"]).default("follow-up"),
-  leadId: z.string().uuid().optional(),
-  leadContext: z.record(z.string(), z.unknown()).optional(),
-  additionalContext: z.string().max(1000).optional(),
+export const generateScriptSchema = z.object({
+  description: z.string().min(1, "Description required").max(3000, "Description too long"),
+  industry: z.string().max(200).optional(),
+  targetPersona: z.string().max(200).optional(),
+  goal: z.string().max(500).optional(),
+  channel: z.enum(["email"]).default("email").optional(),
 });
 
-export const classifyEmailSchema = z.object({
-  subject: z.string().max(500).optional(),
-  body: z.string().max(10000).optional(),
-  fromEmail: email.optional(),
-});
-
-// ── Template install ────────────────────────────────────────────
-export const installTemplateSchema = z.object({
-  slug: z.string().min(1, "Template slug required"),
+// ── Script install ──────────────────────────────────────────────
+export const installScriptSchema = z.object({
+  slug: z.string().min(1, "Script slug required"),
 });
 
 // ── Auth input ───────────────────────────────────────────────────

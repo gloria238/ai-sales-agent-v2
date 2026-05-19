@@ -42,10 +42,10 @@ export default function LoginPage() {
       <div className="glass-card p-8 sm:p-10 rounded-2xl">
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex size-11 rounded-2xl bg-accent items-center justify-center text-white font-bold text-lg shadow-sm shadow-accent/25 mb-5 hover:shadow-md hover:shadow-accent/30 transition-shadow duration-300">
-            O
+            S
           </Link>
           <h1 className="text-xl font-bold tracking-tight text-text">Welcome back</h1>
-          <p className="text-sm text-text-secondary mt-1.5">Sign in to continue to OpsFlow</p>
+          <p className="text-sm text-text-secondary mt-1.5">Sign in to continue to SalesAgent</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">

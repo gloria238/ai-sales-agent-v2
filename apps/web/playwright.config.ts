@@ -21,7 +21,7 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: "pnpm --filter @opsflow/web dev",
+    command: "pnpm --filter @salesagent/web dev",
     url: BASE_URL,
     reuseExistingServer: !process.env.CI,
     timeout: 120000,

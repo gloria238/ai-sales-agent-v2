@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { prisma } from "@opsflow/db";
+import { prisma } from "@salesagent/db";
 import { getSession } from "@/lib/session";
 import { Sidebar } from "@/components/nav/sidebar";
 import { SidebarHeader } from "@/components/nav/sidebar-header";
@@ -39,7 +39,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
             <div className="size-8 rounded-xl bg-accent flex items-center justify-center text-white text-sm font-bold shadow-sm shadow-accent/25 group-hover:shadow-md group-hover:shadow-accent/30 transition-shadow duration-300">
               O
             </div>
-            <span className="font-semibold text-base tracking-tight text-text">OpsFlow</span>
+            <span className="font-semibold text-base tracking-tight text-text">SalesAgent</span>
           </Link>
           <SidebarHeader currentOrg={org} orgs={allOrgs} />
         </div>

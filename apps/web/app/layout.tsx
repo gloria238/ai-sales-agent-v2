@@ -13,8 +13,8 @@ const jakarta = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "OpsFlow — AI-Native Operations Platform",
-  description: "Lead scoring, workflow automation, AI-assisted outreach, and operational monitoring for modern sales teams.",
+  title: "SalesAgent AI — AI SDR Platform",
+  description: "AI sales agents that qualify, follow up, and book meetings automatically. Multi-channel inbox, campaign orchestration, and real-time monitoring.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
