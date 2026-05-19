@@ -59,7 +59,7 @@ export function CampaignListClient({ campaigns, orgSlug }: { campaigns: Campaign
                   <div>
                     <h3 className="font-semibold text-text">{c.name}</h3>
                     <div className="flex items-center gap-2 mt-0.5">
-                      <Badge className={cn("text-[10px]", statusBadge(c.status))} variant="outline">{c.status}</Badge>
+                      <Badge className={cn("text-[10px]", statusBadge(c.status))} variant="default">{c.status}</Badge>
                       {c.script && <span className="text-xs text-text-muted">Script: {c.script.name}</span>}
                       {c.agent && <span className="text-xs text-text-muted">Agent: {c.agent.name}</span>}
                     </div>

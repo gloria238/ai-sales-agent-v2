@@ -62,7 +62,7 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
             <div className="flex items-center gap-2">
               <h1 className="text-2xl font-bold text-text">{lead.name}</h1>
               {lead.score !== null && (
-                <Badge className={cn("text-[10px] px-2 py-0.5", scoreColor)} variant="outline">
+                <Badge className={cn("text-[10px] px-2 py-0.5", scoreColor)} variant="default">
                   {scoreLabel} · {lead.score}
                 </Badge>
               )}
@@ -93,7 +93,7 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
               {canManage ? (
                 <StageSelector currentStage={lead.stage || "new"} leadId={lead.id} orgSlug={session.orgSlug} />
               ) : (
-                <Badge variant="outline" className="text-xs">{lead.stage || "new"}</Badge>
+                <Badge variant="default" className="text-xs">{lead.stage || "new"}</Badge>
               )}
             </Card>
             <Card className="p-4 glass-card">
@@ -117,10 +117,9 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
                       <MessageSquare className="size-4 text-text-muted" />
                       <span className="text-sm text-text">{c.subject || "No subject"}</span>
                     </div>
-                    <Badge variant="outline" className="text-[10px]">{c.status}</Badge>
+                    <Badge variant="default" className="text-[10px]">{c.status}</Badge>
                   </Link>
                 ))}
-              </Link>
             </CardContent>
           </Card>
         )}
@@ -220,7 +219,7 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-text-secondary">Sentiment</span>
-                  <Badge className="text-[10px] bg-green-500/10 text-green-400" variant="outline">
+                  <Badge className="text-[10px] bg-green-500/10 text-green-400" variant="default">
                     <ThumbsUp className="size-2.5 mr-1" /> Positive
                   </Badge>
                 </div>
@@ -266,6 +265,7 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
           </CardContent>
         </Card>
       </div>
+    </div>
     </div>
   );
 }

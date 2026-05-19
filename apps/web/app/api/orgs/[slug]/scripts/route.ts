@@ -86,7 +86,7 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
       name: template.name,
       description: template.description,
       category: template.category,
-      steps: template.steps,
+      steps: template.steps as any,
     },
   });
 

@@ -84,7 +84,7 @@ export function InboxClient({ conversations, orgSlug }: { conversations: any[]; 
                       <div className="flex items-center gap-2">
                         <span className="font-medium text-sm text-text truncate">{c.lead.name}</span>
                         {label && (
-                          <Badge className={cn("text-[10px] px-1.5 py-0", label.color)} variant="outline">
+                          <Badge className={cn("text-[10px] px-1.5 py-0", label.color)} variant="default">
                             {label.text}
                           </Badge>
                         )}

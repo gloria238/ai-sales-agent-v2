@@ -49,12 +49,12 @@ function AITypingIndicator() {
 
 // ── Lead Score badge ───────────────────────────────────────
 function ScoreBadge({ score }: { score: number | null }) {
-  if (score === null) return <Badge variant="outline" className="text-[10px]">Not scored</Badge>;
+  if (score === null) return <Badge variant="default" className="text-[10px]">Not scored</Badge>;
   const c = score >= 70 ? "bg-red-500/10 text-red-400 border-red-500/20" :
     score >= 40 ? "bg-amber-500/10 text-amber-400 border-amber-500/20" :
     "bg-blue-500/10 text-blue-400 border-blue-500/20";
   const label = score >= 70 ? "Hot" : score >= 40 ? "Warm" : "Cold";
-  return <Badge className={cn("text-[10px] px-1.5 py-0", c)} variant="outline">{label} · {score}</Badge>;
+  return <Badge className={cn("text-[10px] px-1.5 py-0", c)} variant="default">{label} · {score}</Badge>;
 }
 
 // ── Stage badge ────────────────────────────────────────────
@@ -65,7 +65,7 @@ function StageBadge({ stage }: { stage: string | null }) {
     negotiation: "bg-orange-500/10 text-orange-400", closed_won: "bg-green-500/10 text-green-400",
     closed_lost: "bg-red-500/10 text-red-400",
   };
-  return <Badge className={cn("text-[10px]", map[stage || "new"])} variant="outline">{stage || "new"}</Badge>;
+  return <Badge className={cn("text-[10px]", map[stage || "new"])} variant="default">{stage || "new"}</Badge>;
 }
 
 export function InboxDetailClient({ conversation, conversations, orgSlug }: Props) {
@@ -341,7 +341,7 @@ export function InboxDetailClient({ conversation, conversations, orgSlug }: Prop
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-xs text-text-secondary">Sentiment</span>
-              <Badge className="text-[10px] bg-green-500/10 text-green-400 border-green-500/20" variant="outline">
+              <Badge className="text-[10px] bg-green-500/10 text-green-400 border-green-500/20" variant="default">
                 <ThumbsUp className="size-2.5 mr-1" /> Positive
               </Badge>
             </div>

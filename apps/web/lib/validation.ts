@@ -71,6 +71,7 @@ export const createCampaignSchema = z.object({
   description: z.string().max(2000).optional(),
   scriptId: z.string().uuid().optional(),
   agentId: z.string().uuid().optional(),
+  status: z.enum(["draft", "active", "paused", "completed"]).optional(),
   targetAudience: z.object({
     stage: z.array(stage).optional(),
     scoreMin: z.number().int().min(0).max(100).optional(),

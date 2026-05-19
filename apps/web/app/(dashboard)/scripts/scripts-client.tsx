@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 import { FileText, Download, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 
-const TEMPLATES = [
+const TEMPLATES: Array<{ slug: string; name: string; desc: string; category: string }> = [
   { slug: "saas-cold-outreach", name: "SaaS Cold Outreach — SPIN Method", desc: "4-step cold email sequence for SaaS founders.", category: "cold_outreach" },
   { slug: "b2b-follow-up", name: "B2B Follow-Up Sequence", desc: "3-step follow-up after initial contact.", category: "follow_up" },
   { slug: "re-engagement", name: "Re-engagement Campaign", desc: "3-step re-engagement for cold leads.", category: "re_engagement" },
@@ -31,7 +31,7 @@ export function ScriptListClient({ scripts, orgSlug }: { scripts: any[]; orgSlug
     } finally { setInstalling(null); }
   }
 
-  const installedSlugs = new Set(scripts.map((s) => {
+  const installedSlugs = new Set<string>(scripts.map((s: any) => {
     if (s.name.includes("Cold Outreach")) return "saas-cold-outreach";
     if (s.name.includes("Follow-Up")) return "b2b-follow-up";
     if (s.name.includes("Re-engagement")) return "re-engagement";

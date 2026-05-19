@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
@@ -60,16 +60,14 @@ export function AgentListClient({ agents, orgSlug }: { agents: Agent[]; orgSlug:
           <p className="text-sm text-text-muted mt-1">Configure AI sales agents with personality, knowledge, and goals.</p>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
+          <DialogTrigger>
             <Button>
               <Plus className="w-4 h-4 mr-2" />
               New Agent
             </Button>
           </DialogTrigger>
           <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Create AI SDR Agent</DialogTitle>
-            </DialogHeader>
+            <h2 className="text-lg font-semibold text-text mb-4">Create AI SDR Agent</h2>
             <form onSubmit={handleCreate} className="space-y-4">
               <Input name="name" placeholder="Agent name (e.g. Inbound SDR)" required />
               <Input name="description" placeholder="Short description" />
@@ -106,7 +104,7 @@ export function AgentListClient({ agents, orgSlug }: { agents: Agent[]; orgSlug:
                   <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
                     <Bot className="w-5 h-5 text-accent" />
                   </div>
-                  <Badge variant={agent.isActive ? "default" : "secondary"} className="text-[10px]">
+                  <Badge variant={agent.isActive ? "default" : "warning"} className="text-[10px]">
                     {agent.isActive ? "Active" : "Paused"}
                   </Badge>
                 </div>

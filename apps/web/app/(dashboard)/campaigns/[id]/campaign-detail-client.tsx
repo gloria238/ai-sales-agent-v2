@@ -49,7 +49,7 @@ export function CampaignDetailClient({ campaign, orgSlug }: { campaign: Campaign
         <div>
           <div className="flex items-center gap-3 mb-1">
             <h1 className="text-2xl font-bold text-text">{campaign.name}</h1>
-            <Badge className={cn("text-[10px]", statusBadge(campaign.status))} variant="outline">{campaign.status}</Badge>
+            <Badge className={cn("text-[10px]", statusBadge(campaign.status))} variant="default">{campaign.status}</Badge>
           </div>
           <p className="text-sm text-text-muted">{campaign.description || "No description"}</p>
           <div className="flex items-center gap-3 mt-2 text-xs text-text-muted">
@@ -130,7 +130,7 @@ export function CampaignDetailClient({ campaign, orgSlug }: { campaign: Campaign
                 <div className="size-7 rounded-full bg-accent/10 flex items-center justify-center text-xs font-bold text-accent shrink-0 mt-0.5">{step.order}</div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
-                    <Badge className="text-[10px]" variant="outline">{step.type}</Badge>
+                    <Badge className="text-[10px]" variant="default">{step.type}</Badge>
                     {step.delay && <span className="text-[10px] text-text-muted">Delay: {step.delay}</span>}
                   </div>
                   <p className="text-xs text-text-secondary font-medium truncate">{step.subject || "No subject"}</p>
@@ -155,7 +155,7 @@ export function CampaignDetailClient({ campaign, orgSlug }: { campaign: Campaign
                       <Badge className={cn("text-[10px]", {
                         queued: "bg-bg-subtle text-text-muted", running: "bg-accent-soft text-accent",
                         completed: "bg-green-500/10 text-green-400", failed: "bg-red-500/10 text-red-400",
-                      }[run.status])} variant="outline">{run.status}</Badge>
+                      }[run.status])} variant="default">{run.status}</Badge>
                       <span className="text-xs text-text-muted ml-2">{run.recipientCount} recipients</span>
                     </div>
                     <span className="text-[10px] text-text-muted">
