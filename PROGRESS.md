@@ -441,6 +441,40 @@ packages/db (Prisma 6 + PostgreSQL)
 
 ---
 
+## Bugfixes (2026-05-23)
+
+### Seed scripts P1001 — "Can't reach database server"
+
+All 5 seed scripts (`seed-demo.ts`, `seed-production.ts`, `seed-members.ts`, `seed-verify-alice.ts`, `clean-demo-org.ts`) created `new PrismaClient()` without `connection_limit=1`, bypassing the `packages/db/index.ts` singleton. Parallel writes (15 `lead.create()` in `Promise.all`) exhausted the Supabase pgBouncer pool, causing P1001 errors.
+
+**Fix**: Each seed script now creates PrismaClient with `datasources: { db: { url: getDatasourceUrl() } }` where `getDatasourceUrl()` appends `connection_limit=1`. `seed-demo.ts` also converted parallel `Promise.all(leadData.map(...))` and `Promise.all(activeLeads.map(...))` to sequential `for...of` loops.
+
+### Inbox empty for new orgs
+
+Registration creates an empty org (User + Organization + Membership only). No conversations, leads, or agents are created during signup. The inbox queries `conversation.findMany({ where: { organizationId } })` which returns empty.
+
+**No code change for this** — it's by design. Users must seed data: `pnpm seed-demo` (Acme Corp with demo@acmecorp.com) or `pnpm seed-prod <org-slug>`.
+
+### Inbox page height miscalculation + layout shift
+
+The inbox used `h-[calc(100vh-4rem)]` but the dashboard header is `h-14` (3.5rem, not 4rem) and `<main>` has `p-4 lg:p-8` padding that wasn't accounted for. This caused the page to overflow and shift irregularly.
+
+**Fix**: Added a wrapper `<div>` in `inbox/page.tsx` and `inbox/[id]/page.tsx` with `-m-4 lg:-m-8 h-[calc(100vh-3.5rem)]` to negate main padding and use the correct header height. Inner containers now use `h-full`.
+
+### POST /messages 400 Bad Request
+
+`sendMessageSchema` required `conversationId` in the request body, but the client sends only `{ content, channel }` — the conversation ID is already in the URL path `POST /api/orgs/{slug}/conversations/{id}/messages`.
+
+**Fix**: Made `conversationId` optional in `sendMessageSchema` and `generateAiDraftSchema` in `lib/validation.ts`.
+
+### AI typing indicator on wrong side + compose area cramped
+
+The AI typing dots appeared on the left side, but the AI draft renders on the right side — visually disconnected. The compose area had tiny icon-only buttons stacked vertically.
+
+**Fix**: AITypingIndicator now uses `flex-row-reverse` to appear on the right. Compose area upgraded to horizontal labeled buttons ("AI Draft" + "Send"), textarea enlarged to 3 rows.
+
+---
+
 ## Known Issues / TODOs
 
 1. **packages/core and packages/ui** are empty shells for future work.

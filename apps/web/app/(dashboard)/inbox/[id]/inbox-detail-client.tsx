@@ -30,11 +30,11 @@ type Props = { conversation: Conversation; conversations: Conversation[]; orgSlu
 // ── AI is typing animation ──────────────────────────────────
 function AITypingIndicator() {
   return (
-    <div className="flex items-start gap-3 px-4 py-3 animate-slide-up">
+    <div className="flex items-start gap-3 px-4 py-3 animate-slide-up flex-row-reverse">
       <div className="size-7 rounded-full bg-accent/10 flex items-center justify-center shrink-0">
         <Sparkles className="size-3.5 text-accent" />
       </div>
-      <div className="glass-card rounded-2xl rounded-tl-sm px-4 py-3 border border-accent/10">
+      <div className="glass-card rounded-2xl rounded-tr-sm px-4 py-3 border border-accent/10">
         <div className="flex items-center gap-1.5">
           <span className="text-xs text-accent font-medium">AI drafting response</span>
           <span className="flex gap-0.5">
@@ -141,7 +141,7 @@ export function InboxDetailClient({ conversation, conversations, orgSlug }: Prop
   const scoreLabel = lead.score !== null ? (lead.score >= 70 ? "Hot" : lead.score >= 40 ? "Warm" : "Cold") : null;
 
   return (
-    <div className="flex h-[calc(100vh-4rem)] overflow-hidden">
+    <div className="flex h-full overflow-hidden">
       {/* ── Left: conversation list with Identity Cells ──── */}
       <div className="hidden md:flex w-72 shrink-0 border-r border-border flex-col bg-bg-card/30 backdrop-blur-sm">
         <div className="p-3 border-b border-border">
@@ -245,22 +245,22 @@ export function InboxDetailClient({ conversation, conversations, orgSlug }: Prop
         </div>
 
         {/* Compose */}
-        <div className="shrink-0 border-t border-border p-3 bg-bg-card/50 backdrop-blur-sm">
-          <div className="flex gap-2">
+        <div className="shrink-0 border-t border-border p-4 bg-bg-card/50 backdrop-blur-sm">
+          <div className="flex items-end gap-3">
             <Textarea
               value={replyDraft}
               onChange={(e) => setReplyDraft(e.target.value)}
               placeholder="Type a reply or generate an AI draft..."
-              rows={2}
+              rows={3}
               className="flex-1 resize-none rounded-xl text-sm"
               onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendReply(); } }}
             />
-            <div className="flex flex-col gap-1.5">
-              <Button size="sm" variant="outline" onClick={generateAiDraft} loading={generating} disabled={aiTyping}>
-                <Sparkles className="size-3.5" />
+            <div className="flex items-center gap-2 shrink-0">
+              <Button size="sm" variant="outline" onClick={generateAiDraft} loading={generating} disabled={aiTyping} className="rounded-xl">
+                <Sparkles className="size-3.5 mr-1.5" /> AI Draft
               </Button>
-              <Button size="sm" onClick={sendReply} loading={sending} disabled={!replyDraft.trim()}>
-                <Send className="size-3.5" />
+              <Button size="sm" onClick={sendReply} loading={sending} disabled={!replyDraft.trim()} className="rounded-xl">
+                <Send className="size-3.5 mr-1.5" /> Send
               </Button>
             </div>
           </div>

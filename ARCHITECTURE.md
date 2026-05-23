@@ -589,14 +589,23 @@ Inbound message received
 └────────────────────┴─────────────────────────────────────────┘
 ```
 
-### 7.2 API 端点
+### 7.2 Inbox 布局实现
+
+Inbox 页面使用双层结构：
+
+- **外层 wrapper** (`page.tsx`): `<div className="-m-4 lg:-m-8 h-[calc(100vh-3.5rem)]">` — 用负边距消除 `<main>` 的 padding，高度精确减去 dashboard header (`h-14` = 3.5rem)
+- **内层** (`inbox-client.tsx` / `inbox-detail-client.tsx`): `h-full` 填满 wrapper
+- **三栏布局** (detail 页): 左侧对话列表 (w-72, md+), 中间消息线程 (flex-1), 右侧 AI 面板 (w-80, xl+)
+
+### 7.3 API 端点
 
 | 方法 | 路径 | 权限 | 描述 |
 |------|------|------|------|
 | GET | /api/orgs/{slug}/conversations | view_agents | 对话列表 (筛选/搜索/分页) |
 | GET | /api/orgs/{slug}/conversations/{id} | view_agents | 对话详情 + 消息列表 |
-| POST | /api/orgs/{slug}/conversations/{id}/reply | manage_agents | 发送回复 (人工或 AI 辅助) |
-| POST | /api/orgs/{slug}/conversations/{id}/ai-draft | manage_agents | 生成 AI 回复草稿 |
+| GET | /api/orgs/{slug}/conversations/{id}/messages | view_agents | 获取对话消息列表 |
+| POST | /api/orgs/{slug}/conversations/{id}/messages | manage_agents | 发送回复 (body: `{content, channel}`, conversationId 在 URL 中) |
+| POST | /api/orgs/{slug}/conversations/{id}/ai-draft | manage_agents | 生成 AI 回复草稿 (body: `{}`, conversationId 在 URL 中) |
 | PATCH | /api/orgs/{slug}/conversations/{id} | manage_agents | 更新状态 (close/archive/reassign) |
 | GET | /api/orgs/{slug}/inbox/stats | view_agents | 收件箱统计 (active/needs-reply/today) |
 

@@ -56,13 +56,13 @@ export const updateAgentSchema = createAgentSchema.partial();
 
 // ── Conversation / Message input ─────────────────────────────────
 export const sendMessageSchema = z.object({
-  conversationId: z.string().uuid(),
+  conversationId: z.string().uuid().optional(),
   content: z.string().min(1, "Message is required").max(10000, "Message too long"),
   channel: z.enum(["email", "chat"]).default("email"),
 });
 
 export const generateAiDraftSchema = z.object({
-  conversationId: z.string().uuid(),
+  conversationId: z.string().uuid().optional(),
 });
 
 // ── Campaign input ───────────────────────────────────────────────

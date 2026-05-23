@@ -23,5 +23,9 @@ export default async function InboxPage() {
     take: 50,
   });
 
-  return <InboxClient conversations={conversations} orgSlug={session.orgSlug} />;
+  return (
+    <div className="-m-4 lg:-m-8 h-[calc(100vh-3.5rem)]">
+      <InboxClient conversations={conversations} orgSlug={session.orgSlug} />
+    </div>
+  );
 }

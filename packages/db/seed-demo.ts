@@ -16,7 +16,17 @@ config({ path: path.resolve(process.cwd(), "packages/db/.env") });
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
-const prisma = new PrismaClient();
+function getDatasourceUrl(): string {
+  const url = process.env.DATABASE_URL;
+  if (!url) throw new Error("DATABASE_URL environment variable is required");
+  if (url.includes("connection_limit")) return url;
+  const sep = url.includes("?") ? "&" : "?";
+  return `${url}${sep}connection_limit=1`;
+}
+
+const prisma = new PrismaClient({
+  datasources: { db: { url: getDatasourceUrl() } },
+});
 
 const ORG_SLUG = "acme-corp";
 const ORG_NAME = "Acme Corp";
@@ -148,26 +158,29 @@ async function main() {
     }
   }
 
-  const leads = await Promise.all(
-    leadData.map((l) => prisma.lead.create({
+  const leads = [];
+  for (const l of leadData) {
+    const lead = await prisma.lead.create({
       data: { organizationId: org.id, name: l.name, email: l.email, company: l.company, stage: l.stage, score: l.score, source: l.source },
-    })),
-  );
+    });
+    leads.push(lead);
+  }
 
   // Create 10 conversations with messages
   const activeLeads = leads.filter((l) => l.stage !== "closed_won" && l.stage !== "closed_lost").slice(0, 8);
-  const conversations = await Promise.all(
-    activeLeads.map((lead, i) =>
-      prisma.conversation.create({
-        data: {
-          organizationId: org.id, leadId: lead.id,
-          agentId: agents[i % 3].id,
-          channel: "email", subject: `Re: ${lead.company} partnership`,
-          status: i < 6 ? "active" : "closed",
-        },
-      }),
-    ),
-  );
+  const conversations = [];
+  for (let i = 0; i < activeLeads.length; i++) {
+    const lead = activeLeads[i];
+    const conv = await prisma.conversation.create({
+      data: {
+        organizationId: org.id, leadId: lead.id,
+        agentId: agents[i % 3].id,
+        channel: "email", subject: `Re: ${lead.company} partnership`,
+        status: i < 6 ? "active" : "closed",
+      },
+    });
+    conversations.push(conv);
+  }
 
   // Add messages to conversations
   const inboundMessages = [

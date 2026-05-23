@@ -58,7 +58,7 @@ export function InboxClient({ conversations, orgSlug }: { conversations: any[]; 
   }
 
   return (
-    <div className="flex h-[calc(100vh-4rem)] gap-0">
+    <div className="flex h-full gap-0">
       {/* Left panel: identity list */}
       <div className="w-full max-w-sm border-r border-border flex flex-col bg-bg-card/50 backdrop-blur-sm">
         <div className="p-4 border-b border-border space-y-3">

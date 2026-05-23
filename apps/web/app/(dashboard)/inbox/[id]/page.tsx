@@ -34,10 +34,12 @@ export default async function InboxDetailPage({ params }: { params: { id: string
   });
 
   return (
-    <InboxDetailClient
-      conversation={JSON.parse(JSON.stringify(conversation))}
-      conversations={JSON.parse(JSON.stringify(conversations))}
-      orgSlug={session.orgSlug}
-    />
+    <div className="-m-4 lg:-m-8 h-[calc(100vh-3.5rem)]">
+      <InboxDetailClient
+        conversation={JSON.parse(JSON.stringify(conversation))}
+        conversations={JSON.parse(JSON.stringify(conversations))}
+        orgSlug={session.orgSlug}
+      />
+    </div>
   );
 }
