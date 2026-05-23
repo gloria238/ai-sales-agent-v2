@@ -1,6 +1,6 @@
 # SalesAgent AI — Progress Report
 
-> Last updated: 2026-05-19
+> Last updated: 2026-05-23
 > Project: AI SDR / Outbound Sales Operating System
 > Migrated from: OpsFlow AI (multi-tenant AI Workflow CRM)
 
@@ -68,10 +68,12 @@ OpsFlow AI → SalesAgent AI rebrand and pivot. Infrastructure carried over; dom
 | Phase 6: Deployment (Vercel + Railway + queue prefix isolation) | ✅ Done | 100% |
 | Phase 7: Security v2 & pgBouncer (Injection audit, prompt armor, $transaction fix) | ✅ Done | 100% |
 | Phase 8: UI/UX — AI Staff Console (Green accent, activity feed, Linear sidebar) | ✅ Done | 100% |
+| Phase 9: Route hardening & DB perf (missing pages, connection_limit, middleware resilience) | ✅ Done | 100% |
+| Phase 10: Operational Customer Identity Layer | ✅ Done | 100% |
 
-**Total:** ~10,000 lines across ~210 files. 35 API routes + SSE + webhook.
+**Total:** ~12,000 lines across ~230 files. 36 API routes + SSE + webhook.
 **Tests:** 53 unit (100%) + 105 integration (96% pass, 4 timing-dependent) + 4 E2E specs.
-**Infrastructure:** TanStack Query, SSE, Redis Rate Limiting, Feature Flags, Structured JSON Logging, Resend Email, BullMQ (4 queues, prefix: "sales-agent").
+**Infrastructure:** TanStack Query, SSE, Redis Rate Limiting, Feature Flags, Structured JSON Logging, Resend Email, BullMQ (4 queues, prefix: "sales-agent"), Vercel serverless + Supabase pooler (connection_limit=1).
 
 ---
 
@@ -342,14 +344,75 @@ OpsFlow AI → SalesAgent AI rebrand and pivot. Infrastructure carried over; dom
 
 ---
 
+## Phase 10 — Operational Customer Identity Layer ✅
+
+> Completed: 2026-05-23
+
+### Identity Stack
+
+| Component | Details |
+|-----------|---------|
+| DiceBear Avatars | `notionists` style via free API, seed=email for uniqueness. Gradient-initials fallback on error. |
+| Presence System | Derived from `updatedAt` recency: online(<5min)/idle(<1h)/away(<24h)/offline. ai-processing pulse, handoff-required amber. |
+| IdentityCard | Reusable component: compact (list) + expanded (detail header). Shows avatar + presence + company + stage + score + AI ownership + activity. |
+| AI Ownership | "AI handling · 92% confidence" badges, "Needs human review" when no agent assigned. |
+| Activity Timestamps | `relativeTime()` — "2m ago", "Active now", "Yesterday". Shared in `lib/time.ts`. |
+
+### Inbox redesign
+
+- Conversation list: Identity Cells replacing plain `<button>` rows
+- DiceBear avatars, presence dots on unread, count badges on filter tabs
+- Conversation detail: Expanded IdentityCard header with full metadata + AI ownership badge
+- Compact cells in sidebar list
+
+### Leads page redesign
+
+- Dual view modes: card grid (3-col) + refined list view, toggle in toolbar
+- Cards show: avatar, name, company, stage badge, score bar, email, source, tags, relative time
+- DiceBear avatars, skeleton loading, empty state
+- Preserved: search, filter, sort, pagination, create, CSV import/export, AI scoring
+
+### Dashboard activity feed
+
+- New API: `GET /api/orgs/{slug}/home/activity` — merges LeadActivity + AuditLog (15 entries)
+- `ActivityFeed` client component: 30s polling, skeleton loading, avatar + identity + action + relative time
+- Replaces 7 hardcoded activity entries with real data
+
+### Bugfix: orgSlug=undefined
+
+10 page components in `(dashboard)` route group used `params.slug` — always `undefined` because the route has no `[slug]` segment. Fixed by using `session.orgSlug` / `session.orgId` (from JWT cookie) instead.
+- Affected: campaigns, campaigns/new, campaigns/[id], agents, agents/[id], inbox, inbox/[id], scripts, scripts/new, scripts/[id]
+- Caused: `POST /api/orgs/undefined/campaigns` and `POST /api/orgs/undefined/agents` → 404 in production
+
+### New files
+
+| File | Purpose |
+|------|---------|
+| `components/identity/avatar.tsx` | DiceBear avatar + gradient fallback + presence dot |
+| `components/identity/identity-card.tsx` | IdentityCell (compact + expanded variants) |
+| `components/identity/presence.tsx` | PresenceDot with pulse animations |
+| `lib/time.ts` | relativeTime(), presenceFromDate(), presenceLabel(), presenceColor() |
+| `app/(dashboard)/home/activity-feed.tsx` | Real activity feed client component |
+| `app/api/orgs/[slug]/home/activity/route.ts` | Activity feed API endpoint |
+
+### Design decisions
+
+- No new DB columns — presence is pure logic, avatars use external API
+- DiceBear chosen over storage-based avatars (MVP: no upload, no Supabase Storage)
+- Presence states are *derived* from data, not realtime pushed (no WebSocket needed yet)
+- Identity Stack is a pattern, not a package — reusable across inbox, leads, dashboard
+
+---
+
 ## Architecture Summary
 
 ```
 apps/web (Next.js 14 App Router)
   ├── Pages: Server Components for data, Client Components for interactivity
-  ├── API: 35 Route Handlers with session + permission checks
+  ├── API: 36 Route Handlers with session + permission checks
   ├── Middleware: JWT guard + Redis rate limiting (100 req/min per IP)
   ├── Security: CSP/HSTS, PII-safe logging, email verification, JWT revocation
+  ├── Identity Stack: DiceBear avatars, presence system, IdentityCard, ActivityFeed
   └── Components: shadcn-style UI kit (11 components), glass morphism design tokens
 
 apps/worker (Node.js)
@@ -380,14 +443,10 @@ packages/db (Prisma 6 + PostgreSQL)
 
 ## Known Issues / TODOs
 
-1. **Schema migration** — New `sales_agent` schema needed on Supabase (OpsFlow's `opsflow` schema is backed up).
-2. **Package rename** — All `@opsflow/*` references need updating across package.json, tsconfig, import paths.
-3. **Queue prefix** — All BullMQ Queue/Worker instances need `prefix: "sales-agent"` added.
-4. **Model migration** — Prisma schema needs the 6 workflow models replaced with 6 SDR models.
-5. **API route rewrite** — 38 OpsFlow endpoints → ~35 SalesAgent endpoints (different domain).
-6. **AI prompt replacement** — 7 OpsFlow prompts → 4 SDR prompts.
-7. **Worker rewrite** — DAG engine → AI response pipeline + campaign sequence engine.
-8. **Landing page** — Reposition from "workflow automation" to "AI SDR / outbound OS".
-9. **packages/core and packages/ui** are empty shells for future work.
-10. **Stripe billing** — Not implemented.
-11. **pgBouncer** — Interactive `$transaction` incompatible with Supabase pooler. Use sequential ops.
+1. **packages/core and packages/ui** are empty shells for future work.
+2. **Stripe billing** — Not implemented.
+3. **API Key Bearer auth** — Pending (Edge runtime Prisma limitation).
+4. **Upstash Redis free tier** — 500K daily command limit; worker exhausts it under heavy test load.
+5. **Railway worker** — Requires `REDIS_URL`; worker crashes on startup without a working Redis instance. Railway deploy: build command = `pnpm install --frozen-lockfile && pnpm --filter @salesagent/db generate`, start command = `npx tsx apps/worker/src/index.ts` (NOT `pnpm --filter @salesagent/worker start` which runs compiled dist/ without Prisma generate).
+6. **pgBouncer** — Sequential ops (no `$transaction`) required for Supabase pooler compat. `connection_limit=1` auto-appended by `packages/db/index.ts` for serverless safety.
+7. **(Fixed 2026-05-23) orgSlug=undefined 404s** — All `(dashboard)` page components now use `session.orgSlug`/`session.orgId` from JWT instead of `params.slug` (which is always undefined because the route group has no `[slug]` segment).

@@ -2,7 +2,7 @@
 
 > AI SDR / outbound sales operating system. AI agents that qualify leads, compose follow-ups, and book meetings.
 > Multi-channel conversation inbox, campaign orchestration, and real-time monitoring.
-> ~9,000 lines across ~180 files. 35 API routes + SSE + webhook trigger.
+> ~10,000 lines across ~220 files. 35 API routes + SSE + webhook trigger.
 
 ---
 
@@ -87,9 +87,14 @@ salesagent-ai/
 │   │   │   │   ├── home/             # AI SDR 仪表盘 (/home, 中间件改写)
 │   │   │   │   ├── inbox/            # 对话收件箱 (多渠道统一视图)
 │   │   │   │   ├── leads/            # 线索管理 + AI 评分
-│   │   │   │   ├── agents/           # AI Agent 配置 (人格/知识库/目标)
+│   │   │   │   ├── agents/           # AI Agent 配置 + 详情编辑
+│   │   │   │   │   └── [id]/          # Agent 详情 (编辑+对话+活动)
 │   │   │   │   ├── campaigns/        # 外呼活动管理 + 分析
-│   │   │   │   ├── scripts/          # 话术脚本市场 (浏览 + 安装)
+│   │   │   │   │   ├── new/          # 活动创建向导
+│   │   │   │   │   └── [id]/         # 活动详情 + 分析
+│   │   │   │   ├── scripts/          # 话术脚本市场 + AI 生成
+│   │   │   │   │   ├── new/          # AI 脚本生成
+│   │   │   │   │   └── [id]/         # 脚本详情
 │   │   │   │   ├── settings/         # 组织设置 + 成员管理 + API 密钥
 │   │   │   │   └── audit-log/        # 审计日志查看
 │   │   │   ├── page.tsx              # 公开落地页 (/)
@@ -939,7 +944,7 @@ Server Components (RSC)         Client Components
 | **React useState** | 组件本地状态 (对话框、回复输入) |
 | **SSE** | 新消息实时推送 → inbox 更新 |
 
-### 14.3 UI 组件库 (11 个)
+### 14.3 UI 组件库 (11 个基础组件)
 
 | 组件 | 文件 | 用途 |
 |------|------|------|
@@ -955,7 +960,55 @@ Server Components (RSC)         Client Components
 | Table | `components/ui/table.tsx` | 表格 |
 | Tabs | `components/ui/tabs.tsx` | 标签页切换 |
 
-### 14.4 UX 模式
+### 14.4 Identity Stack（运营客户身份层）
+
+Operational Customer Identity Layer — 全系统统一的客户身份展示模式。
+
+**设计原则**: AI-native SaaS 的核心不是 AI，而是"谁在控制这个流程"。Identity Stack 通过 avatars + presence + ownership + AI state + activity timestamps 让系统产生"真实运营感（operational realism）"。
+
+**架构**:
+```
+IdentityCard
+├── Avatar (DiceBear notionists + gradient-initials 回退)
+├── PresenceDot (online/idle/ai-processing/handoff-required/syncing)
+├── CustomerMeta (name, company, email)
+├── AIState ("AI handling · 92% confidence" | "Assigned to Emma")
+├── LeadIntent (score bar + hot/warm/cold label)
+└── ActivityTimestamp (relative time: "2m ago", "Active now")
+```
+
+**Presence 状态机** — 从时间戳推导，无需 WebSocket:
+| 状态 | 条件 | 视觉 |
+|------|------|------|
+| `online` | <5min | 绿点 |
+| `idle` | <1h | 灰点 |
+| `away` | <24h | 浅灰点 |
+| `offline` | >24h | 无点 |
+| `ai-processing` | 显式设置 | 紫点 + pulse |
+| `handoff-required` | 显式设置 | 橙点 + pulse |
+| `syncing` | 显式设置 | 蓝点 + pulse |
+
+**组件文件**:
+| 组件 | 文件 |
+|------|------|
+| Avatar | `components/identity/avatar.tsx` |
+| PreseneDot | `components/identity/presence.tsx` |
+| IdentityCard | `components/identity/identity-card.tsx` (compact + expanded 变体) |
+| ActivityFeed | `app/(dashboard)/home/activity-feed.tsx` |
+| 工具函数 | `lib/time.ts` (relativeTime, presenceFromDate, presenceLabel, presenceColor) |
+
+**应用范围**:
+- Inbox 列表: IdentityCard compact 变体 (avatar + name + company + score + message preview + relative time)
+- Conversation Detail: IdentityCard expanded 变体 (大 avatar + 全量 meta + AI ownership badge)
+- Leads 页面: Avatar 组件 (DiceBear + gradient fallback)
+- Dashboard: ActivityFeed 实时活动流 (LeadActivity + AuditLog 合并, 30s 轮询)
+
+**设计决策**:
+- 头像: DiceBear `notionists` 风格 (免费、无需上传、seed 驱动唯一性)，email 作为 seed
+- Presence: 纯数据推导 `Date.now() - updatedAt` → 状态，零额外存储
+- AI ownership: 复用 `conversation.agentId` 关系和 Lead.score，无需新 DB 列
+
+### 14.5 UX 模式
 
 - **Loading**: 所有页面有 `loading.tsx` 骨架屏
 - **Empty**: 含引导文案 + 操作按钮
@@ -1066,8 +1119,8 @@ npx vercel --prod --cwd apps/web      # 部署到 Vercel 生产环境
 
 | 指标 | 数值 |
 |------|------|
-| 总代码行数 | ~9,000 |
-| 文件数 | ~180 |
+| 总代码行数 | ~10,000 |
+| 文件数 | ~220 |
 | API 端点 | 35 + SSE + Webhook |
 | 数据库模型 | 10 + 2 enums |
 | RBAC 权限 | 10 项 |

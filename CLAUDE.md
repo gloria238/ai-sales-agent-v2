@@ -131,6 +131,7 @@ packages/
 - **Email**: Resend SDK. `apps/worker/src/email.ts` — template variable resolution (`{{lead.email}}`) + send. Worker composes AI responses and sends via Resend.
 - **DB**: PrismaClient singleton cached on `globalThis`. `experimental.serverComponentsExternalPackages: ["@prisma/client"]` in next.config for Vercel.
 - **Design system**: CSS custom properties in `globals.css` (RGB triplets for Tailwind opacity support). All colors registered in `tailwind.config.js` as `rgb(var(--x) / <alpha-value>)`. 11 UI components in `components/ui/` use design tokens exclusively — never hardcoded colors. Glass morphism via `.glass-card` utility class.
+- **Identity Stack**: Operational Customer Identity Layer — every customer-facing entity shows: avatar (DiceBear `notionists` + gradient fallback), presence state (derived from `updatedAt` recency), AI ownership (agent name + confidence %), lead intent (score bar), activity timestamp. `IdentityCard` component (compact/expanded variants) used consistently across inbox, leads, and dashboard. Presence states: online/idle/away/offline/ai-processing/handoff-required/syncing. No new DB columns — presence is pure logic on existing timestamps; avatars use free DiceBear API seeded by email.
 
 ### RBAC permissions (10 permissions)
 
@@ -157,7 +158,11 @@ apps/web/app/(dashboard)/home/page.tsx — Dashboard home (Bento grid, pipeline 
 apps/web/app/(dashboard)/inbox/      — Conversation inbox (unified view across channels)
 apps/web/app/(dashboard)/agents/     — AI agent management (configure personality, knowledge base)
 apps/web/app/(dashboard)/scripts/    — Sales script marketplace (browse + install playbooks)
-apps/web/app/(dashboard)/campaigns/  — Outbound campaign creation + analytics
+apps/web/app/(dashboard)/campaigns/  — Outbound campaign list + create + analytics
+apps/web/app/(dashboard)/campaigns/new/ — Campaign creation wizard (agent + script picker)
+apps/web/app/(dashboard)/scripts/[id]/ — Script detail view (steps, linked campaigns)
+apps/web/app/(dashboard)/scripts/new/ — AI script generation playground
+apps/web/app/(dashboard)/agents/[id]/ — Agent detail with inline editing + conversations/campaigns
 apps/web/app/(dashboard)/docs/       — API documentation page
 apps/web/app/(dashboard)/settings/api-keys/ — API key management
 apps/web/app/(dashboard)/onboarding-card.tsx — 3-step onboarding wizard
@@ -176,6 +181,10 @@ apps/web/components/providers/theme-provider.tsx — Dark mode provider with fla
 apps/web/components/providers/theme-toggle.tsx   — Dark/light toggle button
 apps/web/components/nav/mobile-nav.tsx           — Mobile hamburger menu with slide-out drawer
 apps/web/components/leads/import-button.tsx      — CSV import dialog with file upload
+apps/web/components/identity/avatar.tsx          — DiceBear notionists avatar + gradient fallback + presence dot
+apps/web/components/identity/identity-card.tsx   — Operational Identity Cell (compact list + expanded header)
+apps/web/components/identity/presence.tsx        — Presence dot with pulse animation for AI states
+apps/web/lib/time.ts                            — relativeTime(), presenceFromDate(), presenceLabel()
 apps/web/vitest.config.ts           — Unit test config (excludes integration/E2E files)
 apps/web/vitest.integration.config.ts — Integration test config (sequential file execution)
 apps/web/playwright.config.ts       — Playwright E2E config (Chromium, auto-starts dev server)
@@ -194,7 +203,7 @@ packages/db/seed-verify-alice.ts    — Mark alice@example.com emailVerified=tru
 packages/db/clean-demo-org.ts       — FK-safe org cleanup before re-seed
 ```
 
-### State of the project (2026-05-19)
+### State of the project (2026-05-23)
 
 - **Phase 1: Foundation**. Auth + RBAC + DB Schema + package rename (`@opsflow` → `@salesagent`).
 - **Phase 2: CRM + Conversations**. Lead management, conversation inbox, AI-powered messaging.
@@ -203,17 +212,18 @@ packages/db/clean-demo-org.ts       — FK-safe org cleanup before re-seed
 - **Phase 5: Campaign Engine**. Outbound campaign creation, scheduling, delivery tracking, analytics.
 - **Phase 6: Polish & Demo**. Landing page, dark mode, mobile nav, demo seed data, onboarding.
 - **Phase 7: Testing & Security**. 53 unit + 105 integration + 4 E2E specs. CSP/HSTS/rate-limit/JWT revocation/Zod.
-- **Phase 8: Security v2 & pgBouncer**. Injection audit (15 findings fixed). Prompt injection armor (`<user_data>` + PROMPT_ARMOR). Auto-send removed. Prototype pollution blocked. CSV injection sanitized. `checkPermission()` helper. All `$transaction` → sequential ops for pgBouncer compat.
-- **Phase 9: UI/UX — AI Staff Console**. Green accent (#22C55E). Linear-style sidebar. Activity-feed-first dashboard ("Good morning" greeting, agent team status, live activity). AI animations (typing dots, pulse, cursor). Intercom-style inbox with Lead Intelligence panel.
-- **~10,000 lines** across ~210 files. 35 API routes + SSE + webhook.
-- Web app: ✅ Vercel (JWT + API key auth, green glass UI, activity dashboard, inbox, agents, leads, campaigns, scripts).
+- **Phase 8: Security v2 & pgBouncer**. Injection audit (15 findings fixed). Prompt injection armor. `$transaction` → sequential ops.
+- **Phase 9: UI/UX — AI Staff Console**. Green accent (#22C55E). Linear sidebar. Activity-feed-first dashboard. AI animations.
+- **Phase 10: Operational Customer Identity Layer**. DiceBear avatars, presence system (online/idle/ai-processing/handoff-required), IdentityCard components, inbox redesign with Identity Cells, leads page card grid + list view, real activity feed from LeadActivity + AuditLog.
+- **~12,000 lines** across ~230 files. 36 API routes + SSE + webhook.
+- Web app: ✅ Vercel (JWT + API key auth, Identity Stack UI, DiceBear avatars, presence dots, activity feed).
 - Worker: ✅ Railway (4 BullMQ workers, `prefix: "sales-agent"`, AI compose, scoring, campaign delivery, healthcheck).
 - Email: ✅ Resend verification + AI-composed sales emails with open/click tracking.
-- Demo: `pnpm seed-demo` → Acme Corp (15 leads, 3 agents, 10 conversations, 2 campaigns).
-- Landing: Green-accent hero, trust stats, customer logos, testimonial.
-- UX: Green accent, Linear-style sidebar, AI activity feed, typing animations, Intercom-style inbox, Lead Intelligence panel.
+- Demo: `pnpm seed-demo` → Acme Corp.
+- UX: Identity Stack (avatar + presence + AI ownership + activity), card grid/refined list toggle, Inbox Identity Cells, real activity feed.
 - Security: Prompt injection armor, auto-send removed, prototype pollution blocked, CSV injection sanitized, checkPermission 403, Zod (16 schemas), CSP/HSTS, rate limiting, JWT revocation.
 - Queue isolation: All BullMQ queues + Workers use `prefix: "sales-agent"`.
+- Serverless DB: PrismaClient auto-appends `connection_limit=1` for Vercel + Supabase pooler compat.
 - Known: Upstash Redis 500K free limit exhausts under heavy test load. API key Bearer auth pending (Edge runtime).
 
 ### Seed scripts reference
@@ -241,6 +251,7 @@ packages/db/clean-demo-org.ts       — FK-safe org cleanup before re-seed
 11. **Prisma config conflict**: If `prisma.config.ts` exists, Prisma skips automatic `.env` loading. Delete this file unless you explicitly load env vars in it.
 12. **.env location**: Prisma looks for `.env` relative to the schema file. Keep a `.env` in `packages/db/` with `DATABASE_URL` and `DIRECT_URL`.
 13. **Supabase pooler V2**: New Supabase projects (2025+) use V2 pooler (`aws-1-{region}.pooler.supabase.com`), NOT V1 (`aws-0-...`). If you get `FATAL: Tenant or user not found`, check the pooler version in Supabase Dashboard → Connection string. The username format is `postgres.{project-ref}` for the pooler, `postgres` for direct connection. Always copy the full URI from Supabase Dashboard — don't compose it manually.
+14. **Prisma connection_limit in serverless**: Without `connection_limit=1` in the DATABASE_URL, Prisma opens `num_cpus * 2 + 1` connections per serverless instance. On Vercel with 30+ routes, this can exhaust Supabase's free-tier pool, causing slow queries and timeouts. `packages/db/index.ts` appends `&connection_limit=1` automatically if not present. Supabase pooler (pgBouncer) + `connection_limit=1` = safe for serverless.
 
 ### Railway deployment (worker)
 
