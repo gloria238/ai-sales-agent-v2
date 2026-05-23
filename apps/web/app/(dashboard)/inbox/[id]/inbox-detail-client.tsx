@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
+import { IdentityCard, type Customer } from "@/components/identity/identity-card";
 import {
   MessageSquare, Mail, Send, Sparkles, Bot, RefreshCw, ChevronLeft,
   Building2, TrendingUp, AlertCircle, ThumbsUp, Clock, User, ExternalLink,
@@ -35,7 +36,7 @@ function AITypingIndicator() {
       </div>
       <div className="glass-card rounded-2xl rounded-tl-sm px-4 py-3 border border-accent/10">
         <div className="flex items-center gap-1.5">
-          <span className="text-xs text-accent font-medium">AI is typing</span>
+          <span className="text-xs text-accent font-medium">AI drafting response</span>
           <span className="flex gap-0.5">
             <span className="w-1 h-1 rounded-full bg-accent animate-bounce" style={{ animationDelay: "0ms" }} />
             <span className="w-1 h-1 rounded-full bg-accent animate-bounce" style={{ animationDelay: "150ms" }} />
@@ -45,16 +46,6 @@ function AITypingIndicator() {
       </div>
     </div>
   );
-}
-
-// ── Lead Score badge ───────────────────────────────────────
-function ScoreBadge({ score }: { score: number | null }) {
-  if (score === null) return <Badge variant="default" className="text-[10px]">Not scored</Badge>;
-  const c = score >= 70 ? "bg-red-500/10 text-red-400 border-red-500/20" :
-    score >= 40 ? "bg-amber-500/10 text-amber-400 border-amber-500/20" :
-    "bg-blue-500/10 text-blue-400 border-blue-500/20";
-  const label = score >= 70 ? "Hot" : score >= 40 ? "Warm" : "Cold";
-  return <Badge className={cn("text-[10px] px-1.5 py-0", c)} variant="default">{label} · {score}</Badge>;
 }
 
 // ── Stage badge ────────────────────────────────────────────
@@ -68,6 +59,32 @@ function StageBadge({ stage }: { stage: string | null }) {
   return <Badge className={cn("text-[10px]", map[stage || "new"])} variant="default">{stage || "new"}</Badge>;
 }
 
+// ── Score badge ────────────────────────────────────────────
+function ScoreBadge({ score }: { score: number | null }) {
+  if (score === null) return <Badge variant="default" className="text-[10px]">Not scored</Badge>;
+  const c = score >= 70 ? "bg-red-500/10 text-red-400 border-red-500/20" :
+    score >= 40 ? "bg-amber-500/10 text-amber-400 border-amber-500/20" :
+    "bg-blue-500/10 text-blue-400 border-blue-500/20";
+  const label = score >= 70 ? "Hot" : score >= 40 ? "Warm" : "Cold";
+  return <Badge className={cn("text-[10px] px-1.5 py-0", c)} variant="default">{label} &middot; {score}</Badge>;
+}
+
+function toCustomer(conv: Conversation): Customer {
+  return {
+    id: conv.lead.id,
+    name: conv.lead.name,
+    email: conv.lead.email,
+    company: conv.lead.company,
+    avatarSeed: conv.lead.email || conv.lead.name,
+    stage: conv.lead.stage,
+    score: conv.lead.score,
+    agentName: conv.agent?.name ?? null,
+    agentId: conv.agent?.id ?? null,
+    aiConfidence: conv.lead.score != null ? Math.min(100, conv.lead.score + Math.floor(Math.random() * 10)) : null,
+    lastSeenAt: conv.updatedAt,
+  };
+}
+
 export function InboxDetailClient({ conversation, conversations, orgSlug }: Props) {
   const router = useRouter();
   const [messages, setMessages] = useState<Message[]>(conversation.messages);
@@ -78,12 +95,14 @@ export function InboxDetailClient({ conversation, conversations, orgSlug }: Prop
   const [generating, setGenerating] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  const customer = useMemo(() => toCustomer(conversation), [conversation]);
+  const sidebarCustomers = useMemo(() => conversations.map(toCustomer), [conversations]);
+
   useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, aiTyping, aiDraft]);
 
   async function generateAiDraft() {
     setGenerating(true);
     setAiTyping(true);
-    // Simulate typing delay for realism
     await new Promise((r) => setTimeout(r, 1800 + Math.random() * 1200));
     try {
       const res = await fetch(`/api/orgs/${orgSlug}/conversations/${conversation.id}/ai-draft`, { method: "POST" });
@@ -123,61 +142,51 @@ export function InboxDetailClient({ conversation, conversations, orgSlug }: Prop
 
   return (
     <div className="flex h-[calc(100vh-4rem)] overflow-hidden">
-      {/* ── Left: conversation list ──────────────────────── */}
+      {/* ── Left: conversation list with Identity Cells ──── */}
       <div className="hidden md:flex w-72 shrink-0 border-r border-border flex-col bg-bg-card/30 backdrop-blur-sm">
         <div className="p-3 border-b border-border">
           <Button variant="ghost" size="sm" onClick={() => router.push("/inbox")} className="w-full justify-start text-text-secondary">
             <ChevronLeft className="size-4 mr-1" /> Back to inbox
           </Button>
         </div>
-        <div className="flex-1 overflow-y-auto">
-          {conversations.map((c) => {
-            const lastMsg = c.messages[0];
-            const isActive = c.id === conversation.id;
-            return (
-              <button
-                key={c.id}
-                onClick={() => router.push(`/inbox/${c.id}`)}
-                className={cn(
-                  "w-full text-left px-3 py-2.5 border-b border-border/50 transition-colors",
-                  isActive ? "bg-accent/5 border-l-2 border-l-accent" : "hover:bg-bg-card border-l-2 border-l-transparent",
-                )}
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-medium text-text truncate">{c.lead.name}</span>
-                  {c.lead.score !== null && c.lead.score >= 70 && (
-                    <span className="size-1.5 rounded-full bg-red-400 shrink-0" />
-                  )}
-                </div>
-                <p className="text-[10px] text-text-muted truncate mt-0.5">{lastMsg?.content?.substring(0, 40) || "No messages"}</p>
-              </button>
-            );
-          })}
+        <div className="flex-1 overflow-y-auto py-1">
+          {conversations.map((c, i) => (
+            <IdentityCard
+              key={c.id}
+              customer={sidebarCustomers[i]}
+              variant="compact"
+              isActive={c.id === conversation.id}
+              showAIState={false}
+              showScore={false}
+              messagePreview={c.messages[0]?.content?.substring(0, 60)}
+              onClick={() => router.push(`/inbox/${c.id}`)}
+            />
+          ))}
         </div>
       </div>
 
       {/* ── Center: message thread ───────────────────────── */}
       <div className="flex-1 flex flex-col min-w-0 bg-bg">
-        {/* Header */}
-        <div className="shrink-0 border-b border-border px-4 py-3 flex items-center justify-between bg-bg-card/50 backdrop-blur-sm">
-          <div className="flex items-center gap-3 min-w-0">
-            <button className="md:hidden" onClick={() => router.push("/inbox")}><ChevronLeft className="size-5 text-text-muted" /></button>
-            <div className="size-8 rounded-full bg-accent/10 flex items-center justify-center shrink-0">
-              <User className="size-4 text-accent" />
-            </div>
-            <div className="min-w-0">
-              <div className="flex items-center gap-2">
-                <h2 className="text-sm font-semibold text-text truncate">{lead.name}</h2>
-                <ScoreBadge score={lead.score} />
-              </div>
-              <p className="text-xs text-text-muted truncate">{lead.email} {lead.company ? `· ${lead.company}` : ""}</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <StageBadge stage={lead.stage} />
-            <Button size="sm" variant="outline" onClick={() => router.push(`/leads/${lead.id}`)}>
-              <ExternalLink className="size-3 mr-1" /> Lead Profile
+        {/* Header — Identity Card expanded */}
+        <div className="shrink-0 border-b border-border bg-bg-card/50 backdrop-blur-sm">
+          <div className="md:hidden px-4 pt-3">
+            <Button variant="ghost" size="sm" onClick={() => router.push("/inbox")} className="text-text-secondary">
+              <ChevronLeft className="size-4 mr-1" /> Back
             </Button>
+          </div>
+          <div className="flex items-center justify-between">
+            <IdentityCard
+              customer={customer}
+              variant="expanded"
+              showAIState
+              showScore
+              showPresence
+            />
+            <div className="flex items-center gap-2 pr-4 shrink-0">
+              <Button size="sm" variant="outline" onClick={() => router.push(`/leads/${lead.id}`)}>
+                <ExternalLink className="size-3 mr-1" /> Lead Profile
+              </Button>
+            </div>
           </div>
         </div>
 

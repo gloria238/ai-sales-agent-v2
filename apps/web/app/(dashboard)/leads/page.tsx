@@ -25,7 +25,7 @@ export default async function LeadsPage() {
 
   return (
     <LeadTableClient
-      initialLeads={initialLeads}
+      initialLeads={JSON.parse(JSON.stringify(initialLeads))}
       initialTotal={total}
       orgSlug={session.orgSlug}
       canManage={canManage}

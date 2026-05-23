@@ -3,27 +3,27 @@ import { getSession } from "@/lib/session";
 import { redirect } from "next/navigation";
 import { CampaignCreateClient } from "./campaign-create-client";
 
-export default async function CampaignCreatePage({ params }: { params: { slug: string } }) {
+export default async function CampaignCreatePage() {
   const session = await getSession();
   if (!session) redirect("/login");
 
   const membership = await prisma.membership.findFirst({
-    where: { userId: session.userId, organization: { slug: params.slug } },
+    where: { userId: session.userId, organizationId: session.orgId },
   });
   if (!membership) redirect("/login");
 
   const [agents, scripts] = await Promise.all([
     prisma.agent.findMany({
-      where: { organizationId: membership.organizationId, isActive: true },
+      where: { organizationId: session.orgId, isActive: true },
       select: { id: true, name: true },
       orderBy: { name: "asc" },
     }),
     prisma.script.findMany({
-      where: { organizationId: membership.organizationId },
+      where: { organizationId: session.orgId },
       select: { id: true, name: true, category: true },
       orderBy: { name: "asc" },
     }),
   ]);
 
-  return <CampaignCreateClient agents={agents} scripts={scripts} orgSlug={params.slug} />;
+  return <CampaignCreateClient agents={agents} scripts={scripts} orgSlug={session.orgSlug} />;
 }

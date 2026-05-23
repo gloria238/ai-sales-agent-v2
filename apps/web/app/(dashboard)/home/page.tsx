@@ -4,8 +4,8 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { WorkerStatusCard } from "../worker-status-card";
 import { OnboardingCard } from "../onboarding-card";
-import { ArrowRight, MessageSquare, Users, Bot, Zap, CheckCircle, TrendingUp, Plus, Send, RefreshCw } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { ActivityFeed } from "./activity-feed";
+import { MessageSquare, Bot, Zap, CheckCircle, TrendingUp, Plus } from "lucide-react";
 
 export default async function DashboardHomePage() {
   const session = await getSession();
@@ -109,34 +109,13 @@ export default async function DashboardHomePage() {
           </span>
         </h2>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 space-y-1">
-            {[
-              { icon: Bot, text: "AI replied to", highlight: "Alice Chen", time: "2 min ago", meta: "Inbound SDR · auto-sent", color: "border-l-accent" },
-              { icon: TrendingUp, text: "Lead qualified:", highlight: "Bob Martinez → 87 (Hot)", time: "8 min ago", meta: "Intent: high · Budget: confirmed", color: "border-l-green-400" },
-              { icon: Send, text: "Campaign email sent to", highlight: "12 leads", time: "15 min ago", meta: "SaaS Founder Q2 Outreach · step 2/4", color: "border-l-accent" },
-              { icon: CheckCircle, text: "Meeting booked with", highlight: "Carol Davis", time: "22 min ago", meta: "Outbound Closer · Thursday 2pm", color: "border-l-green-400" },
-              { icon: MessageSquare, text: "New inbound message from", highlight: "David Kim", time: "31 min ago", meta: "SaaSFast · asking about pricing", color: "border-l-blue-400" },
-              { icon: Bot, text: "AI escalated to human:", highlight: "Eva Johansson", time: "45 min ago", meta: "Enterprise deal · needs approval", color: "border-l-amber-400" },
-              { icon: RefreshCw, text: "Campaign retry:", highlight: "3 bounced emails recovered", time: "1 hour ago", meta: "Re-engagement campaign", color: "border-l-amber-400" },
-            ].map((item, i) => (
-              <div key={i} className={cn("glass-card p-3 border-l-2 flex items-center gap-3 cursor-pointer hover:border-accent/40 transition-all", item.color)}>
-                <div className="size-8 rounded-lg bg-bg-subtle flex items-center justify-center shrink-0">
-                  <item.icon className="size-3.5 text-text-secondary" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-[13px] text-text-secondary truncate">
-                    {item.text} <span className="font-semibold text-text">{item.highlight}</span>
-                  </p>
-                  <p className="text-[11px] text-text-muted mt-0.5">{item.meta}</p>
-                </div>
-                <span className="text-[10px] text-text-muted shrink-0">{item.time}</span>
-              </div>
-            ))}
+          <div className="lg:col-span-2">
+            <ActivityFeed orgSlug={session.orgSlug} />
           </div>
-        </div>
-        <div className="space-y-3">
-          <h3 className="text-sm font-semibold text-text">Worker Health</h3>
-          <WorkerStatusCard orgSlug={org.slug} />
+          <div className="space-y-3">
+            <h3 className="text-sm font-semibold text-text">Worker Health</h3>
+            <WorkerStatusCard orgSlug={org.slug} />
+          </div>
         </div>
       </div>
 

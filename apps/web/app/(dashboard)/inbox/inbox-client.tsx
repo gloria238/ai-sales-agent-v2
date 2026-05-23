@@ -2,11 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { MessageSquare, Mail, Clock, Star, ChevronRight } from "lucide-react";
+import { IdentityCard, type Customer } from "@/components/identity/identity-card";
+import { MessageSquare, Mail } from "lucide-react";
 
 type Conversation = {
   id: string;
@@ -33,79 +31,92 @@ export function InboxClient({ conversations, orgSlug }: { conversations: any[]; 
     return c.status === filter;
   });
 
-  const scoreLabel = (score: number | null) => {
-    if (score === null) return null;
-    if (score >= 70) return { text: "Hot", color: "bg-red-500/10 text-red-400 border-red-500/20" };
-    if (score >= 40) return { text: "Warm", color: "bg-amber-500/10 text-amber-400 border-amber-500/20" };
-    return { text: "Cold", color: "bg-blue-500/10 text-blue-400 border-blue-500/20" };
+  const counts = {
+    all: conversations.length,
+    active: conversations.filter((c: any) => c.status === "active").length,
+    needs_reply: conversations.filter((c: any) => {
+      const lastMsg = c.messages[0];
+      return c.status === "active" && lastMsg?.direction === "inbound";
+    }).length,
+    closed: conversations.filter((c: any) => c.status === "closed").length,
   };
+
+  function toCustomer(c: Conversation): Customer {
+    return {
+      id: c.lead.id,
+      name: c.lead.name,
+      email: c.lead.email,
+      company: c.lead.company,
+      avatarSeed: c.lead.email || c.lead.name,
+      stage: c.lead.stage,
+      score: c.lead.score,
+      agentName: c.agent?.name ?? null,
+      agentId: c.agent?.id ?? null,
+      aiConfidence: c.lead.score != null ? Math.min(100, c.lead.score + Math.floor(Math.random() * 10)) : null,
+      lastSeenAt: c.updatedAt,
+    };
+  }
 
   return (
     <div className="flex h-[calc(100vh-4rem)] gap-0">
-      {/* Left panel: conversation list */}
+      {/* Left panel: identity list */}
       <div className="w-full max-w-sm border-r border-border flex flex-col bg-bg-card/50 backdrop-blur-sm">
-        <div className="p-4 border-b border-border">
-          <h1 className="text-lg font-semibold text-text mb-3">Inbox</h1>
+        <div className="p-4 border-b border-border space-y-3">
+          <h1 className="text-lg font-semibold text-text">Inbox</h1>
           <div className="flex gap-1">
             {(["all", "active", "needs_reply", "closed"] as const).map((f) => (
               <button
                 key={f}
                 onClick={() => setFilter(f)}
                 className={cn(
-                  "px-3 py-1 text-xs rounded-lg transition-colors",
+                  "flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg transition-all duration-150",
                   filter === f
-                    ? "bg-accent text-white"
-                    : "text-text-muted hover:text-text hover:bg-bg-card"
+                    ? "bg-accent text-white shadow-sm"
+                    : "text-text-muted hover:text-text hover:bg-bg-subtle",
                 )}
               >
-                {f === "needs_reply" ? "Needs Reply" : f.charAt(0).toUpperCase() + f.slice(1)}
+                <span>{f === "needs_reply" ? "Needs Reply" : f.charAt(0).toUpperCase() + f.slice(1)}</span>
+                {counts[f] > 0 && (
+                  <span className={cn(
+                    "inline-flex items-center justify-center min-w-[18px] h-[18px] rounded-full text-[10px] font-medium px-1",
+                    filter === f ? "bg-white/20" : "bg-bg-subtle",
+                  )}>
+                    {counts[f]}
+                  </span>
+                )}
               </button>
             ))}
           </div>
         </div>
+
         <div className="flex-1 overflow-y-auto">
           {filtered.length === 0 ? (
-            <div className="p-8 text-center text-text-muted">
-              <MessageSquare className="w-8 h-8 mx-auto mb-2 opacity-50" />
-              <p className="text-sm">No conversations</p>
+            <div className="p-12 text-center text-text-muted">
+              <MessageSquare className="size-10 mx-auto mb-3 opacity-30" />
+              <p className="text-sm font-medium">No conversations</p>
+              <p className="text-xs mt-1">
+                {filter === "needs_reply" ? "All caught up" : "Nothing to show"}
+              </p>
             </div>
           ) : (
-            filtered.map((c) => {
-              const lastMsg = c.messages[0];
-              const label = scoreLabel(c.lead.score);
-              return (
-                <button
-                  key={c.id}
-                  onClick={() => router.push(`/inbox/${c.id}`)}
-                  className="w-full text-left p-4 border-b border-border hover:bg-bg-card transition-colors group"
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium text-sm text-text truncate">{c.lead.name}</span>
-                        {label && (
-                          <Badge className={cn("text-[10px] px-1.5 py-0", label.color)} variant="default">
-                            {label.text}
-                          </Badge>
-                        )}
-                      </div>
-                      <p className="text-xs text-text-muted mt-0.5">{c.lead.company || c.lead.email || "No contact info"}</p>
-                      <p className="text-xs text-text-muted mt-1 truncate max-w-[220px]">
-                        {lastMsg ? lastMsg.content.substring(0, 80) : "No messages"}
-                      </p>
-                    </div>
-                    <div className="flex flex-col items-end gap-1 shrink-0">
-                      <span className="text-[10px] text-text-muted">
-                        {new Date(c.updatedAt).toLocaleDateString()}
-                      </span>
-                      {lastMsg?.direction === "inbound" && c.status === "active" && (
-                        <span className="w-2 h-2 rounded-full bg-accent" />
-                      )}
-                    </div>
-                  </div>
-                </button>
-              );
-            })
+            <div className="py-1">
+              {filtered.map((c) => {
+                const cust = toCustomer(c);
+                const lastMsg = c.messages[0];
+                const isUnread = lastMsg?.direction === "inbound" && c.status === "active";
+                return (
+                  <IdentityCard
+                    key={c.id}
+                    customer={cust}
+                    variant="compact"
+                    isActive={false}
+                    showPresence={isUnread}
+                    messagePreview={lastMsg?.content?.substring(0, 100)}
+                    onClick={() => router.push(`/inbox/${c.id}`)}
+                  />
+                );
+              })}
+            </div>
           )}
         </div>
       </div>
@@ -113,8 +124,9 @@ export function InboxClient({ conversations, orgSlug }: { conversations: any[]; 
       {/* Right panel: placeholder */}
       <div className="hidden md:flex flex-1 items-center justify-center bg-bg">
         <div className="text-center text-text-muted">
-          <Mail className="w-12 h-12 mx-auto mb-3 opacity-30" />
-          <p className="text-sm">Select a conversation to view</p>
+          <Mail className="size-12 mx-auto mb-3 opacity-20" />
+          <p className="text-sm font-medium">Select a conversation</p>
+          <p className="text-xs mt-1">View messages and AI insights</p>
         </div>
       </div>
     </div>

@@ -9,16 +9,57 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { ImportButton } from "@/components/leads/import-button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { cn } from "@/lib/utils";
+import { Avatar } from "@/components/identity/avatar";
+import { relativeTime } from "@/lib/time";
+import {
+  LayoutGrid,
+  List,
+  Mail,
+  Building2,
+  Hash,
+  Calendar,
+  Sparkles,
+  ChevronRight,
+  User,
+} from "lucide-react";
 
-const STAGES = ["new", "qualified", "proposal", "negotiation", "closed-won", "closed-lost"];
+const STAGES = ["new", "contacted", "qualified", "proposal", "negotiation", "closed_won", "closed_lost"];
 const PAGE_SIZE = 20;
 
+const STAGE_CONFIG: Record<string, { color: string; bg: string; dot: string }> = {
+  new:          { color: "text-slate-400", bg: "bg-slate-100 dark:bg-slate-800", dot: "bg-slate-400" },
+  contacted:    { color: "text-indigo-500", bg: "bg-indigo-50 dark:bg-indigo-900/30", dot: "bg-indigo-500" },
+  qualified:    { color: "text-blue-500", bg: "bg-blue-50 dark:bg-blue-900/30", dot: "bg-blue-500" },
+  proposal:     { color: "text-amber-500", bg: "bg-amber-50 dark:bg-amber-900/30", dot: "bg-amber-500" },
+  negotiation:  { color: "text-orange-500", bg: "bg-orange-50 dark:bg-orange-900/30", dot: "bg-orange-500" },
+  closed_won:   { color: "text-emerald-500", bg: "bg-emerald-50 dark:bg-emerald-900/30", dot: "bg-emerald-500" },
+  closed_lost:  { color: "text-red-400", bg: "bg-red-50 dark:bg-red-900/30", dot: "bg-red-400" },
+};
+
+const SCORE_CONFIG = {
+  hot:  { bg: "bg-red-100 dark:bg-red-900/30", text: "text-red-600 dark:text-red-400", bar: "bg-red-500", label: "Hot" },
+  warm: { bg: "bg-yellow-100 dark:bg-yellow-900/30", text: "text-yellow-600 dark:text-yellow-400", bar: "bg-yellow-500", label: "Warm" },
+  cold: { bg: "bg-slate-100 dark:bg-slate-800", text: "text-slate-500 dark:text-slate-400", bar: "bg-slate-400", label: "Cold" },
+};
+
+function scoreLabel(score: number): "hot" | "warm" | "cold" {
+  if (score >= 70) return "hot";
+  if (score >= 40) return "warm";
+  return "cold";
+}
+
+// ── Types ────────────────────────────────────────────────────────
 interface Lead {
   id: string;
   name: string;
   email: string | null;
+  company: string | null;
+  phone: string | null;
   stage: string | null;
+  score: number | null;
+  source: string | null;
+  tags: string[] | null;
   createdAt: string | Date;
 }
 
@@ -29,6 +70,58 @@ interface Props {
   canManage: boolean;
 }
 
+// ── Sub-components ───────────────────────────────────────────────
+
+function StageBadge({ stage }: { stage: string | null }) {
+  const s = stage || "new";
+  const cfg = STAGE_CONFIG[s] ?? STAGE_CONFIG.new;
+  return (
+    <span className={cn("inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-medium", cfg.bg, cfg.color)}>
+      <span className={cn("size-1.5 rounded-full", cfg.dot)} />
+      {s.replace("_", " ")}
+    </span>
+  );
+}
+
+function ScoreDisplay({ score, scoring }: { score: number | null; scoring?: boolean }) {
+  if (scoring) {
+    return <span className="text-[11px] text-text-muted animate-pulse">Scoring…</span>;
+  }
+  if (score == null) return null;
+  const label = scoreLabel(score);
+  const cfg = SCORE_CONFIG[label];
+  return (
+    <div className="flex items-center gap-2">
+      <div className="flex-1 h-1.5 rounded-full bg-bg-subtle overflow-hidden">
+        <div
+          className={cn("h-full rounded-full transition-all duration-500", cfg.bar)}
+          style={{ width: `${score}%` }}
+        />
+      </div>
+      <span className={cn("text-[11px] font-semibold tabular-nums", cfg.text)}>{score}</span>
+    </div>
+  );
+}
+
+function TagsList({ tags }: { tags: string[] | null }) {
+  if (!tags || tags.length === 0) return null;
+  const show = tags.slice(0, 3);
+  return (
+    <div className="flex flex-wrap gap-1">
+      {show.map((t) => (
+        <span key={t} className="inline-flex rounded-md bg-bg-subtle px-1.5 py-0.5 text-[10px] text-text-muted font-medium">
+          {t}
+        </span>
+      ))}
+      {tags.length > 3 && (
+        <span className="text-[10px] text-text-muted">+{tags.length - 3}</span>
+      )}
+    </div>
+  );
+}
+
+// ── Main Component ───────────────────────────────────────────────
+
 export function LeadTableClient({ initialLeads, initialTotal, orgSlug, canManage }: Props) {
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
@@ -36,10 +129,11 @@ export function LeadTableClient({ initialLeads, initialTotal, orgSlug, canManage
   const [stage, setStage] = useState("");
   const [sortBy, setSortBy] = useState("createdAt");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [aiScores, setAiScores] = useState<Map<string, { score: number; label: string }>>(new Map());
   const [scoringIds, setScoringIds] = useState<Set<string>>(new Set());
 
-  // Create dialog state
+  // Create dialog
   const [createOpen, setCreateOpen] = useState(false);
   const [newName, setNewName] = useState("");
   const [newEmail, setNewEmail] = useState("");
@@ -63,7 +157,9 @@ export function LeadTableClient({ initialLeads, initialTotal, orgSlug, canManage
       if (!res.ok) throw new Error("Failed to fetch");
       return res.json() as Promise<{ leads: Lead[]; total: number }>;
     },
-    initialData: page === 1 && !search && !stage && sortBy === "createdAt" && sortOrder === "desc" ? { leads: initialLeads, total: initialTotal } : undefined,
+    initialData: page === 1 && !search && !stage && sortBy === "createdAt" && sortOrder === "desc"
+      ? { leads: initialLeads, total: initialTotal }
+      : undefined,
   });
 
   const leads = data?.leads ?? [];
@@ -90,7 +186,7 @@ export function LeadTableClient({ initialLeads, initialTotal, orgSlug, canManage
     },
   });
 
-  // ── AI Scoring ────────────────────────────────────────────────
+  // AI Scoring
   const scoreLead = useCallback(async (leadId: string) => {
     if (scoringIds.has(leadId)) return;
     setScoringIds((prev) => new Set(prev).add(leadId));
@@ -120,7 +216,7 @@ export function LeadTableClient({ initialLeads, initialTotal, orgSlug, canManage
     for (const lead of leads) scoreLead(lead.id);
   }, [leads, scoreLead]);
 
-  // ── Sorting ───────────────────────────────────────────────────
+  // Sorting
   const toggleSort = useCallback((column: string) => {
     setSortBy((prev) => {
       if (prev === column) {
@@ -133,13 +229,6 @@ export function LeadTableClient({ initialLeads, initialTotal, orgSlug, canManage
     setPage(1);
   }, []);
 
-  const SortHeader = ({ column, children }: { column: string; children: React.ReactNode }) => (
-    <button onClick={() => toggleSort(column)} className="flex items-center gap-1 hover:text-gray-900 transition-colors">
-      {children}
-      {sortBy === column && <span className="text-[10px]">{sortOrder === "asc" ? "▲" : "▼"}</span>}
-    </button>
-  );
-
   // Debounced search
   const debouncedSearch = useCallback((value: string) => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -149,10 +238,171 @@ export function LeadTableClient({ initialLeads, initialTotal, orgSlug, canManage
     }, 300);
   }, []);
 
+  const SortIcon = ({ column }: { column: string }) => {
+    if (sortBy !== column) return null;
+    return <span className="text-[10px] ml-0.5">{sortOrder === "asc" ? "▲" : "▼"}</span>;
+  };
+
+  // ── Render helpers ───────────────────────────────────────────
+
+  const effectiveScore = (lead: Lead) => {
+    const ai = aiScores.get(lead.id);
+    if (ai) return ai.score;
+    return lead.score ?? null;
+  };
+
+  const renderCard = (lead: Lead, index: number) => {
+    const score = effectiveScore(lead);
+    const isScoring = scoringIds.has(lead.id);
+
+    return (
+      <Link
+        key={lead.id}
+        href={`/leads/${lead.id}`}
+        className="glass-card group p-5 flex flex-col gap-3 hover:-translate-y-0.5 hover:shadow-lg hover:border-accent/20 transition-all duration-200 animate-slide-up"
+        style={{ animationDelay: `${index * 40}ms` }}
+      >
+        {/* Header: Avatar + identity */}
+        <div className="flex items-start gap-3">
+          <Avatar name={lead.name} size="md" seed={lead.email || lead.name} />
+          <div className="flex-1 min-w-0">
+            <h3 className="text-sm font-semibold text-text truncate group-hover:text-accent transition-colors">
+              {lead.name}
+            </h3>
+            {lead.company ? (
+              <p className="text-[12px] text-text-muted truncate flex items-center gap-1 mt-0.5">
+                <Building2 className="size-3 shrink-0" />
+                {lead.company}
+              </p>
+            ) : (
+              <p className="text-[12px] text-text-muted truncate mt-0.5">{lead.email || "No email"}</p>
+            )}
+          </div>
+          <ChevronRight className="size-4 text-text-muted opacity-0 group-hover:opacity-100 transition-all shrink-0 -translate-x-1 group-hover:translate-x-0" />
+        </div>
+
+        {/* Stage + Score */}
+        <div className="flex items-center gap-3">
+          <StageBadge stage={lead.stage} />
+          {score != null || isScoring ? (
+            <div className="flex-1 min-w-0">
+              <ScoreDisplay score={score} scoring={isScoring} />
+            </div>
+          ) : (
+            <button
+              onClick={(e) => { e.preventDefault(); scoreLead(lead.id); }}
+              className="text-[11px] text-accent hover:underline font-medium flex items-center gap-1 ml-auto"
+            >
+              <Sparkles className="size-3" /> Score
+            </button>
+          )}
+        </div>
+
+        {/* Info row */}
+        <div className="flex items-center gap-3 text-[11px] text-text-muted">
+          {lead.email && (
+            <span className="flex items-center gap-1 truncate">
+              <Mail className="size-3 shrink-0" />
+              <span className="truncate">{lead.email}</span>
+            </span>
+          )}
+          {lead.source && (
+            <span className="flex items-center gap-1 shrink-0">
+              <Hash className="size-3" />
+              {lead.source}
+            </span>
+          )}
+        </div>
+
+        {/* Tags + Time */}
+        <div className="flex items-center justify-between mt-auto pt-1 border-t border-border/50">
+          <TagsList tags={lead.tags} />
+          <span className="text-[10px] text-text-muted flex items-center gap-1 shrink-0 ml-2">
+            <Calendar className="size-3" />
+            {relativeTime(lead.createdAt)}
+          </span>
+        </div>
+      </Link>
+    );
+  };
+
+  const renderListRow = (lead: Lead, index: number) => {
+    const score = effectiveScore(lead);
+    const isScoring = scoringIds.has(lead.id);
+    const rowBg = index % 2 === 0 ? "bg-transparent" : "bg-bg-subtle/50";
+
+    return (
+      <Link
+        key={lead.id}
+        href={`/leads/${lead.id}`}
+        className={cn(
+          "group flex items-center gap-4 px-4 py-3 rounded-xl border border-transparent hover:border-accent/20 hover:bg-bg-subtle/70 transition-all duration-150",
+          "border-l-2 hover:border-l-accent",
+          rowBg,
+        )}
+      >
+        {/* Avatar + Name */}
+        <div className="flex items-center gap-3 min-w-0 w-48">
+          <Avatar name={lead.name} size="sm" seed={lead.email || lead.name} />
+          <div className="min-w-0">
+            <p className="text-[13px] font-semibold text-text truncate group-hover:text-accent transition-colors">
+              {lead.name}
+            </p>
+            {lead.company && (
+              <p className="text-[11px] text-text-muted truncate">{lead.company}</p>
+            )}
+          </div>
+        </div>
+
+        {/* Stage */}
+        <div className="w-28 shrink-0">
+          <StageBadge stage={lead.stage} />
+        </div>
+
+        {/* Score or Score button */}
+        <div className="w-32 shrink-0">
+          {score != null || isScoring ? (
+            <ScoreDisplay score={score} scoring={isScoring} />
+          ) : (
+            <button
+              onClick={(e) => { e.preventDefault(); scoreLead(lead.id); }}
+              className="text-[11px] text-accent hover:underline font-medium flex items-center gap-1"
+            >
+              <Sparkles className="size-3" /> Score
+            </button>
+          )}
+        </div>
+
+        {/* Email */}
+        <div className="flex-1 min-w-0 text-[12px] text-text-muted truncate">
+          {lead.email || "—"}
+        </div>
+
+        {/* Source */}
+        <div className="w-24 shrink-0 text-[12px] text-text-muted">
+          {lead.source || "—"}
+        </div>
+
+        {/* Tags */}
+        <div className="w-28 shrink-0">
+          <TagsList tags={lead.tags} />
+        </div>
+
+        {/* Date */}
+        <div className="w-20 shrink-0 text-right text-[11px] text-text-muted">
+          {relativeTime(lead.createdAt)}
+        </div>
+      </Link>
+    );
+  };
+
+  // ── Main Render ──────────────────────────────────────────────
+
   return (
     <div>
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-2xl font-bold text-text">Leads</h2>
+      {/* ── Top Toolbar ── */}
+      <div className="flex items-center justify-between mb-5">
+        <h2 className="text-xl font-bold tracking-tight text-text">Leads</h2>
         <div className="flex items-center gap-2">
           <a
             href={`/api/orgs/${orgSlug}/leads/export`}
@@ -168,35 +418,62 @@ export function LeadTableClient({ initialLeads, initialTotal, orgSlug, canManage
                 <DialogTrigger>
                   <Button size="sm">New Lead</Button>
                 </DialogTrigger>
-            <DialogContent title="New Lead">
-              <div className="space-y-4">
-                <Input label="Name *" value={newName} onChange={(e) => setNewName(e.target.value)} disabled={createMutation.isPending} />
-                <Input label="Email" type="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} disabled={createMutation.isPending} />
-                <div>
-                  <label className="block text-sm font-medium mb-1">Stage</label>
-                  <Select value={newStage} onValueChange={setNewStage}>
-                    <SelectTrigger />
-                    <SelectContent>
-                      {STAGES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="flex justify-end gap-2">
-                  <Button variant="outline" onClick={() => setCreateOpen(false)} disabled={createMutation.isPending}>Cancel</Button>
-                  <Button onClick={() => createMutation.mutate()} disabled={createMutation.isPending || !newName.trim()}>
-                    {createMutation.isPending ? "Creating..." : "Create"}
-                  </Button>
-                </div>
-              </div>
-            </DialogContent>
-          </Dialog>
-          </>
-        )}
-      </div>
+                <DialogContent title="New Lead">
+                  <div className="space-y-4">
+                    <Input label="Name *" value={newName} onChange={(e) => setNewName(e.target.value)} disabled={createMutation.isPending} />
+                    <Input label="Email" type="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} disabled={createMutation.isPending} />
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Stage</label>
+                      <Select value={newStage} onValueChange={setNewStage}>
+                        <SelectTrigger />
+                        <SelectContent>
+                          {STAGES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="flex justify-end gap-2">
+                      <Button variant="outline" onClick={() => setCreateOpen(false)} disabled={createMutation.isPending}>Cancel</Button>
+                      <Button onClick={() => createMutation.mutate()} disabled={createMutation.isPending || !newName.trim()}>
+                        {createMutation.isPending ? "Creating..." : "Create"}
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </>
+          )}
+          {/* View Toggle */}
+          <div className="flex rounded-lg border border-border bg-bg-subtle p-0.5 ml-2">
+            <button
+              onClick={() => setViewMode("grid")}
+              className={cn(
+                "flex items-center justify-center size-8 rounded-md transition-all duration-150",
+                viewMode === "grid"
+                  ? "bg-bg-card text-accent shadow-sm"
+                  : "text-text-muted hover:text-text",
+              )}
+              title="Card view"
+            >
+              <LayoutGrid className="size-4" />
+            </button>
+            <button
+              onClick={() => setViewMode("list")}
+              className={cn(
+                "flex items-center justify-center size-8 rounded-md transition-all duration-150",
+                viewMode === "list"
+                  ? "bg-bg-card text-accent shadow-sm"
+                  : "text-text-muted hover:text-text",
+              )}
+              title="List view"
+            >
+              <List className="size-4" />
+            </button>
+          </div>
+        </div>
       </div>
 
-      {/* Filters */}
-      <div className="flex gap-3 mb-4">
+      {/* ── Filters + Sort ── */}
+      <div className="flex items-center gap-3 mb-5">
         <div className="flex-1">
           <Input
             placeholder="Search by name or email..."
@@ -204,120 +481,128 @@ export function LeadTableClient({ initialLeads, initialTotal, orgSlug, canManage
             onChange={(e) => debouncedSearch(e.target.value)}
           />
         </div>
-        <div className="w-44">
+        <div className="w-40">
           <Select value={stage} onValueChange={setStage}>
             <SelectTrigger placeholder="All stages" />
             <SelectContent>
               <SelectItem value="">All stages</SelectItem>
-              {STAGES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+              {STAGES.map((s) => <SelectItem key={s} value={s}>{s.replace(/_/g, " ")}</SelectItem>)}
             </SelectContent>
           </Select>
         </div>
+        <div className="w-36">
+          <Select value={sortBy} onValueChange={(v) => { setSortBy(v); setPage(1); }}>
+            <SelectTrigger placeholder="Sort by" />
+            <SelectContent>
+              <SelectItem value="createdAt">Created</SelectItem>
+              <SelectItem value="name">Name</SelectItem>
+              <SelectItem value="email">Email</SelectItem>
+              <SelectItem value="stage">Stage</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <button
+          onClick={() => { setSortOrder((o) => (o === "asc" ? "desc" : "asc")); setPage(1); }}
+          className="shrink-0 size-9 flex items-center justify-center rounded-lg border border-border text-text-muted hover:text-text hover:bg-bg-subtle transition-all text-xs"
+          title={sortOrder === "asc" ? "Ascending" : "Descending"}
+        >
+          {sortOrder === "asc" ? "↑" : "↓"}
+        </button>
+        <button
+          onClick={scoreAllLeads}
+          className="shrink-0 inline-flex items-center gap-1.5 rounded-lg border border-accent/30 bg-accent/5 text-accent text-xs font-medium px-3 py-2 hover:bg-accent/10 transition-all"
+        >
+          <Sparkles className="size-3.5" />
+          Score all
+        </button>
       </div>
 
-      {/* Error state */}
+      {/* ── Error ── */}
       {error && (
-        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-center mb-4">
-          <p className="text-sm text-red-600 mb-2">{error instanceof Error ? error.message : "Failed to load leads"}</p>
+        <div className="rounded-xl border border-red-200 bg-red-50 dark:bg-red-950/20 p-4 text-center mb-5">
+          <p className="text-sm text-red-600 dark:text-red-400 mb-2">{error instanceof Error ? error.message : "Failed to load leads"}</p>
           <Button variant="outline" size="sm" onClick={() => queryClient.invalidateQueries({ queryKey: ["leads", orgSlug] })}>Retry</Button>
         </div>
       )}
 
-      {/* Table */}
+      {/* ── Content ── */}
       {!error && (
         <>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead><SortHeader column="name">Name</SortHeader></TableHead>
-                <TableHead><SortHeader column="email">Email</SortHeader></TableHead>
-                <TableHead><SortHeader column="stage">Stage</SortHeader></TableHead>
-                <TableHead>
-                  <div className="flex items-center gap-1">
-                    AI Score
-                    <button onClick={scoreAllLeads} className="text-[10px] text-blue-600 hover:underline ml-1">(all)</button>
+          {isLoading && leads.length === 0 ? (
+            /* Loading skeleton */
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="glass-card p-5 animate-pulse">
+                  <div className="flex items-start gap-3">
+                    <div className="size-11 rounded-full bg-bg-subtle" />
+                    <div className="flex-1 space-y-2">
+                      <div className="h-3 w-24 rounded bg-bg-subtle" />
+                      <div className="h-2.5 w-32 rounded bg-bg-subtle" />
+                    </div>
                   </div>
-                </TableHead>
-                <TableHead><SortHeader column="createdAt">Created</SortHeader></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoading && leads.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center py-8 text-gray-400">
-                    Loading...
-                  </TableCell>
-                </TableRow>
-              ) : leads.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center py-8 text-gray-500">
-                    {search || stage ? "No leads match your search." : "No leads yet. Create your first lead to get started."}
-                  </TableCell>
-                </TableRow>
-              ) : (
-                leads.map((lead) => (
-                  <TableRow key={lead.id}>
-                    <TableCell>
-                      <Link href={`/leads/${lead.id}`} className="text-blue-600 hover:underline font-medium">
-                        {lead.name}
-                      </Link>
-                    </TableCell>
-                    <TableCell className="text-gray-500">{lead.email || "—"}</TableCell>
-                    <TableCell>
-                      <Badge variant={lead.stage === "new" ? "default" : "success"}>{lead.stage || "new"}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      {aiScores.has(lead.id) ? (
-                        <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
-                          aiScores.get(lead.id)!.label === "hot" ? "bg-red-100 text-red-700" :
-                          aiScores.get(lead.id)!.label === "warm" ? "bg-yellow-100 text-yellow-700" :
-                          "bg-gray-100 text-gray-500"
-                        }`}>
-                          {aiScores.get(lead.id)!.score}
-                        </span>
-                      ) : scoringIds.has(lead.id) ? (
-                        <span className="text-xs text-gray-400">Scoring...</span>
-                      ) : (
-                        <button onClick={() => scoreLead(lead.id)} className="text-xs text-blue-600 hover:underline">
-                          Score
-                        </button>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-gray-500 text-xs">
-                      {new Date(lead.createdAt).toLocaleDateString()}
-                    </TableCell>
-                  </TableRow>
-                ))
+                  <div className="mt-3 space-y-2">
+                    <div className="h-2 w-full rounded bg-bg-subtle" />
+                    <div className="h-2 w-2/3 rounded bg-bg-subtle" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : leads.length === 0 ? (
+            /* Empty state */
+            <div className="glass-card p-16 text-center">
+              <div className="size-16 rounded-2xl bg-accent-soft flex items-center justify-center mx-auto mb-4">
+                <User className="size-8 text-accent opacity-50" />
+              </div>
+              <h3 className="text-lg font-semibold text-text mb-2">
+                {search || stage ? "No leads match your search" : "No leads yet"}
+              </h3>
+              <p className="text-sm text-text-secondary max-w-sm mx-auto mb-5">
+                {search || stage
+                  ? "Try adjusting your filters or search terms."
+                  : "Create your first lead to start tracking prospects and running AI-powered outreach."}
+              </p>
+              {!search && !stage && canManage && (
+                <Button onClick={() => setCreateOpen(true)}>Create your first lead</Button>
               )}
-            </TableBody>
-          </Table>
+            </div>
+          ) : viewMode === "grid" ? (
+            /* ── Grid View ── */
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {leads.map((lead, i) => renderCard(lead, i))}
+            </div>
+          ) : (
+            /* ── List View ── */
+            <div className="space-y-0.5">
+              {/* List header */}
+              <div className="flex items-center gap-4 px-4 py-2 text-[11px] font-semibold text-text-muted uppercase tracking-wider">
+                <span className="w-48">Lead</span>
+                <span className="w-28">Stage</span>
+                <span className="w-32">Score</span>
+                <span className="flex-1">Email</span>
+                <span className="w-24">Source</span>
+                <span className="w-28">Tags</span>
+                <span className="w-20 text-right">Date</span>
+              </div>
+              {leads.map((lead, i) => renderListRow(lead, i))}
+            </div>
+          )}
 
           {/* Loading overlay for refetches */}
           {isLoading && leads.length > 0 && (
-            <div className="text-center py-2 text-xs text-gray-400">Updating...</div>
+            <div className="text-center py-2 text-xs text-text-muted animate-pulse">Updating...</div>
           )}
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="flex items-center justify-between mt-4 text-sm">
-              <span className="text-gray-500">
-                Page {page} of {totalPages} ({total} total)
+            <div className="flex items-center justify-between mt-6 text-sm">
+              <span className="text-text-muted">
+                Page {page} of {totalPages} &middot; {total} leads
               </span>
               <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={page <= 1}
-                  onClick={() => setPage(page - 1)}
-                >
+                <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage(page - 1)}>
                   Previous
                 </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={page >= totalPages}
-                  onClick={() => setPage(page + 1)}
-                >
+                <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage(page + 1)}>
                   Next
                 </Button>
               </div>
