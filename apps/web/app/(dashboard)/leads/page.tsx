@@ -22,11 +22,13 @@ export default async function LeadsPage() {
   const canManage = ["owner", "admin", "operator"].includes(membership.role);
 
   return (
-    <LeadTableClient
-      initialLeads={JSON.parse(JSON.stringify(initialLeads))}
-      initialTotal={total}
-      orgSlug={session.orgSlug}
-      canManage={canManage}
-    />
+    <div className="p-4 lg:p-6">
+      <LeadTableClient
+        initialLeads={JSON.parse(JSON.stringify(initialLeads))}
+        initialTotal={total}
+        orgSlug={session.orgSlug}
+        canManage={canManage}
+      />
+    </div>
   );
 }

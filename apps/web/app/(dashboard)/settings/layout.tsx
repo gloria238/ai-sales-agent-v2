@@ -12,7 +12,7 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
   const pathname = usePathname();
 
   return (
-    <div>
+    <div className="p-4 lg:p-6">
       <h2 className="text-2xl font-bold mb-6 text-zinc-900 dark:text-white">Settings</h2>
       <div className="flex gap-4 mb-6 border-b border-zinc-200 dark:border-zinc-800">
         {tabs.map((tab) => {

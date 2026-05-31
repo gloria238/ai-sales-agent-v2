@@ -47,7 +47,7 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
     "bg-blue-500/10 text-blue-400 border-blue-500/20";
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6">
+    <div className="max-w-6xl mx-auto space-y-6 p-4 lg:p-6">
       <Link href="/leads" className="flex items-center gap-1 text-sm text-text-muted hover:text-text transition-colors">
         <ArrowLeft className="size-3.5" /> Back to Leads
       </Link>

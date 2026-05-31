@@ -53,17 +53,41 @@ async function main() {
     await prisma.organization.delete({ where: { id: existingOrg.id } });
     const existingUser = await prisma.user.findUnique({ where: { email: DEMO_EMAIL } });
     if (existingUser) await prisma.user.delete({ where: { id: existingUser.id } });
+    // Also clean up quick-demo-login user from any prior run
+    const demoLoginUserOld = await prisma.user.findUnique({ where: { email: "demo@salesagent.ai" } });
+    if (demoLoginUserOld) {
+      const demoOrg = await prisma.organization.findUnique({ where: { slug: "demo-workspace" } });
+      if (demoOrg) {
+        await prisma.membership.deleteMany({ where: { organizationId: demoOrg.id } });
+        await prisma.organization.delete({ where: { id: demoOrg.id } }).catch(() => {});
+      }
+      await prisma.membership.deleteMany({ where: { userId: demoLoginUserOld.id } });
+      await prisma.user.delete({ where: { id: demoLoginUserOld.id } });
+    }
   }
 
   // Create org
   const org = await prisma.organization.create({ data: { name: ORG_NAME, slug: ORG_SLUG } });
 
-  // Create user
+  // Create primary user
   const hash = await bcrypt.hash(DEMO_PASSWORD, 10);
   const user = await prisma.user.create({
     data: { email: DEMO_EMAIL, name: "Demo User", passwordHash: hash, emailVerified: true },
   });
   await prisma.membership.create({ data: { organizationId: org.id, userId: user.id, role: "owner" } });
+
+  // Create quick-demo-login user (demo@salesagent.ai) — same org
+  const demoHash = await bcrypt.hash("demo123456", 10);
+  const demoUser = await prisma.user.upsert({
+    where: { email: "demo@salesagent.ai" },
+    update: {},
+    create: { email: "demo@salesagent.ai", name: "Demo Explorer", passwordHash: demoHash, emailVerified: true },
+  });
+  await prisma.membership.upsert({
+    where: { organizationId_userId: { organizationId: org.id, userId: demoUser.id } },
+    update: {},
+    create: { organizationId: org.id, userId: demoUser.id, role: "owner" },
+  });
 
   // Create 3 AI SDR agents
   const agents = await Promise.all([

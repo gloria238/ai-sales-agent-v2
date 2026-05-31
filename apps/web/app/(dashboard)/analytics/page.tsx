@@ -58,7 +58,7 @@ export default async function AnalyticsPage() {
   const maxStageCount = Math.max(1, ...stages.map((s) => stageMap[s.key] ?? 0));
 
   return (
-    <div className="max-w-7xl mx-auto space-y-8 animate-slide-up">
+    <div className="max-w-7xl mx-auto space-y-8 animate-slide-up p-4 lg:p-6">
       <div>
         <h1 className="text-xl font-bold tracking-tight text-text">Analytics</h1>
         <p className="text-sm text-text-secondary mt-1">Pipeline, campaign, and AI performance metrics</p>

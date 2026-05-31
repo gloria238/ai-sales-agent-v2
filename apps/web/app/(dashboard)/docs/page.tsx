@@ -76,7 +76,7 @@ export default async function DocsPage() {
   const sections = ["Auth", "Organizations", "Leads", "Conversations", "Agents", "Campaigns", "Scripts", "Members & Settings", "AI"];
 
   return (
-    <div className="max-w-4xl">
+    <div className="max-w-4xl p-4 lg:p-6">
       <h1 className="text-2xl font-bold text-zinc-900 dark:text-white mb-2">API Reference</h1>
       <p className="text-zinc-500 dark:text-zinc-400 mb-8">
         {endpoints.length} endpoints across auth, leads, conversations, agents, campaigns, and AI.
