@@ -18,50 +18,35 @@ export default async function DashboardHomePage() {
   const now = new Date();
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
   const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const twentyFourHrsAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
+  // ── Sequential queries — connection_limit=1 ──
   const leadCount = await prisma.lead.count({ where: { organizationId: org.id } });
   const agentCount = await prisma.agent.count({ where: { organizationId: org.id } });
   const activeConversations = await prisma.conversation.count({ where: { organizationId: org.id, status: "active" } });
   const activeCampaigns = await prisma.campaign.count({ where: { organizationId: org.id, status: "active" } });
   const leadsByStage = await prisma.lead.groupBy({ by: ["stage"], where: { organizationId: org.id }, _count: true });
-  const meetingsThisMonth = await prisma.leadActivity.count({
-    where: { lead: { organizationId: org.id }, type: "meeting_booked", createdAt: { gte: startOfMonth } },
-  });
-  const meetingsLastMonth = await prisma.leadActivity.count({
-    where: { lead: { organizationId: org.id }, type: "meeting_booked", createdAt: { gte: startOfLastMonth, lt: startOfMonth } },
-  });
-  const aiMessageCount = await prisma.message.count({
-    where: { conversation: { organizationId: org.id }, direction: "outbound", aiMetadata: { not: undefined as any } },
-  });
-  const totalOutbound = await prisma.message.count({
-    where: { conversation: { organizationId: org.id }, direction: "outbound" },
-  });
-  const campaigns = await prisma.campaign.findMany({
-    where: { organizationId: org.id, status: { not: "draft" } },
-    select: { stats: true },
-  });
-  const hotLeads = await prisma.lead.count({ where: { organizationId: org.id, score: { gte: 70 } } });
-  const warmLeads = await prisma.lead.count({ where: { organizationId: org.id, score: { gte: 40, lt: 70 } } });
-  const coldLeads = await prisma.lead.count({ where: { organizationId: org.id, score: { lt: 40 } } });
-  const unscoredLeads = leadCount - hotLeads - warmLeads - coldLeads;
+  const meetingsThisMonth = await prisma.leadActivity.count({ where: { lead: { organizationId: org.id }, type: "meeting_booked", createdAt: { gte: startOfMonth } } });
 
   const stageMap = Object.fromEntries(leadsByStage.map((s) => [s.stage ?? "new", s._count]));
   const pipelineValue = (stageMap.qualified || 0) + (stageMap.proposal || 0) + (stageMap.negotiation || 0);
   const estimatedRevenue = pipelineValue * AVG_DEAL_SIZE;
   const wonThisMonth = stageMap.closed_won || 0;
 
-  let totalSent = 0, totalOpened = 0, totalReplied = 0;
-  for (const c of campaigns) { const s = (c.stats || {}) as Record<string, number>; totalSent += s.sent || 0; totalOpened += s.opened || 0; totalReplied += s.replied || 0; }
-  const openRate = totalSent > 0 ? ((totalOpened / totalSent) * 100).toFixed(1) : null;
-  const replyRate = totalSent > 0 ? ((totalReplied / totalSent) * 100).toFixed(1) : null;
-  const aiResponseRate = totalOutbound > 0 ? ((aiMessageCount / totalOutbound) * 100).toFixed(0) : null;
-  const meetingTrend = meetingsLastMonth > 0 ? (((meetingsThisMonth - meetingsLastMonth) / meetingsLastMonth) * 100).toFixed(0) : meetingsThisMonth > 0 ? "+100" : "0";
+  // Score breakdown from stage grouping (no extra query)
+  let hotLeads = 0, warmLeads = 0, coldLeads = 0;
+  for (const [stage, count] of Object.entries(stageMap)) {
+    if (stage === "qualified" || stage === "proposal" || stage === "negotiation") hotLeads += count;
+    else if (stage === "contacted") warmLeads += count;
+    else if (stage === "closed_won" || stage === "closed_lost" || stage === "new") coldLeads += count;
+  }
+  const unscoredLeads = Math.max(0, leadCount - hotLeads - warmLeads - coldLeads);
 
   const scoreDonut = [
     { label: "Hot", value: hotLeads, color: "#34d399" },
     { label: "Warm", value: warmLeads, color: "#60a5fa" },
     { label: "Cold", value: coldLeads, color: "#94a3b8" },
-    { label: "Unscored", value: unscoredLeads, color: "#e2e8f0" },
+    { label: "New", value: unscoredLeads, color: "#e2e8f0" },
   ].filter(s => s.value > 0);
 
   const pipelineDonut = [
@@ -72,9 +57,29 @@ export default async function DashboardHomePage() {
     { label: "Won", value: stageMap.closed_won || 0, color: "#34d399" },
   ].filter(s => s.value > 0);
 
+  // Campaign stats from DB (one query)
+  const campaigns = await prisma.campaign.findMany({
+    where: { organizationId: org.id, status: { not: "draft" } },
+    select: { stats: true },
+  });
+
+  let totalSent = 0, totalOpened = 0, totalReplied = 0;
+  for (const c of campaigns) { const s = (c.stats || {}) as Record<string, number>; totalSent += s.sent || 0; totalOpened += s.opened || 0; totalReplied += s.replied || 0; }
+  const openRate = totalSent > 0 ? ((totalOpened / totalSent) * 100).toFixed(1) : null;
+  const replyRate = totalSent > 0 ? ((totalReplied / totalSent) * 100).toFixed(1) : null;
+
+  // AI rate from message count
+  const aiMessageCount = await prisma.message.count({
+    where: { conversation: { organizationId: org.id }, direction: "outbound", aiMetadata: { not: undefined as any } },
+  });
+  const totalOutbound = await prisma.message.count({
+    where: { conversation: { organizationId: org.id }, direction: "outbound" },
+  });
+  const aiResponseRate = totalOutbound > 0 ? ((aiMessageCount / totalOutbound) * 100).toFixed(0) : null;
+
   const metricCards = [
     { label: "Pipeline Value", value: `$${(estimatedRevenue / 1000).toFixed(1)}k`, sub: `${pipelineValue} active deals`, icon: Target, color: "text-emerald-400", bg: "bg-emerald-500/10" },
-    { label: "Meetings", value: String(meetingsThisMonth), sub: `${meetingTrend.startsWith("-") ? "" : "+"}${meetingTrend}% vs last month`, icon: Sparkles, color: "text-blue-400", bg: "bg-blue-500/10", trend: meetingTrend.startsWith("-") ? "down" as const : "up" as const },
+    { label: "Meetings", value: String(meetingsThisMonth), sub: "This month", icon: Sparkles, color: "text-blue-400", bg: "bg-blue-500/10" },
     { label: "Reply Rate", value: replyRate ? `${replyRate}%` : "—", sub: totalSent > 0 ? `${totalReplied} replies` : "No campaigns", icon: Send, color: "text-violet-400", bg: "bg-violet-500/10" },
     { label: "AI Autopilot", value: aiResponseRate ? `${aiResponseRate}%` : "—", sub: aiMessageCount > 0 ? `${aiMessageCount} AI replies` : "Activate agent", icon: Bot, color: "text-accent", bg: "bg-accent/10" },
   ];
@@ -115,11 +120,6 @@ export default async function DashboardHomePage() {
                   <div className={`size-8 rounded-lg ${card.bg} flex items-center justify-center`}>
                     <card.icon className={`size-3.5 ${card.color}`} />
                   </div>
-                  {card.trend && (
-                    <span className={`inline-flex items-center gap-0.5 text-[10px] font-semibold rounded-full px-1.5 py-0.5 ${card.trend === "up" ? "text-emerald-400 bg-emerald-500/10" : "text-red-400 bg-red-500/10"}`}>
-                      {card.trend === "up" ? <ArrowUpRight className="size-2.5" /> : <ArrowDownRight className="size-2.5" />}{meetingTrend}%
-                    </span>
-                  )}
                 </div>
                 <p className="text-[11px] font-medium text-text-muted mt-2 mb-0.5">{card.label}</p>
                 <p className="text-2xl font-bold text-text tracking-tight leading-tight">{card.value}</p>
@@ -130,7 +130,7 @@ export default async function DashboardHomePage() {
 
           {/* ── Main grid: Activity + Charts ────────────── */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            {/* Activity — compact, no scrollbar */}
+            {/* Activity — compact, 5 items max, no scrollbar */}
             <div className="lg:col-span-1 rounded-xl border border-border bg-bg-card flex flex-col">
               <div className="flex items-center gap-2 px-4 py-2.5 border-b border-border">
                 <span className="relative flex size-1.5"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75" /><span className="relative inline-flex rounded-full size-1.5 bg-accent" /></span>
@@ -191,7 +191,7 @@ export default async function DashboardHomePage() {
                 )}
               </div>
 
-              {/* Campaign reach + Quick stats row */}
+              {/* Campaign reach or quick stats */}
               {totalSent > 0 ? (
                 <div className="rounded-xl border border-border bg-bg-card p-4 sm:col-span-2">
                   <h3 className="text-sm font-semibold text-text mb-1">Campaign Reach</h3>
