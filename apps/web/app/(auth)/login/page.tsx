@@ -28,7 +28,7 @@ export default function LoginPage() {
         return;
       }
       toast.success("Welcome back!");
-      router.push("/");
+      router.push("/home");
       router.refresh();
     } catch {
       setError("Network error — please try again");

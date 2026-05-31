@@ -55,7 +55,7 @@ export async function GET(request: Request) {
     logInfo(ctx, "Login verified", { userId: user.id, orgSlug: membership.organization.slug });
 
     // Redirect to home (dashboard) with JWT cookie set
-    const response = NextResponse.redirect(new URL("/", request.url));
+    const response = NextResponse.redirect(new URL("/home", request.url));
     response.cookies.set("session", jwt, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
