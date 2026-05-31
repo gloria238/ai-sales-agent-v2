@@ -187,6 +187,16 @@ async function main() {
     const lead = await prisma.lead.create({
       data: { organizationId: org.id, name: l.name, email: l.email, company: l.company, stage: l.stage, score: l.score, source: l.source },
     });
+    // Create LeadActivity for every lead
+    const activityData: any = { leadId: lead.id, organizationId: org.id, userId: user.id, userName: "Demo User", type: "created", content: "Lead created" };
+    if (l.stage !== "new") {
+      // Simulate stage progression
+      await prisma.leadActivity.create({ data: { ...activityData, createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) } });
+      if (l.stage === "qualified" || l.stage === "proposal" || l.stage === "negotiation") {
+        await prisma.leadActivity.create({ data: { leadId: lead.id, organizationId: org.id, userId: user.id, userName: "Demo User", type: "stage_change", content: `Moved to ${l.stage}`, metadata: { fromStage: "contacted", toStage: l.stage }, createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000) } });
+      }
+    }
+    await prisma.leadActivity.create({ data: activityData });
     leads.push(lead);
   }
 
@@ -218,10 +228,17 @@ async function main() {
 
   for (let i = 0; i < conversations.length; i++) {
     const conv = conversations[i];
+    const lead = leads.find((l) => l.id === conv.leadId);
     const inbound = inboundMessages[i % inboundMessages.length];
-    await prisma.message.create({
+    const inboundMsg = await prisma.message.create({
       data: { conversationId: conv.id, direction: "inbound", content: inbound, channel: "email" },
     });
+    // Activity: email received
+    if (lead) {
+      await prisma.leadActivity.create({
+        data: { leadId: lead.id, organizationId: org.id, userId: user.id, userName: "Demo User", type: "email_received", content: inbound.slice(0, 200), metadata: { messageId: inboundMsg.id }, createdAt: new Date(Date.now() - (i + 2) * 60 * 60 * 1000) },
+      });
+    }
 
     if (i < 6) {
       // AI draft response
@@ -233,8 +250,12 @@ async function main() {
         "Yes! We support custom domains, multi-tenant workspaces, and team collaboration with 4 role levels. It's designed for agencies and multi-brand teams.",
         "I'd love to show you! How about Thursday at 2pm ET? Here's a calendar link: [demo call]. Looking forward to it!",
       ];
-      await prisma.message.create({
-        data: { conversationId: conv.id, direction: "outbound", content: outbound[i], channel: "email" },
+      const outMsg = await prisma.message.create({
+        data: { conversationId: conv.id, direction: "outbound", content: outbound[i], channel: "email", aiMetadata: { generatedBy: "AI SDR Agent", confidence: 0.85 + Math.random() * 0.1 } },
+      });
+      // Activity: email sent
+      await prisma.leadActivity.create({
+        data: { leadId: conv.leadId, organizationId: org.id, userId: user.id, userName: agents[i % 3].name, type: "email_sent", content: outbound[i].slice(0, 200), metadata: { messageId: outMsg.id }, createdAt: new Date(Date.now() - i * 60 * 60 * 1000) },
       });
     }
   }
@@ -276,6 +297,19 @@ async function main() {
       },
     }),
   ]);
+
+  // Audit logs for activity feed
+  await prisma.auditLog.createMany({
+    data: [
+      { organizationId: org.id, userId: user.id, userName: "Demo User", action: "agent.created", targetType: "Agent", targetId: agents[0].id, metadata: { name: agents[0].name }, createdAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000) },
+      { organizationId: org.id, userId: user.id, userName: "Demo User", action: "agent.created", targetType: "Agent", targetId: agents[1].id, metadata: { name: agents[1].name }, createdAt: new Date(Date.now() - 13 * 24 * 60 * 60 * 1000) },
+      { organizationId: org.id, userId: user.id, userName: "Demo User", action: "agent.created", targetType: "Agent", targetId: agents[2].id, metadata: { name: agents[2].name }, createdAt: new Date(Date.now() - 12 * 24 * 60 * 60 * 1000) },
+      { organizationId: org.id, userId: user.id, userName: "Demo User", action: "lead.imported", targetType: "Lead", metadata: { count: 15 }, createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000) },
+      { organizationId: org.id, userId: user.id, userName: "Demo User", action: "campaign.created", targetType: "Campaign", metadata: { name: "SaaS Founder Q2 Outreach" }, createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000) },
+      { organizationId: org.id, userId: user.id, userName: "Demo User", action: "campaign.started", targetType: "Campaign", metadata: { name: "SaaS Founder Q2 Outreach" }, createdAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000) },
+      { organizationId: org.id, userId: user.id, userName: "Demo User", action: "lead.qualified", targetType: "Lead", metadata: { count: 6 }, createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000) },
+    ],
+  });
 
   // Create 2 campaigns
   await prisma.campaign.create({
