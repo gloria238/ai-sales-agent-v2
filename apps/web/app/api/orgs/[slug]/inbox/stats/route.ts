@@ -15,21 +15,19 @@ export async function GET(req: NextRequest, { params }: { params: { slug: string
 
   const orgId = membership.organizationId;
 
-  const [active, needsReply, todayTotal, qualifiedLeads, activeCampaigns] = await Promise.all([
-    prisma.conversation.count({ where: { organizationId: orgId, status: "active" } }),
-    prisma.conversation.count({
-      where: {
-        organizationId: orgId,
-        status: "active",
-        messages: { some: { direction: "inbound", createdAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) } } },
-      },
-    }),
-    prisma.conversation.count({
-      where: { organizationId: orgId, updatedAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) } },
-    }),
-    prisma.lead.count({ where: { organizationId: orgId, score: { gte: 70 } } }),
-    prisma.campaign.count({ where: { organizationId: orgId, status: "active" } }),
-  ]);
+  const active = await prisma.conversation.count({ where: { organizationId: orgId, status: "active" } });
+  const needsReply = await prisma.conversation.count({
+    where: {
+      organizationId: orgId,
+      status: "active",
+      messages: { some: { direction: "inbound", createdAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) } } },
+    },
+  });
+  const todayTotal = await prisma.conversation.count({
+    where: { organizationId: orgId, updatedAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) } },
+  });
+  const qualifiedLeads = await prisma.lead.count({ where: { organizationId: orgId, score: { gte: 70 } } });
+  const activeCampaigns = await prisma.campaign.count({ where: { organizationId: orgId, status: "active" } });
 
   return NextResponse.json({
     activeConversations: active,

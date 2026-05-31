@@ -38,8 +38,8 @@ const STAGE_CONFIG: Record<string, { color: string; bg: string; dot: string }> =
 };
 
 const SCORE_CONFIG = {
-  hot:  { bg: "bg-red-100 dark:bg-red-900/30", text: "text-red-600 dark:text-red-400", bar: "bg-red-500", label: "Hot" },
-  warm: { bg: "bg-yellow-100 dark:bg-yellow-900/30", text: "text-yellow-600 dark:text-yellow-400", bar: "bg-yellow-500", label: "Warm" },
+  hot:  { bg: "bg-emerald-100 dark:bg-emerald-900/30", text: "text-emerald-600 dark:text-emerald-400", bar: "bg-emerald-500", label: "Hot" },
+  warm: { bg: "bg-blue-100 dark:bg-blue-900/30", text: "text-blue-600 dark:text-blue-400", bar: "bg-blue-400", label: "Warm" },
   cold: { bg: "bg-slate-100 dark:bg-slate-800", text: "text-slate-500 dark:text-slate-400", bar: "bg-slate-400", label: "Cold" },
 };
 

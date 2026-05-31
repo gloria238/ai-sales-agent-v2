@@ -52,5 +52,14 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
 
   await prisma.conversation.update({ where: { id: params.id }, data: { updatedAt: new Date() } });
 
+  // Enqueue AI reply composition + email delivery (non-blocking — worker handles if Redis available)
+  try {
+    const { conversationQueue, emailQueue } = await import("@salesagent/worker/queue");
+    await conversationQueue.add("compose-reply", { conversationId: params.id });
+    await emailQueue.add("send-outbound", { conversationId: params.id, leadId: conversation.leadId });
+  } catch {
+    // Redis unavailable — message is still saved, AI reply + email won't fire
+  }
+
   return NextResponse.json({ message }, { status: 201 });
 }

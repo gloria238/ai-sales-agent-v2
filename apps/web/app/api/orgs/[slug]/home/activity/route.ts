@@ -22,19 +22,18 @@ export async function GET(_request: Request, { params }: { params: { slug: strin
 
   const orgId = membership.organizationId;
 
-  const [recentActivities, recentAuditLogs] = await Promise.all([
-    prisma.leadActivity.findMany({
-      where: { organizationId: orgId },
-      include: { lead: { select: { id: true, name: true, email: true, company: true, stage: true, score: true } } },
-      orderBy: { createdAt: "desc" },
-      take: 20,
-    }),
-    prisma.auditLog.findMany({
-      where: { organizationId: orgId },
-      orderBy: { createdAt: "desc" },
-      take: 10,
-    }),
-  ]);
+  // Sequential queries — connection_limit=1, parallel exhausts pgBouncer pool
+  const recentActivities = await prisma.leadActivity.findMany({
+    where: { organizationId: orgId },
+    include: { lead: { select: { id: true, name: true, email: true, company: true, stage: true, score: true } } },
+    orderBy: { createdAt: "desc" },
+    take: 20,
+  });
+  const recentAuditLogs = await prisma.auditLog.findMany({
+    where: { organizationId: orgId },
+    orderBy: { createdAt: "desc" },
+    take: 10,
+  });
 
   // Merge and sort by time, interleaving activities and audit logs
   const feed: Array<{

@@ -6,12 +6,10 @@ import { InboxClient } from "./inbox-client";
 export default async function InboxPage() {
   const session = await getSession();
   if (!session) redirect("/login");
-
   const membership = await prisma.membership.findFirst({
     where: { userId: session.userId, organizationId: session.orgId },
   });
   if (!membership) redirect("/login");
-
   const conversations = await prisma.conversation.findMany({
     where: { organizationId: session.orgId },
     include: {
@@ -22,9 +20,8 @@ export default async function InboxPage() {
     orderBy: { updatedAt: "desc" },
     take: 50,
   });
-
   return (
-    <div className="-m-4 lg:-m-8 h-[calc(100vh-3.5rem)]">
+    <div className="h-full flex flex-col">
       <InboxClient conversations={conversations} orgSlug={session.orgSlug} />
     </div>
   );

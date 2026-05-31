@@ -3,19 +3,17 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { LayoutDashboard, Users, MessageSquare, Bot, Send, ScrollText, Settings, History, Menu, X } from "lucide-react";
+import { LayoutDashboard, Users, MessageSquare, Bot, Send, TrendingUp, Settings, Menu, X } from "lucide-react";
 import { ThemeToggle } from "@/components/providers/theme-toggle";
 
 const navItems = [
   { href: "/home", label: "Dashboard", icon: LayoutDashboard },
   { href: "/inbox", label: "Inbox", icon: MessageSquare },
-  { href: "/leads", label: "Leads", icon: Users },
-  { href: "/agents", label: "Agents", icon: Bot },
   { href: "/campaigns", label: "Campaigns", icon: Send },
-  { href: "/scripts", label: "Scripts", icon: ScrollText },
+  { href: "/leads", label: "Leads", icon: Users },
+  { href: "/analytics", label: "Analytics", icon: TrendingUp },
+  { href: "/agents", label: "Agents", icon: Bot },
   { href: "/settings", label: "Settings", icon: Settings },
-  { href: "/audit-log", label: "Audit Log", icon: History },
-  { href: "/docs", label: "API Docs", icon: History },
 ];
 
 export function MobileNav() {
@@ -38,8 +36,8 @@ export function MobileNav() {
           <div className="absolute left-0 top-0 bottom-0 w-64 bg-white dark:bg-zinc-900 shadow-xl p-4 flex flex-col">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-2">
-                <div className="size-7 rounded-md bg-blue-600 flex items-center justify-center text-white text-xs font-bold">O</div>
-                <span className="font-semibold text-sm dark:text-white">OpsFlow</span>
+                <div className="size-7 rounded-md bg-accent flex items-center justify-center text-white text-xs font-bold">S</div>
+                <span className="font-semibold text-sm dark:text-white">SalesAgent</span>
               </div>
               <button onClick={() => setOpen(false)} className="p-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800">
                 <X className="size-5 text-zinc-500" />

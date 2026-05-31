@@ -1,7 +1,7 @@
 import { prisma } from "@salesagent/db";
 import { getSession } from "@/lib/session";
 import { redirect } from "next/navigation";
-import { InboxDetailClient } from "./inbox-detail-client";
+import { InboxClient } from "../inbox-client";
 
 export default async function InboxDetailPage({ params }: { params: { id: string } }) {
   const session = await getSession();
@@ -12,33 +12,29 @@ export default async function InboxDetailPage({ params }: { params: { id: string
   });
   if (!membership) redirect("/login");
 
-  const conversation = await prisma.conversation.findFirst({
+  const exists = await prisma.conversation.findFirst({
     where: { id: params.id, organizationId: session.orgId },
-    include: {
-      lead: true,
-      agent: { select: { id: true, name: true, personality: true } },
-      messages: { orderBy: { createdAt: "asc" } },
-    },
+    select: { id: true },
   });
-  if (!conversation) redirect("/inbox");
+  if (!exists) redirect("/inbox");
 
-  // Fetch all conversations for the side list
   const conversations = await prisma.conversation.findMany({
     where: { organizationId: session.orgId },
     include: {
       lead: { select: { id: true, name: true, email: true, company: true, stage: true, score: true } },
-      messages: { orderBy: { createdAt: "desc" }, take: 1 },
+      agent: { select: { id: true, name: true } },
+      messages: { orderBy: { createdAt: "desc" }, take: 1, select: { content: true, direction: true, createdAt: true } },
     },
     orderBy: { updatedAt: "desc" },
     take: 50,
   });
 
   return (
-    <div className="-m-4 lg:-m-8 h-[calc(100vh-3.5rem)]">
-      <InboxDetailClient
-        conversation={JSON.parse(JSON.stringify(conversation))}
-        conversations={JSON.parse(JSON.stringify(conversations))}
+    <div className="-m-4 lg:-m-6 h-[calc(100%+2rem)] lg:h-[calc(100%+3rem)] flex flex-col">
+      <InboxClient
+        conversations={conversations}
         orgSlug={session.orgSlug}
+        selectedId={params.id}
       />
     </div>
   );

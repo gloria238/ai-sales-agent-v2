@@ -12,14 +12,12 @@ export default async function LeadsPage() {
   });
   if (!membership) redirect("/login");
 
-  const [initialLeads, total] = await Promise.all([
-    prisma.lead.findMany({
-      where: { organizationId: session.orgId },
-      orderBy: { createdAt: "desc" },
-      take: 20,
-    }),
-    prisma.lead.count({ where: { organizationId: session.orgId } }),
-  ]);
+  const initialLeads = await prisma.lead.findMany({
+    where: { organizationId: session.orgId },
+    orderBy: { createdAt: "desc" },
+    take: 20,
+  });
+  const total = await prisma.lead.count({ where: { organizationId: session.orgId } });
 
   const canManage = ["owner", "admin", "operator"].includes(membership.role);
 

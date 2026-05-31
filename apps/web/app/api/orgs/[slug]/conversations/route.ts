@@ -27,21 +27,19 @@ export async function GET(req: NextRequest, { params }: { params: { slug: string
     where.lead = { name: { contains: search, mode: "insensitive" } };
   }
 
-  const [conversations, total] = await Promise.all([
-    prisma.conversation.findMany({
-      where: where as any,
-      include: {
-        lead: { select: { id: true, name: true, email: true, company: true, stage: true, score: true } },
-        agent: { select: { id: true, name: true } },
-        messages: { orderBy: { createdAt: "desc" }, take: 1, select: { content: true, direction: true, createdAt: true } },
-        _count: { select: { messages: true } },
-      },
-      orderBy: { updatedAt: "desc" },
-      skip: (page - 1) * limit,
-      take: limit,
-    }),
-    prisma.conversation.count({ where: where as any }),
-  ]);
+  const conversations = await prisma.conversation.findMany({
+    where: where as any,
+    include: {
+      lead: { select: { id: true, name: true, email: true, company: true, stage: true, score: true } },
+      agent: { select: { id: true, name: true } },
+      messages: { orderBy: { createdAt: "desc" }, take: 1, select: { content: true, direction: true, createdAt: true } },
+      _count: { select: { messages: true } },
+    },
+    orderBy: { updatedAt: "desc" },
+    skip: (page - 1) * limit,
+    take: limit,
+  });
+  const total = await prisma.conversation.count({ where: where as any });
 
   return NextResponse.json({ conversations, total, page, limit });
 }

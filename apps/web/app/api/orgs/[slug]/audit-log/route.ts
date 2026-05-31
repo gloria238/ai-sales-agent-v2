@@ -25,15 +25,13 @@ export async function GET(request: Request, { params }: { params: { slug: string
   if (action) where.action = { contains: action, mode: "insensitive" };
   if (targetType) where.targetType = targetType;
 
-  const [logs, total] = await Promise.all([
-    prisma.auditLog.findMany({
-      where,
-      orderBy: { createdAt: "desc" },
-      skip: (page - 1) * limit,
-      take: limit,
-    }),
-    prisma.auditLog.count({ where }),
-  ]);
+  const logs = await prisma.auditLog.findMany({
+    where,
+    orderBy: { createdAt: "desc" },
+    skip: (page - 1) * limit,
+    take: limit,
+  });
+  const total = await prisma.auditLog.count({ where });
 
   return NextResponse.json({
     logs,

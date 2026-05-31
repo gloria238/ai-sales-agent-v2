@@ -62,9 +62,9 @@ function StageBadge({ stage }: { stage: string | null }) {
 // ── Score badge ────────────────────────────────────────────
 function ScoreBadge({ score }: { score: number | null }) {
   if (score === null) return <Badge variant="default" className="text-[10px]">Not scored</Badge>;
-  const c = score >= 70 ? "bg-red-500/10 text-red-400 border-red-500/20" :
-    score >= 40 ? "bg-amber-500/10 text-amber-400 border-amber-500/20" :
-    "bg-blue-500/10 text-blue-400 border-blue-500/20";
+  const c = score >= 70 ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" :
+    score >= 40 ? "bg-blue-500/10 text-blue-400 border-blue-500/20" :
+    "bg-slate-500/10 text-slate-400 border-slate-500/20";
   const label = score >= 70 ? "Hot" : score >= 40 ? "Warm" : "Cold";
   return <Badge className={cn("text-[10px] px-1.5 py-0", c)} variant="default">{label} &middot; {score}</Badge>;
 }
@@ -80,7 +80,7 @@ function toCustomer(conv: Conversation): Customer {
     score: conv.lead.score,
     agentName: conv.agent?.name ?? null,
     agentId: conv.agent?.id ?? null,
-    aiConfidence: conv.lead.score != null ? Math.min(100, conv.lead.score + Math.floor(Math.random() * 10)) : null,
+    aiConfidence: conv.lead.score != null ? conv.lead.score : null,
     lastSeenAt: conv.updatedAt,
   };
 }
@@ -144,11 +144,6 @@ export function InboxDetailClient({ conversation, conversations, orgSlug }: Prop
     <div className="flex h-full overflow-hidden">
       {/* ── Left: conversation list with Identity Cells ──── */}
       <div className="hidden md:flex w-72 shrink-0 border-r border-border flex-col bg-bg-card/30 backdrop-blur-sm">
-        <div className="p-3 border-b border-border">
-          <Button variant="ghost" size="sm" onClick={() => router.push("/inbox")} className="w-full justify-start text-text-secondary">
-            <ChevronLeft className="size-4 mr-1" /> Back to inbox
-          </Button>
-        </div>
         <div className="flex-1 overflow-y-auto py-1">
           {conversations.map((c, i) => (
             <IdentityCard
@@ -169,9 +164,9 @@ export function InboxDetailClient({ conversation, conversations, orgSlug }: Prop
       <div className="flex-1 flex flex-col min-w-0 bg-bg">
         {/* Header — Identity Card expanded */}
         <div className="shrink-0 border-b border-border bg-bg-card/50 backdrop-blur-sm">
-          <div className="md:hidden px-4 pt-3">
-            <Button variant="ghost" size="sm" onClick={() => router.push("/inbox")} className="text-text-secondary">
-              <ChevronLeft className="size-4 mr-1" /> Back
+          <div className="md:hidden px-3 pt-2 pb-1">
+            <Button variant="ghost" size="sm" onClick={() => router.push("/inbox")} className="text-text-secondary -ml-2">
+              <ChevronLeft className="size-4 mr-0.5" /> Inbox
             </Button>
           </div>
           <div className="flex items-center justify-between">
@@ -281,9 +276,9 @@ export function InboxDetailClient({ conversation, conversations, orgSlug }: Prop
           <div className="flex items-center gap-3 mb-3">
             <div className={cn(
               "size-14 rounded-2xl flex items-center justify-center text-lg font-bold",
-              scoreLabel === "Hot" ? "bg-red-500/10 text-red-400" :
-              scoreLabel === "Warm" ? "bg-amber-500/10 text-amber-400" :
-              "bg-blue-500/10 text-blue-400",
+              scoreLabel === "Hot" ? "bg-emerald-500/10 text-emerald-400" :
+              scoreLabel === "Warm" ? "bg-blue-500/10 text-blue-400" :
+              "bg-slate-500/10 text-slate-400",
             )}>
               {lead.score ?? "—"}
             </div>
@@ -306,7 +301,7 @@ export function InboxDetailClient({ conversation, conversations, orgSlug }: Prop
                   <div className="flex-1 h-1.5 bg-bg-subtle rounded-full overflow-hidden">
                     <div className={cn(
                       "h-full rounded-full transition-all",
-                      d.val >= 70 ? "bg-red-400" : d.val >= 40 ? "bg-amber-400" : "bg-blue-400",
+                      d.val >= 70 ? "bg-emerald-400" : d.val >= 40 ? "bg-blue-400" : "bg-slate-400",
                     )} style={{ width: `${d.val}%` }} />
                   </div>
                   <span className="text-[10px] text-text-muted w-6 text-right">{Math.round(d.val)}</span>

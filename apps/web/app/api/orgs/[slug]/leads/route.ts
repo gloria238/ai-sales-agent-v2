@@ -50,15 +50,13 @@ export async function GET(request: Request, { params }: { params: { slug: string
   const actualSortBy = allowedSortFields.includes(sortBy) ? sortBy : "createdAt";
   const actualSortOrder = sortOrder === "asc" ? "asc" : "desc";
 
-  const [leads, total] = await Promise.all([
-    prisma.lead.findMany({
-      where,
-      orderBy: { [actualSortBy]: actualSortOrder },
-      skip: (page - 1) * limit,
-      take: limit,
-    }),
-    prisma.lead.count({ where }),
-  ]);
+  const leads = await prisma.lead.findMany({
+    where,
+    orderBy: { [actualSortBy]: actualSortOrder },
+    skip: (page - 1) * limit,
+    take: limit,
+  });
+  const total = await prisma.lead.count({ where });
 
   return NextResponse.json({
     leads,

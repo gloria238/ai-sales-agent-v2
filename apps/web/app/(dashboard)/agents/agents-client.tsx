@@ -41,8 +41,10 @@ export function AgentListClient({ agents, orgSlug }: { agents: Agent[]; orgSlug:
         }),
       });
       if (res.ok) {
+        const data = await res.json();
         toast.success("Agent created");
         setOpen(false);
+        router.push(`/agents/${data.agent.id}`);
         router.refresh();
       } else {
         toast.error("Failed to create agent");

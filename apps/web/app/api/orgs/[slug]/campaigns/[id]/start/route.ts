@@ -59,15 +59,23 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
     data: { status: "active", stats: { ...(campaign.stats as any || {}), sent: ((campaign.stats as any)?.sent || 0) + leads.length } },
   });
 
-  // Dispatch to queue (dynamic import — only if Redis is available)
+  // Dispatch to queue (dynamic import — requires Redis)
+  let dispatchFailed = false;
   try {
     const { campaignQueue } = await import("@salesagent/worker/queue");
     for (const lead of leads) {
       await campaignQueue.add("send-email", { campaignId: params.id, leadId: lead.id, stepIndex: 0 });
     }
   } catch {
-    console.warn("Campaign queue unavailable — run persisted but jobs not dispatched");
+    dispatchFailed = true;
+    // Mark run as failed since we can't dispatch
+    await prisma.campaignRun.update({ where: { id: run.id }, data: { status: "failed" } });
+    await prisma.campaign.update({ where: { id: params.id }, data: { status: "draft" } });
   }
 
-  return NextResponse.json({ run, leadCount: leads.length });
+  if (dispatchFailed) {
+    return NextResponse.json({ error: "Campaign queue unavailable. Worker must be running with Redis.", dispatched: false }, { status: 503 });
+  }
+
+  return NextResponse.json({ run, leadCount: leads.length, dispatched: true });
 }

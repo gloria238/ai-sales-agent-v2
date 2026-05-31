@@ -30,40 +30,54 @@ export async function callDeepSeek(
   options?: { temperature?: number; maxTokens?: number },
 ): Promise<string> {
   const apiKey = process.env.DEEPSEEK_API_KEY;
-  if (!apiKey) throw new AIClientError("DEEPSEEK_API_KEY not configured", 500);
+  if (!apiKey) throw new AIClientError("DEEPSEEK_API_KEY not configured — set it in .env.local", 500);
 
   const messages: DeepSeekMessage[] = [];
   if (system) messages.push({ role: "system", content: system });
   messages.push({ role: "user", content: prompt });
 
-  const res = await fetch(`${DEEPSEEK_BASE}/chat/completions`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model: MODEL,
-      messages,
-      temperature: options?.temperature ?? 0.7,
-      max_tokens: options?.maxTokens ?? 4000,
-    }),
-  });
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 15000);
 
-  if (!res.ok) {
-    const text = await res.text().catch(() => "Unknown error");
-    throw new AIClientError(
-      `DeepSeek API error (${res.status}): ${text.slice(0, 200)}`,
-      res.status,
-      res.status === 429 || res.status >= 500,
-    );
+  try {
+    const res = await fetch(`${DEEPSEEK_BASE}/chat/completions`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: MODEL,
+        messages,
+        temperature: options?.temperature ?? 0.7,
+        max_tokens: options?.maxTokens ?? 4000,
+      }),
+      signal: controller.signal,
+    });
+
+    if (!res.ok) {
+      const text = await res.text().catch(() => "Unknown error");
+      throw new AIClientError(
+        `DeepSeek API error (${res.status}): ${text.slice(0, 200)}`,
+        res.status,
+        res.status === 429 || res.status >= 500,
+      );
+    }
+
+    const data = (await res.json()) as DeepSeekResponse;
+    const content = data.choices?.[0]?.message?.content;
+    if (!content) throw new AIClientError("Empty AI response");
+
+    return content;
+  } catch (err) {
+    if (err instanceof AIClientError) throw err;
+    if ((err as Error)?.name === "AbortError") {
+      throw new AIClientError("DeepSeek API request timed out after 15s — check your network and DEEPSEEK_API_KEY", 408, true);
+    }
+    throw new AIClientError(`AI request failed: ${(err as Error)?.message || "Unknown"}`, 500);
+  } finally {
+    clearTimeout(timeout);
   }
-
-  const data = (await res.json()) as DeepSeekResponse;
-  const content = data.choices?.[0]?.message?.content;
-  if (!content) throw new AIClientError("Empty AI response");
-
-  return content;
 }
 
 function extractBalancedJSON(text: string): string | null {
