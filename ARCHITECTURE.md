@@ -2,7 +2,7 @@
 
 > AI SDR / outbound sales operating system. AI agents that qualify leads, compose follow-ups, and book meetings.
 > Multi-channel conversation inbox, campaign orchestration, and real-time monitoring.
-> ~10,000 lines across ~220 files. 35 API routes + SSE + webhook trigger.
+> ~15,000 lines across ~250 files. 37 API routes + demo-login + SSE.
 
 ---
 
@@ -84,8 +84,8 @@ salesagent-ai/
 │   │   ├── app/
 │   │   │   ├── (auth)/               # 登录/注册页面
 │   │   │   ├── (dashboard)/          # 仪表盘页面组
-│   │   │   │   ├── home/             # AI SDR 仪表盘 (/home, 中间件改写)
-│   │   │   │   ├── inbox/            # 对话收件箱 (多渠道统一视图)
+│   │   │   │   ├── home/             # AI SDR 仪表盘 (/home, 中间件 redirect)
+│   │   │   │   ├── inbox/            # 对话收件箱 (单页分栏, 无页面跳转)
 │   │   │   │   ├── leads/            # 线索管理 + AI 评分
 │   │   │   │   ├── agents/           # AI Agent 配置 + 详情编辑
 │   │   │   │   │   └── [id]/          # Agent 详情 (编辑+对话+活动)
@@ -95,6 +95,7 @@ salesagent-ai/
 │   │   │   │   ├── scripts/          # 话术脚本市场 + AI 生成
 │   │   │   │   │   ├── new/          # AI 脚本生成
 │   │   │   │   │   └── [id]/         # 脚本详情
+│   │   │   │   ├── analytics/        # 分析面板 (pipeline + campaign 指标)
 │   │   │   │   ├── settings/         # 组织设置 + 成员管理 + API 密钥
 │   │   │   │   └── audit-log/        # 审计日志查看
 │   │   │   ├── page.tsx              # 公开落地页 (/)
@@ -103,7 +104,7 @@ salesagent-ai/
 │   │   │       └── orgs/[slug]/      # CRUD + AI + conversations + campaigns
 │   │   ├── components/
 │   │   │   ├── ui/                   # shadcn 风格 UI 组件 (11个)
-│   │   │   ├── nav/                  # 侧边栏、用户菜单
+│   │   │   ├── nav/                  # 可折叠侧边栏 (ChatGPT 风格)、用户菜单、PageTitle
 │   │   │   ├── inbox/                # 对话收件箱组件
 │   │   │   ├── agents/               # Agent 配置组件
 │   │   │   └── leads/                # 线索相关组件
@@ -589,13 +590,15 @@ Inbound message received
 └────────────────────┴─────────────────────────────────────────┘
 ```
 
-### 7.2 Inbox 布局实现
+### 7.2 Inbox 布局实现 (2026-06-01)
 
-Inbox 页面使用双层结构：
+Inbox 已改造为统一的单页面分栏设计（参考 Linear/Figma 风格）：
 
-- **外层 wrapper** (`page.tsx`): `<div className="-m-4 lg:-m-8 h-[calc(100vh-3.5rem)]">` — 用负边距消除 `<main>` 的 padding，高度精确减去 dashboard header (`h-14` = 3.5rem)
-- **内层** (`inbox-client.tsx` / `inbox-detail-client.tsx`): `h-full` 填满 wrapper
-- **三栏布局** (detail 页): 左侧对话列表 (w-72, md+), 中间消息线程 (flex-1), 右侧 AI 面板 (w-80, xl+)
+- **单页面交互**: 点击左侧对话 → 右侧直接展开消息线程，不跳转页面
+- **左侧列表**: 固定宽度 `w-80 lg:w-96`，filter tabs（All/Active/Needs Reply/Closed）带计数徽标
+- **右侧详情**: `DetailHeader`（紧凑客户信息 + 邮箱 + stage badge + 评分 + AI 建议条）+ 消息流 + 输入区
+- **LeadPopover**: 客户名旁 hover 小图标 → 浮窗显示完整 Lead 信息（公司、评分、跳转链接）
+- **无子路由导航**: `inbox/[id]/page.tsx` 复用 `InboxClient` 传 `selectedId` 预选中
 
 ### 7.3 API 端点
 
@@ -901,17 +904,17 @@ Worker: composeAndSend(conversationId, agentId)
 
 ## 13. 仪表盘与运维面板
 
-### 13.1 AI SDR 仪表盘
+### 13.1 AI SDR 仪表盘 (2026-06-01)
 
-首页显示关键的 SDR 运营指标：
+首页采用 Data-Dense Dashboard 设计，填满整屏：
 
-| 指标卡片 | 内容 |
-|---------|------|
-| **Active Conversations** | 正在进行的 AI/人工对话数 |
-| **Qualified Leads** | 本周 AI 资格认定通过数 |
-| **Response Rate** | AI 自动回复覆盖率 % |
-| **Booked Meetings** | AI 预约的会议数 |
-| **Campaign Performance** | 活跃活动的 sent/opened/replied |
+| 区域 | 内容 |
+|------|------|
+| **KPI 卡片** | Pipeline Value ($)、Meetings Booked、Reply Rate、AI Autopilot — 4 列等宽 |
+| **Activity Feed** | 15 条最新活动（LeadActivity + AuditLog 合并），30 秒轮询 |
+| **Lead Quality** | SVG 环形图（Hot/Warm/Cold），从 pipeline stage 推导 |
+| **Pipeline** | SVG 环形图（New/Contacted/Qualified/Proposal/Won） |
+| **Campaign Reach** | Sent/Opened/Replied 三段进度条 + 快速统计（Agents/Leads/Campaigns/Threads） |
 
 ### 13.2 收件箱统计
 

@@ -55,15 +55,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Commands
 
 ```bash
-# Development (starts all apps/packages)
+# Development (starts all apps/packages — web only, worker is separate)
 pnpm dev
+pnpm dev-worker                 # Start worker explicitly (BullMQ consumers — uses Redis quota)
 
 # Build all packages
 pnpm build
 
 # Run a specific app
 pnpm --filter @salesagent/web dev
-pnpm --filter @salesagent/worker dev
+pnpm --filter @salesagent/worker start
 
 # Database
 pnpm seed                          # Seed demo data (destructive — drops all data)
@@ -152,10 +153,12 @@ packages/
 ### Key files
 
 ```
-apps/web/app/page.tsx                — Public landing page (static, unauthenticated visitors)
-apps/web/middleware.ts               — Rewrites / → /home for authenticated users
-apps/web/app/(dashboard)/home/page.tsx — Dashboard home (Bento grid, pipeline chart, worker health)
-apps/web/app/(dashboard)/inbox/      — Conversation inbox (unified view across channels)
+apps/web/app/page.tsx                — Public landing page with "Try Live Demo →" CTA
+apps/web/middleware.ts               — JWT guard + rate-limit + /→/home redirect + /login?clear=1 stale cookie clearing
+apps/web/app/(dashboard)/home/page.tsx — Dashboard (dense full-viewport, donut charts, KPI cards, activity feed)
+apps/web/app/(dashboard)/home/donut-chart.tsx — SVG donut chart (zero deps, stroke-dasharray)
+apps/web/app/(dashboard)/inbox/      — Conversation inbox (unified single-page split-pane, no navigation)
+apps/web/app/(dashboard)/analytics/   — Analytics dashboard (pipeline, campaign perf, conversion rates)
 apps/web/app/(dashboard)/agents/     — AI agent management (configure personality, knowledge base)
 apps/web/app/(dashboard)/scripts/    — Sales script marketplace (browse + install playbooks)
 apps/web/app/(dashboard)/campaigns/  — Outbound campaign list + create + analytics
@@ -164,6 +167,7 @@ apps/web/app/(dashboard)/scripts/[id]/ — Script detail view (steps, linked cam
 apps/web/app/(dashboard)/scripts/new/ — AI script generation playground
 apps/web/app/(dashboard)/agents/[id]/ — Agent detail with inline editing + conversations/campaigns
 apps/web/app/(dashboard)/docs/       — API documentation page
+apps/web/app/api/demo-login/route.ts — Quick demo login (auto-seeds, signs JWT, redirects /home)
 apps/web/app/(dashboard)/settings/api-keys/ — API key management
 apps/web/app/(dashboard)/onboarding-card.tsx — 3-step onboarding wizard
 apps/web/lib/auth.ts                — JWT sign/verify (jose), Edge-compatible, no fallback secret
@@ -179,6 +183,8 @@ apps/web/lib/prompts.ts             — AI system prompts + builders (4 prompt p
 apps/web/middleware.ts              — JWT guard + Redis rate limiting (100 req/min per IP) + webhook bypass
 apps/web/components/providers/theme-provider.tsx — Dark mode provider with flash prevention
 apps/web/components/providers/theme-toggle.tsx   — Dark/light toggle button
+apps/web/components/nav/sidebar.tsx              — Collapsible sidebar (ChatGPT-style), user menu at bottom
+apps/web/components/nav/page-title.tsx           — Page title from path segment (no UUIDs in header)
 apps/web/components/nav/mobile-nav.tsx           — Mobile hamburger menu with slide-out drawer
 apps/web/components/leads/import-button.tsx      — CSV import dialog with file upload
 apps/web/components/identity/avatar.tsx          — DiceBear notionists avatar + gradient fallback + presence dot
