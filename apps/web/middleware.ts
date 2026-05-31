@@ -37,6 +37,15 @@ export async function middleware(request: NextRequest) {
     }
   }
 
+  // ═══ Clear stale session cookie on layout-initiated redirect ═══
+  // layout.tsx redirects to /login?clear=1 when user/membership not found.
+  // This handles it before the public-paths check so the cookie actually gets cleared.
+  if (pathname === "/login" && request.nextUrl.searchParams.has("clear")) {
+    const response = NextResponse.redirect(new URL("/login", request.url));
+    response.cookies.set("session", "", { httpOnly: true, secure: true, sameSite: "lax", maxAge: 0, path: "/" });
+    return response;
+  }
+
   // Redirect authenticated users from landing page to dashboard
   if (pathname === "/") {
     const token = request.cookies.get("session")?.value;
@@ -75,7 +84,9 @@ export async function middleware(request: NextRequest) {
 
   const payload = await verifyToken(token);
   if (!payload) {
-    return NextResponse.redirect(new URL("/login", request.url));
+    const response = NextResponse.redirect(new URL("/login", request.url));
+    response.cookies.set("session", "", { httpOnly: true, secure: true, sameSite: "lax", maxAge: 0, path: "/" });
+    return response;
   }
 
   if (payload.jti) {
