@@ -37,7 +37,7 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // Rewrite authenticated users from landing page to dashboard
+  // Redirect authenticated users from landing page to dashboard
   if (pathname === "/") {
     const token = request.cookies.get("session")?.value;
     if (token) {
@@ -47,7 +47,7 @@ export async function middleware(request: NextRequest) {
         if (!revoked) {
           const url = request.nextUrl.clone();
           url.pathname = "/home";
-          return NextResponse.rewrite(url);
+          return NextResponse.redirect(url);
         }
       }
     }
