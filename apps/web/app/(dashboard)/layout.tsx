@@ -4,6 +4,7 @@ import { Sidebar } from "@/components/nav/sidebar";
 import { SidebarHeader } from "@/components/nav/sidebar-header";
 import { MobileNav } from "@/components/nav/mobile-nav";
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const session = await getSession();
@@ -14,10 +15,19 @@ export default async function DashboardLayout({ children }: { children: React.Re
     where: { id: session.userId },
     include: { memberships: { include: { organization: true } } },
   });
-  if (!user) redirect("/login");
+  if (!user) {
+    // Stale cookie — user was deleted (e.g., DB re-seeded). Clear it.
+    const c = cookies();
+    c.set("session", "", { httpOnly: true, secure: true, sameSite: "lax", maxAge: 0, path: "/" });
+    redirect("/login");
+  }
 
   const currentMembership = user.memberships.find((m) => m.organizationId === session.orgId);
-  if (!currentMembership) redirect("/login");
+  if (!currentMembership) {
+    const c = cookies();
+    c.set("session", "", { httpOnly: true, secure: true, sameSite: "lax", maxAge: 0, path: "/" });
+    redirect("/login");
+  }
   const org = currentMembership.organization;
 
   const allOrgs = user.memberships.map((m) => ({
