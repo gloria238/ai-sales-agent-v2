@@ -4,7 +4,7 @@ import { verifyToken } from "@/lib/auth";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { isTokenRevoked } from "@/lib/token-blacklist";
 
-const publicPaths = ["/", "/login", "/register", "/docs"];
+const publicPaths = ["/", "/login", "/register", "/docs", "/api/demo-login"];
 const authApiPaths = ["/api/auth/login", "/api/auth/register", "/api/auth/logout", "/api/auth/verify"];
 
 export async function middleware(request: NextRequest) {

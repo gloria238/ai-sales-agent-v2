@@ -14,6 +14,7 @@
   "private": true,
   "scripts": {
     "dev": "turbo run dev",
+    "dev-worker": "pnpm --filter @salesagent/worker start",
     "build": "turbo run build",
     "lint": "turbo run lint",
     "seed": "pnpm --filter @salesagent/db seed",
@@ -22,8 +23,7 @@
     "seed-verify-alice": "pnpm tsx packages/db/seed-verify-alice.ts",
     "clean-org": "pnpm tsx packages/db/clean-demo-org.ts",
     "seed-demo": "pnpm tsx packages/db/seed-demo.ts",
-    "postinstall": "pnpm --filter @salesagent/db generate",
-    "start": "npx tsx apps/worker/src/index.ts"
+    "postinstall": "pnpm --filter @salesagent/db generate"
   },
   "keywords": [],
   "author": "",

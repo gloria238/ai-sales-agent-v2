@@ -8,3 +8,4 @@ dist
 *.tsbuildinfo
 .claude/settings.local.json
 .vercel
+/apps/web/.env.local
