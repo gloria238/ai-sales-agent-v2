@@ -19,7 +19,7 @@ interface ActivityItem {
 
 interface Props { orgSlug: string }
 
-const MAX_VISIBLE = 5;
+const MAX_VISIBLE = 15;
 
 export function ActivityFeed({ orgSlug }: Props) {
   const { data, isLoading, error } = useQuery({
@@ -40,13 +40,13 @@ export function ActivityFeed({ orgSlug }: Props) {
 
   if (isLoading) {
     return (
-      <div className="space-y-0.5 px-2">
+      <div className="space-y-px">
         {Array.from({ length: 5 }).map((_, i) => (
-          <div key={i} className="flex items-center gap-2.5 py-2 animate-pulse">
-            <div className="size-7 rounded-full bg-bg-subtle shrink-0" />
+          <div key={i} className="flex items-center gap-2 py-1.5 animate-pulse">
+            <div className="size-6 rounded-full bg-bg-subtle shrink-0" />
             <div className="flex-1 space-y-1">
-              <div className="h-2.5 w-36 rounded bg-bg-subtle" />
-              <div className="h-2 w-20 rounded bg-bg-subtle" />
+              <div className="h-2 w-28 rounded bg-bg-subtle" />
+              <div className="h-1.5 w-16 rounded bg-bg-subtle" />
             </div>
           </div>
         ))}
@@ -56,30 +56,32 @@ export function ActivityFeed({ orgSlug }: Props) {
 
   if (feed.length === 0) {
     return (
-      <div className="text-center py-6 text-text-muted px-2">
-        <Sparkles className="size-5 mx-auto mb-1.5 opacity-25" />
-        <p className="text-[11px]">Activity will appear here as your AI agents work</p>
+      <div className="flex-1 flex items-center justify-center text-text-muted">
+        <div className="text-center">
+          <Sparkles className="size-4 mx-auto mb-1 opacity-20" />
+          <p className="text-[10px]">Activity will appear here</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-0.5 px-1">
+    <div className="h-full overflow-y-auto space-y-px">
       {feed.map((item) => {
         const leadLink = item.lead?.id ? `/leads/${item.lead.id}` : null;
         return (
-          <div key={item.id} className="flex items-center gap-2.5 py-2 px-2 rounded-lg hover:bg-bg-subtle/50 transition-colors">
+          <div key={item.id} className="flex items-center gap-2 py-1.5 px-1.5 rounded-md hover:bg-bg-subtle/50 transition-colors">
             {item.lead ? (
               <Link href={leadLink!} className="shrink-0">
                 <Avatar name={item.lead.name} size="sm" seed={item.lead.email || item.lead.name} />
               </Link>
             ) : (
-              <div className="size-7 rounded-full bg-bg-subtle flex items-center justify-center shrink-0">
-                <span className="text-[10px] font-semibold text-text-muted">{(item.userName || "S")[0].toUpperCase()}</span>
+              <div className="size-5 rounded-full bg-bg-subtle flex items-center justify-center shrink-0">
+                <span className="text-[9px] font-semibold text-text-muted">{(item.userName || "S")[0]}</span>
               </div>
             )}
             <div className="flex-1 min-w-0">
-              <p className="text-[12px] text-text-secondary truncate">
+              <p className="text-[11px] text-text-secondary truncate">
                 {item.lead ? (
                   <Link href={leadLink!} className="font-semibold text-text hover:text-accent transition-colors">
                     {item.lead.name}
@@ -90,11 +92,8 @@ export function ActivityFeed({ orgSlug }: Props) {
                 {" "}
                 <span className="text-text-muted">{item.description.toLowerCase()}</span>
               </p>
-              {item.lead?.company && (
-                <p className="text-[10px] text-text-muted mt-0.5 truncate">{item.lead.company}</p>
-              )}
             </div>
-            <span className="text-[10px] text-text-muted shrink-0">{relativeTime(item.createdAt)}</span>
+            <span className="text-[9px] text-text-muted shrink-0">{relativeTime(item.createdAt)}</span>
           </div>
         );
       })}
