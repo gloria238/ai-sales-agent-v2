@@ -3,6 +3,7 @@ node_modules
 .next
 dist
 .env
+.env.local
 .worker-health.json
 *.tsbuildinfo
 .claude/settings.local.json
