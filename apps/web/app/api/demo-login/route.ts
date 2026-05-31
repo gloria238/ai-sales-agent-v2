@@ -7,8 +7,12 @@ export const dynamic = "force-dynamic";
 const DEMO_EMAIL = "demo@salesagent.ai";
 const DEMO_ORG_SLUG = "acme-corp";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    // Build redirect URL from the actual request (works on Vercel, Railway, localhost)
+    const url = new URL(request.url);
+    const origin = `${url.protocol}//${url.host}`;
+
     // Find existing demo user + membership — must be pre-seeded via pnpm seed-demo
     const user = await prisma.user.findUnique({ where: { email: DEMO_EMAIL } });
 
@@ -40,9 +44,7 @@ export async function GET() {
     });
 
     // Set cookie and redirect
-    const response = NextResponse.redirect(
-      new URL("/home", process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000")
-    );
+    const response = NextResponse.redirect(new URL("/home", origin));
     response.cookies.set("session", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
