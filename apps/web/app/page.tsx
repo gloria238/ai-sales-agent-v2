@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { DemoLoginButton } from "@/components/demo-login-button";
 
 const features = [
   { icon: "🤖", title: "AI Lead Qualification", desc: "AI agents score every lead across intent, budget, authority, need, and timeline. Hot leads auto-route to human SDRs." },
@@ -35,7 +36,7 @@ export default function LandingPage() {
           <div className="flex items-center gap-3">
             <Link href="/login" className="text-sm font-medium text-text-secondary hover:text-text transition-colors px-3 py-2">Sign in</Link>
             <Link href="/register" className="rounded-xl bg-accent text-white text-sm font-semibold px-4 py-2 hover:bg-accent-hover transition-all duration-200 shadow-sm shadow-accent/20 active:scale-[0.98]">Get started</Link>
-            <Link href="/api/demo-login" className="rounded-xl bg-gradient-to-r from-violet-500 to-purple-600 text-white text-sm font-semibold px-4 py-2 hover:from-violet-600 hover:to-purple-700 transition-all duration-200 shadow-sm shadow-violet-500/20 active:scale-[0.98]">Try Demo</Link>
+            <DemoLoginButton variant="nav" />
           </div>
         </div>
       </header>
@@ -60,9 +61,7 @@ export default function LandingPage() {
           AI SDRs handle inbound leads, run outbound campaigns, and schedule meetings — while your team focuses on closing.
         </p>
         <div className="mt-10 flex items-center justify-center gap-4">
-          <Link href="/api/demo-login" className="rounded-xl bg-gradient-to-r from-violet-500 to-purple-600 text-white font-semibold px-7 py-3.5 text-base hover:from-violet-600 hover:to-purple-700 transition-all duration-200 shadow-md shadow-violet-500/20 active:scale-[0.98]">
-            Try Live Demo →
-          </Link>
+          <DemoLoginButton />
           <Link href="/register" className="rounded-xl bg-accent text-white font-semibold px-7 py-3.5 text-base hover:bg-accent-hover transition-all duration-200 shadow-md shadow-accent/20 active:scale-[0.98]">
             Start your AI SDR
           </Link>

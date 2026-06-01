@@ -10,9 +10,10 @@ interface DonutChartProps {
   segments: Segment[];
   size?: number;
   thickness?: number;
+  label?: string;
 }
 
-export function DonutChart({ segments, size = 120, thickness = 28 }: DonutChartProps) {
+export function DonutChart({ segments, size = 120, thickness = 28, label = "Total" }: DonutChartProps) {
   const total = segments.reduce((sum, s) => sum + s.value, 0) || 1;
   const radius = (size - thickness) / 2;
   const center = size / 2;
@@ -41,8 +42,8 @@ export function DonutChart({ segments, size = 120, thickness = 28 }: DonutChartP
     return a;
   });
 
-  const fontSize = Math.round(size * 0.16);
-  const subFontSize = Math.round(size * 0.09);
+  const fontSize = Math.round(size * 0.18);
+  const subFontSize = Math.round(size * 0.11);
 
   return (
     <svg viewBox={`0 0 ${size} ${size}`} width={size} height={size} className="shrink-0" style={{ transform: "rotate(-90deg)" }}>
@@ -90,7 +91,7 @@ export function DonutChart({ segments, size = 120, thickness = 28 }: DonutChartP
           dominantBaseline="auto"
           style={{ fill: "rgb(var(--text-muted))", fontSize: `${subFontSize}px`, fontWeight: 500 }}
         >
-          Total
+          {label}
         </text>
       </g>
     </svg>

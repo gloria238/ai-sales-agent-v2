@@ -40,13 +40,13 @@ export function ActivityFeed({ orgSlug }: Props) {
 
   if (isLoading) {
     return (
-      <div className="space-y-px">
+      <div className="space-y-0.5">
         {Array.from({ length: 5 }).map((_, i) => (
-          <div key={i} className="flex items-center gap-2 py-1.5 animate-pulse">
+          <div key={i} className="flex items-center gap-2.5 py-2 animate-pulse">
             <div className="size-6 rounded-full bg-bg-subtle shrink-0" />
-            <div className="flex-1 space-y-1">
-              <div className="h-2 w-28 rounded bg-bg-subtle" />
-              <div className="h-1.5 w-16 rounded bg-bg-subtle" />
+            <div className="flex-1 space-y-1.5">
+              <div className="h-2.5 w-32 rounded-md bg-bg-subtle" />
+              <div className="h-2 w-20 rounded-md bg-bg-subtle" />
             </div>
           </div>
         ))}
@@ -58,30 +58,31 @@ export function ActivityFeed({ orgSlug }: Props) {
     return (
       <div className="flex-1 flex items-center justify-center text-text-muted">
         <div className="text-center">
-          <Sparkles className="size-4 mx-auto mb-1 opacity-20" />
-          <p className="text-[10px]">Activity will appear here</p>
+          <Sparkles className="size-5 mx-auto mb-2 opacity-20" />
+          <p className="text-[11px]">Activity will appear here</p>
+          <p className="text-[10px] mt-1 opacity-60">Lead actions &amp; campaign events</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="h-full overflow-y-auto space-y-px">
-      {feed.map((item) => {
+    <div className="h-full overflow-y-auto space-y-0.5">
+      {feed.map((item, i) => {
         const leadLink = item.lead?.id ? `/leads/${item.lead.id}` : null;
         return (
-          <div key={item.id} className="flex items-center gap-2 py-1.5 px-1.5 rounded-md hover:bg-bg-subtle/50 transition-colors">
+          <div key={item.id} className="flex items-center gap-2.5 py-2 px-2 rounded-lg hover:bg-bg-subtle/50 transition-colors animate-fade-in" style={{ animationDelay: `${i * 30}ms` }}>
             {item.lead ? (
               <Link href={leadLink!} className="shrink-0">
                 <Avatar name={item.lead.name} size="sm" seed={item.lead.email || item.lead.name} />
               </Link>
             ) : (
-              <div className="size-5 rounded-full bg-bg-subtle flex items-center justify-center shrink-0">
-                <span className="text-[9px] font-semibold text-text-muted">{(item.userName || "S")[0]}</span>
+              <div className="size-6 rounded-full bg-bg-subtle flex items-center justify-center shrink-0">
+                <span className="text-[10px] font-semibold text-text-muted">{(item.userName || "S")[0]}</span>
               </div>
             )}
             <div className="flex-1 min-w-0">
-              <p className="text-[11px] text-text-secondary truncate">
+              <p className="text-[11px] text-text-secondary truncate leading-relaxed">
                 {item.lead ? (
                   <Link href={leadLink!} className="font-semibold text-text hover:text-accent transition-colors">
                     {item.lead.name}
@@ -93,7 +94,7 @@ export function ActivityFeed({ orgSlug }: Props) {
                 <span className="text-text-muted">{item.description.toLowerCase()}</span>
               </p>
             </div>
-            <span className="text-[9px] text-text-muted shrink-0">{relativeTime(item.createdAt)}</span>
+            <span className="text-[10px] text-text-muted shrink-0 tabular-nums">{relativeTime(item.createdAt)}</span>
           </div>
         );
       })}

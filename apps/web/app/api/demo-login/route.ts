@@ -13,25 +13,19 @@ export async function GET(request: Request) {
     const url = new URL(request.url);
     const origin = `${url.protocol}//${url.host}`;
 
-    // Find existing demo user + membership — must be pre-seeded via pnpm seed-demo
-    const user = await prisma.user.findUnique({ where: { email: DEMO_EMAIL } });
+    // Single query: find membership by user email + org slug, include both relations
+    const membership = await prisma.membership.findFirst({
+      where: { user: { email: DEMO_EMAIL }, organization: { slug: DEMO_ORG_SLUG } },
+      include: { user: true, organization: true },
+    });
 
-    if (!user) {
+    if (!membership) {
       return NextResponse.json({
         error: "Demo account not found. Run: pnpm tsx packages/db/seed-demo.ts",
       }, { status: 500 });
     }
 
-    const membership = await prisma.membership.findFirst({
-      where: { userId: user.id, organization: { slug: DEMO_ORG_SLUG } },
-      include: { organization: true },
-    });
-
-    if (!membership) {
-      return NextResponse.json({
-        error: "Demo membership not found. Run: pnpm tsx packages/db/seed-demo.ts",
-      }, { status: 500 });
-    }
+    const user = membership.user;
 
     // Sign JWT
     const token = await signToken({
