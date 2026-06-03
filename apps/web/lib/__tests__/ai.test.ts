@@ -5,7 +5,7 @@ import {
   LEAD_SCORING_SYSTEM, buildLeadScoringPrompt,
   SUMMARIZE_CONVERSATION_SYSTEM, buildSummarizeConversationPrompt,
   GENERATE_SCRIPT_SYSTEM, buildGenerateScriptPrompt,
-} from "@/lib/prompts";
+} from "@salesagent/ai-core";
 import { isEnabled } from "@/lib/feature-flags";
 
 // ── Compose Response Tests ─────────────────────────────────────

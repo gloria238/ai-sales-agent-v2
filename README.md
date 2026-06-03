@@ -2,13 +2,16 @@
   <img src="https://img.shields.io/badge/Next.js-14-black?logo=next.js" />
   <img src="https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white" />
   <img src="https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql&logoColor=white" />
-  <img src="https://img.shields.io/badge/Prisma-ORM-2D3748?logo=prisma&logoColor=white" />
+  <img src="https://img.shields.io/badge/Prisma-6-2D3748?logo=prisma&logoColor=white" />
+  <img src="https://img.shields.io/badge/pgvector-Embeddings-4169E1?logo=postgresql" />
+  <img src="https://img.shields.io/badge/Expo-Mobile-000020?logo=expo" />
   <img src="https://img.shields.io/badge/BullMQ-Async%20Queue-DC2626" />
   <img src="https://img.shields.io/badge/Redis-Background%20Jobs-red?logo=redis&logoColor=white" />
-  <img src="https://img.shields.io/badge/Resend-Email%20Automation-7C3AED" />
-  <img src="https://img.shields.io/badge/DeepSeek-AI%20SDR-4F46E5" />
+  <img src="https://img.shields.io/badge/RAG-Knowledge%20Base-4F46E5" />
+  <img src="https://img.shields.io/badge/Resend-Email-7C3AED" />
+  <img src="https://img.shields.io/badge/DeepSeek-AI-4F46E5" />
   <img src="https://img.shields.io/badge/Vercel-Web%20Deploy-black?logo=vercel" />
-  <img src="https://img.shields.io/badge/Railway-Worker%20Runtime-0B0D0E?logo=railway" />
+  <img src="https://img.shields.io/badge/Railway-Worker-0B0D0E?logo=railway" />
 </p>
 
 <h1 align="center">
@@ -16,235 +19,153 @@
 </h1>
 
 <p align="center">
-  AI sales agents that qualify, follow up, and book meetings automatically.
+  Multi-tenant AI Agent Platform with Web, Mobile, Worker, and Knowledge Infrastructure.
 </p>
 
 <p align="center">
-  AI SDR infrastructure for outbound sales — multi-channel inbox, campaign orchestration, and real-time monitoring.
+  Build and deploy AI Sales, Concierge, and Support Agents on a shared platform.
 </p>
 
 ---
 
-# What is this?
+## What is this?
 
-SalesAgent AI is an **AI SDR (Sales Development Representative) platform**.
+SalesAgent AI is a **Multi-Tenant AI Agent Platform**.
 
-Not a generic CRM.
-Not a workflow builder.
-Not an AI chatbot wrapper.
+Not a chatbot wrapper. Not a workflow builder. Not a generic CRM.
 
-It's infrastructure for running AI-powered outbound sales at scale:
+It's infrastructure for running domain-specific AI agents — sales agents that qualify leads and book meetings, concierge agents that answer knowledge-base questions, support agents that handle inquiries — all on a shared, multi-tenant platform with web, mobile, and background worker.
 
-- AI agents that respond to inbound leads automatically
-- Outbound email campaigns with personalized AI sequences
-- Lead qualification and scoring
-- Conversation memory across channels
-- Real-time inbox for human oversight
-- Campaign analytics and reply tracking
-
----
-
-# Who is this for?
-
-- **SaaS startups** that need to scale outbound without hiring a 10-person SDR team
-- **Agencies** running outreach for multiple clients
-- **Sales teams** that want AI to handle first-touch qualification
-- **Founders** doing their own sales who need AI assistant
-
----
-
-# Core Product
-
-## AI SDR Agents
-
-Configure AI sales agents with personality, product knowledge, and goals. Each agent handles conversations autonomously — qualifying leads, answering questions, handling objections, and booking meetings.
+### Three layers:
 
 ```
-Agent "Inbound SDR"
-  ├── Personality: Friendly, consultative, SPIN methodology
-  ├── Knowledge: Product docs, pricing, FAQs, competitor comparisons
-  ├── Goals: Qualify inbound leads → book discovery calls
-  └── Constraints: Max 50 emails/day, human review for leads scored > 80
-```
-
-## Conversation Inbox
-
-Unified inbox across all channels. See every conversation, AI-generated draft replies, lead context, and qualification scores in one view.
-
-```
-┌─ Inbox ─────────────────────────────────────────────┐
-│                                                      │
-│  Conversations          │  Thread + AI Draft         │
-│  ├─ Alice · Hot · 85   │  ├─ Lead: Alice Chen       │
-│  ├─ Bob · Warm · 62    │  │   Score: 85 · Qualified │
-│  ├─ Carol · Cold · 35  │  ├─ Conversation history   │
-│  └─ Dave · Hot · 91    │  └─ AI Draft → Edit → Send │
-│                                                      │
-└──────────────────────────────────────────────────────┘
-```
-
-## Outbound Campaigns
-
-Create multi-step outbound sequences with AI personalization, delays, and automatic reply detection.
-
-```
-Campaign "SaaS Founder Outreach"
-  Day 1  → AI-personalized cold email
-  Day 3  → Follow-up (no reply detected)
-  Day 7  → Value prop + case study
-  Day 14 → Breakup email
-
-  Reply detected? → Stop sequence, route to inbox
-  No reply?       → Continue to next step
-```
-
-## Lead Qualification
-
-AI scores every lead across 5 dimensions: intent, budget, authority, need, and timeline. Hot leads get auto-routed to human SDRs. Warm leads stay in AI nurture. Cold leads enter long-term re-engagement.
-
-## Script Playground
-
-Type a natural language prompt and get a complete sales playbook:
-
-> "Generate a cold outbound campaign for SaaS founders who just raised Series A"
-
-AI outputs: complete email sequence with subject lines, templates, follow-up timing, and personalization variables.
-
----
-
-# Technical Architecture
-
-```
-┌─────────────────────────────────────────────────────────┐
-│                    Next.js 14 Web App                    │
-│                  (Vercel, pnpm hoisted)                  │
-│                                                         │
-│  Landing · Dashboard · Inbox · Agents · Campaigns        │
-│  Leads · Scripts · Settings · API Docs                  │
-│  35 API Routes + SSE + Webhook                          │
-└──────────┬──────────────────────────────────────────────┘
-           │
-    ┌──────┼──────────────────┐
-    │      │                  │
-    ▼      ▼                  ▼
-┌──────┐ ┌──────────┐ ┌─────────────┐
-│Supabase│ │Upstash   │ │ DeepSeek    │
-│Postgres│ │Redis     │ │ AI API      │
-│        │ │          │ │             │
-│schema: │ │4 queues: │ │ compose     │
-│sales_  │ │conversation│ │ score      │
-│agent   │ │email     │ │ summarize   │
-│        │ │campaign  │ │ gen-script  │
-│10      │ │scoring   │ │             │
-│models  │ │prefix:   │ │             │
-└───┬────┘ │sales-agent│ └─────────────┘
-    │      └─────┬─────┘
-    │            │
-    ▼            ▼
-┌──────────────────────────────────────┐
-│         Railway Worker               │
-│                                       │
-│  AI Response Pipeline                 │
-│  Campaign Sequence Engine             │
-│  Email Delivery (Resend)              │
-│  Lead Scoring                         │
-│  Healthcheck HTTP Server              │
-└──────────────────────────────────────┘
+Presentation  →  Web (Next.js 14)  +  Mobile (Expo)
+Application   →  AI Core  +  RAG Core  +  API Client
+Foundation    →  Domain entities  +  Types  +  Database (PostgreSQL + pgvector)
 ```
 
 ---
 
-# Stack
+## Platform Capabilities
+
+### AI Agents
+Configure agents with personality, knowledge, and goals. Each agent handles conversations autonomously — qualifying leads, answering questions, booking meetings.
+
+### Knowledge Base (RAG)
+Upload PDFs, FAQs, and documents. The platform chunks, embeds, indexes, and retrieves — so agents answer with source citations, not hallucinations.
+
+```
+Upload PDF → Parse → Chunk → Embed → pgvector → Retrieve → Answer + Citations
+```
+
+### Conversation Inbox
+Unified inbox across all channels. See conversations, AI drafts, lead context, and qualification scores. Split-pane design — no page navigation.
+
+### Outbound Campaigns
+Multi-step sequences with AI-personalized emails, delays, and automatic reply detection. Campaigns run in the background via BullMQ worker.
+
+### Lead Qualification
+AI scores leads across 5 dimensions (intent, budget, authority, need, timeline). Hot leads route to humans. Warm leads stay in AI nurture.
+
+### Mobile App
+Expo app with Dashboard + Inbox tabs. Shares types, API client, and design tokens with the web app.
+
+---
+
+## Stack
 
 | Layer | Technology |
 |-------|-----------|
-| Frontend | Next.js 14 App Router, React 18, Tailwind CSS |
-| Language | TypeScript (strict) |
-| UI | shadcn/ui components, glass morphism design system, Plus Jakarta Sans |
-| State | TanStack Query + Zustand |
-| Validation | Zod (16 schemas) |
-| Database | PostgreSQL (Supabase, `sales_agent` schema) |
-| ORM | Prisma 6 |
-| Queue | BullMQ + Upstash Redis (4 queues, `prefix: "sales-agent"`) |
-| Email | Resend (AI composition, template engine, open/click tracking) |
-| AI | DeepSeek API (4 endpoints: compose, score, summarize, generate-script) |
-| Auth | Custom JWT (jose) + bcryptjs + httpOnly cookies + email verification |
-| Worker | Railway (standalone Node.js process) |
-| Hosting | Vercel (web) + Railway (worker) |
-| Testing | Vitest + Playwright (3 layers: unit, integration, E2E) |
-| Monorepo | pnpm workspaces + Turborepo |
+| **Web** | Next.js 14 App Router, React 18, Tailwind CSS |
+| **Mobile** | Expo SDK 52, React Native |
+| **Language** | TypeScript (strict) |
+| **Design** | Luxury Nature palette, glass morphism, design tokens |
+| **Database** | PostgreSQL (Supabase) + pgvector |
+| **ORM** | Prisma 6 |
+| **Queue** | BullMQ + Upstash Redis (4 queues, prefix: `sales-agent`) |
+| **Email** | Resend (AI composition, template engine, open/click tracking) |
+| **AI** | DeepSeek API (compose, score, summarize, generate-script) |
+| **RAG** | OpenAI Embeddings → pgvector || PostgreSQL keyword fallback |
+| **Auth** | Custom JWT (jose) + bcryptjs + httpOnly cookies |
+| **Monorepo** | pnpm workspaces + Turborepo |
+| **Hosting** | Vercel (web) + Railway (worker) |
 
 ---
 
-# Monorepo Structure
+## Architecture
 
 ```
 apps/
-  web/         — Next.js 14 (App Router, RSC, React 18), 35 API routes
-  worker/      — BullMQ Worker (AI response + campaigns + email + scoring)
+  web/       — Next.js 14 (App Router, ~40 API routes, SSE)
+  worker/    — BullMQ Worker (AI + campaigns + email + scoring)
+  mobile/    — Expo (Dashboard + Inbox)
+
 packages/
-  db/          — Prisma 6 schema + client (10 models, sales_agent schema)
-  core/        — (reserved)
-  ui/          — (reserved)
+  shared-types/  — API contract types (wire format)
+  domain/        — Business entities (LeadStage, CampaignStatus, etc.)
+  ui-tokens/     — Luxury Nature palette + Tailwind preset
+  ai-core/       — Unified AI client + prompts + agents
+  rag-core/      — Full RAG pipeline (parse → chunk → embed → retrieve → cite)
+  api-client/    — Type-safe fetch client (web + mobile share)
+  db/            — Prisma schema + pgvector (12 models)
 ```
 
----
+### Database (12 models)
 
-# Multi-Tenant SaaS
+```
+Organization  ──< Memberships >── User
+      │
+      ├──< Agent ──< Conversation ──< Message
+      ├──< Lead ──< LeadActivity
+      ├──< Script ──< Campaign ──< CampaignRun
+      ├──< Document ──< DocumentChunk (pgvector)
+      └──< AuditLog
+```
 
-Every organization has isolated data, AI agent configurations, and campaign history.
+### Multi-Tenant RBAC
 
-- **4 roles**: Owner, Admin, Operator, Viewer
-- **10 permissions**: Granular control over agents, leads, campaigns, members, audit log
-- **Org switching**: Multi-org users can switch workspaces from sidebar
-- **Scoped everything**: All queries, AI context, campaign audiences are org-scoped
-
----
-
-# Security
-
-- JWT auth (HS256, httpOnly Secure SameSite=Lax cookies)
-- bcryptjs password hashing (10 rounds, min 8 characters)
-- Email verification required for registration
-- Upstash Redis rate limiting (100 req/min per IP)
-- CSP, HSTS, X-Frame-Options, X-Content-Type-Options headers
-- Zod input validation on all mutation endpoints
-- JWT revocation via Redis blacklist
-- PII hashing in logs (SHA256)
-- Timing-safe webhook comparison
-- Organization enumeration prevention
+| Role | Manage Org | Manage Members | Manage Agents | View All |
+|------|:---:|:---:|:---:|:---:|
+| Owner | ✅ | ✅ | ✅ | ✅ |
+| Admin | — | ✅ | ✅ | ✅ |
+| Operator | — | — | ✅ | ✅ |
+| Viewer | — | — | — | ✅ |
 
 ---
 
-# AI Features
+## Color System
 
-AI is embedded as an operational layer, not a chatbot wrapper:
+**Luxury Nature palette** — Premium Enterprise SaaS aesthetic (Notion / Linear / Stripe / Ramp).
 
-- **Response composition** — AI drafts personalized replies using agent personality + product knowledge
-- **Lead scoring** — 5-dimension scoring (intent, budget, authority, need, timeline)
-- **Conversation summarization** — Extracts key points, action items, objections from threads
-- **Script generation** — Natural language → complete sales playbook with email sequences
-
-All AI features are feature-flagged and can be toggled independently.
+| Token | Hex | Role |
+|---|---|---|
+| Primary | `#265834` | CTAs, active states |
+| Hover | `#579360` | Hover / dark mode accent |
+| Dark BG | `#1f2b1d` | Dark mode background |
+| Olive | `#656d4a` | Sidebar, secondary surfaces |
+| Card | `#E8E6DF` | Cards, elevated surfaces |
+| Sage | `#d6d9c3` | Badges, highlights |
+| Tan | `#b6ad90` | Dividers, muted accents |
 
 ---
 
-# Getting Started
+## Getting Started
 
-## Prerequisites
-
-- Node.js 20+
-- pnpm 9+
-- PostgreSQL (Supabase)
+### Prerequisites
+- Node.js 20+, pnpm 9+
+- PostgreSQL (Supabase) + pgvector extension
 - Upstash Redis
 
-## Install
+### Install
 
 ```bash
 pnpm install
+pnpm --filter @salesagent/db push     # Push schema
+pnpm --filter @salesagent/db generate  # Generate Prisma client
+node packages/db/setup-vector.mjs     # Enable pgvector + embedding column
 ```
 
-## Environment
+### Environment
 
 ```bash
 # packages/db/.env
@@ -255,72 +176,69 @@ DIRECT_URL="postgresql://..."
 JWT_SECRET="64-char-random-string"
 DEEPSEEK_API_KEY="sk-..."
 REDIS_URL="redis://..."
-UPSTASH_REDIS_REST_URL="https://..."
-UPSTASH_REDIS_REST_TOKEN="..."
 
-# apps/worker/.env
-DATABASE_URL="postgresql://..."
-REDIS_URL="redis://..."
-DEEPSEEK_API_KEY="sk-..."
-RESEND_API_KEY="re_..."
-EMAIL_FROM="agent@yourdomain.com"
+# Optional: for vector search (falls back to keyword search)
+EMBEDDING_API_KEY="sk-..."   # OpenAI API key
+EMBEDDING_MODEL="text-embedding-3-small"
 ```
 
-## Develop
+### Develop
 
 ```bash
-pnpm dev                    # Start web app + worker
-pnpm --filter @salesagent/db push     # Push schema to DB
-pnpm seed                   # Reset + seed demo data
-pnpm seed-prod <org-slug>   # Idempotent seed (3 scripts + 5 leads)
+pnpm dev              # Web app
+pnpm dev-worker       # Worker
+pnpm seed-demo        # Demo data (Acme Corp)
+pnpm --filter @salesagent/web test  # 53 tests
 ```
 
-## Deploy
+### Deploy
 
 ```bash
-# Web
-npx vercel --prod --cwd apps/web
-
-# Worker (auto-deploys on git push to main via Railway)
+npx vercel --prod --cwd apps/web     # Web → Vercel
+# Worker auto-deploys via Railway on git push
 ```
 
 ---
 
-# Demo
+## Seed Scripts
+
+| Command | What |
+|---------|------|
+| `pnpm seed` | Full reset + demo data |
+| `pnpm seed-prod <slug>` | 3 scripts + 5 leads (idempotent) |
+| `pnpm seed-members <slug>` | RBAC test accounts |
+| `pnpm seed-verify-alice` | Verify alice@example.com |
+| `pnpm seed-demo` | Acme Corp demo org |
+| `pnpm clean-org <slug>` | FK-safe org cleanup |
+
+---
+
+## Demo
 
 ```bash
 pnpm seed-demo
 ```
 
-Creates **Acme Corp** with:
-- 15 leads across 6 pipeline stages
-- 3 AI SDR agents (Inbound Qualifier, Outbound SDR, Enterprise Closer)
-- 10 conversations with AI-generated replies
-- 2 active campaigns with analytics
-- Dashboard fully populated
+Creates **Acme Corp** with 15 leads, 3 AI agents, 10 conversations, 2 campaigns.
 
 Login: `demo@acmecorp.com` / `demo123456`
 
 ---
 
-# From OpsFlow to SalesAgent
+## V1.5 Changelog (2026-06-03)
 
-This project was migrated from [OpsFlow AI](https://github.com/gloria238/opsflow-ai), a multi-tenant AI workflow CRM. The infrastructure (auth, multi-tenant, queue, email, deployment, security) was carried over. The domain model was replaced:
-
-| OpsFlow | SalesAgent |
-|---------|------------|
-| Workflow Builder canvas | Conversation Inbox |
-| DAG execution engine | AI response pipeline |
-| Workflow templates | Sales playbook scripts |
-| Lead management (basic) | Lead qualification + scoring |
-| 7 AI endpoints | 4 SDR-focused AI endpoints |
-| `opsflow` schema | `sales_agent` schema |
-| `workflow-runs` queue | 4 queues with `sales-agent` prefix |
+- **7 new packages**: shared-types, domain, ui-tokens, ai-core, rag-core, api-client, db (expanded)
+- **RAG pipeline**: Upload → Parse → Chunk → Embed → pgvector → Retrieve → Cite
+- **Knowledge Base**: `/kb` page + `/kb/playground` + 3 API routes
+- **Mobile app**: Expo with Dashboard + Inbox tabs, shared types/tokens/client
+- **Color redesign**: Green/slate → Luxury Nature palette
+- **Eliminated duplication**: AI client merged from web + worker, prompts unified with injection armor
+- **Build**: ✅ | **Tests**: 53/53
 
 ---
 
-# Author
+## Author
 
 **Gloria Han**
 
-Focus: AI SDR Systems, SaaS Architecture, Outbound Automation, Async Processing, Full-Stack Product Engineering
+Focus: AI Agent Platforms · Multi-Tenant SaaS · RAG Infrastructure · Full-Stack Product Engineering

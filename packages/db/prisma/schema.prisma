@@ -46,6 +46,8 @@ model Organization {
   campaigns     Campaign[]
   scripts       Script[]
   auditLogs     AuditLog[]
+  documents     Document[]
+  documentChunks DocumentChunk[]
   createdAt     DateTime       @default(now())
   @@schema("sales_agent")
 }
@@ -207,6 +209,41 @@ model CampaignRun {
   finishedAt     DateTime?
   createdAt      DateTime     @default(now())
 
+  @@schema("sales_agent")
+}
+
+// ── Knowledge Base (RAG) ──────────────────────────────────────────
+
+model Document {
+  id             String          @id @default(uuid())
+  organizationId String
+  name           String          // original file name
+  type           String          // pdf | txt | md | faq
+  status         String          @default("processing") // processing | ready | failed
+  chunkCount     Int             @default(0)
+  metadata       Json?           // { fileSize, uploadedAt, source }
+  organization   Organization    @relation(fields: [organizationId], references: [id])
+  chunks         DocumentChunk[]
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  @@index([organizationId, createdAt(sort: Desc)])
+  @@schema("sales_agent")
+}
+
+model DocumentChunk {
+  id             String       @id @default(uuid())
+  documentId     String
+  organizationId String
+  content        String
+  chunkIndex     Int
+  metadata       Json?        // { title, fileName, section }
+  document       Document     @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  createdAt      DateTime     @default(now())
+
+  @@index([documentId, chunkIndex])
+  @@index([organizationId])
   @@schema("sales_agent")
 }
 

@@ -12,6 +12,9 @@
     "./queue": "./src/queue.ts"
   },
   "dependencies": {
+    "@salesagent/shared-types": "workspace:*",
+    "@salesagent/domain": "workspace:*",
+    "@salesagent/ai-core": "workspace:*",
     "@salesagent/db": "workspace:*",
     "bullmq": "^5.76.8",
     "ioredis": "^5.10.1",

@@ -1,0 +1,16 @@
+{
+  "name": "@salesagent/domain",
+  "version": "1.0.0",
+  "private": true,
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./lead": "./src/lead.ts",
+    "./campaign": "./src/campaign.ts",
+    "./conversation": "./src/conversation.ts",
+    "./agent": "./src/agent.ts",
+    "./organization": "./src/organization.ts",
+    "./activity": "./src/activity.ts"
+  }
+}

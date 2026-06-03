@@ -1,131 +1,117 @@
 # SalesAgent AI — Progress Report
 
-> Last updated: 2026-06-01
-> Project: AI SDR / Outbound Sales Operating System
+> Last updated: 2026-06-03
+> Project: Multi-Tenant AI Agent Platform
 
 ## Overall Status
 
 | Phase | Status | Completion |
 |-------|--------|------------|
-| Phase 0: OpsFlow Migration (schema + package rename + queue prefix) | ✅ Done | 100% |
-| Phase 1: AI SDR Foundation (Agent config, Conversation inbox, Lead scoring) | ✅ Done | 100% |
-| Phase 2: Campaign Engine (Outbound sequences, delay, retry, analytics) | ✅ Done | 100% |
-| Phase 3: AI Intelligence (Response composition, script generation, summarization) | ✅ Done | 100% |
-| Phase 4: Polish & Demo (Landing page, dark mode, seed data, onboarding) | ✅ Done | 100% |
-| Phase 5: Testing & Security (Unit + integration + E2E, Zod, JWT revocation) | ✅ Done | 100% |
-| Phase 6: Deployment (Vercel + Railway + queue prefix isolation) | ✅ Done | 100% |
-| Phase 7: Security v2 & pgBouncer (Injection audit, prompt armor, $transaction fix) | ✅ Done | 100% |
-| Phase 8: UI/UX — AI Staff Console (Green accent, activity feed, Linear sidebar) | ✅ Done | 100% |
-| Phase 9: Route hardening & DB perf (missing pages, connection_limit, middleware resilience) | ✅ Done | 100% |
+| Phase 0: OpsFlow Migration | ✅ Done | 100% |
+| Phase 1: AI SDR Foundation | ✅ Done | 100% |
+| Phase 2: Campaign Engine | ✅ Done | 100% |
+| Phase 3: AI Intelligence | ✅ Done | 100% |
+| Phase 4: Polish & Demo | ✅ Done | 100% |
+| Phase 5: Testing & Security | ✅ Done | 100% |
+| Phase 6: Deployment | ✅ Done | 100% |
+| Phase 7: Security v2 & pgBouncer | ✅ Done | 100% |
+| Phase 8: UI/UX — AI Staff Console | ✅ Done | 100% |
+| Phase 9: Route hardening & DB perf | ✅ Done | 100% |
 | Phase 10: Operational Customer Identity Layer | ✅ Done | 100% |
 | Phase 11: UX Rework & Demo Login | ✅ Done | 100% |
 | Phase 12: Bugfix Sprint & Polish | ✅ Done | 100% |
+| **Phase 13: V1.5 Agent Platform** | ✅ Done | 100% |
 
-**Total:** ~15,000 lines across ~250 files. 37 API routes + demo-login + SSE.
+**Total:** ~20,000 lines across ~300 files. 40+ API routes + SSE.
 **Tests:** 53 unit (100% pass). Build: ✅ green.
-**Infrastructure:** Next.js 14 · React 18 · Tailwind CSS · Prisma 6 · PostgreSQL (Supabase) · Upstash Redis · BullMQ (4 queues, prefix: "sales-agent") · DeepSeek AI · Resend email · Vercel + Railway.
+**Infrastructure:** Next.js 14 · React 18 · Expo 52 · Tailwind CSS · Prisma 6 · PostgreSQL (Supabase + pgvector) · Upstash Redis · BullMQ (4 queues, prefix: "sales-agent") · DeepSeek AI · OpenAI Embeddings · Resend email · Vercel + Railway.
 
-## Phase 11 — UX Rework & Demo Login ✅
+---
 
-> Completed: 2026-06-01
+## Phase 13 — V1.5 Agent Platform ✅
 
-### ChatGPT-style collapsible sidebar
-- `PanelLeftClose`/`PanelLeft` toggle — collapsed state shows icon-only nav with tooltips
-- User menu moved to sidebar bottom (avatar + name/email + Settings/Sign out dropdown)
-- Desktop top header removed — only thin mobile bar with hamburger
-- Brand: logo S in collapsed mode, "SalesAgent" in expanded. Hover logo → expand button
-- `PageTitle` component replaces `Breadcrumb` (no UUID in header)
+> Completed: 2026-06-03
 
-### Inbox unified single-page
-- Click conversation → right panel slides in, no page navigation
-- Left panel fixed width `w-80 lg:w-96`, right panel fills remaining space
-- `DetailHeader`: avatar + name + LeadPopover (hover icon → full lead card) + stage badge + score + AI agent name + AI suggestion bar
-- Compose: Textarea 4 rows, AI Draft + Send buttons
-- Mobile: left list full screen, thread full screen with back button
-
-### Dashboard dense layout
-- Donut charts (SVG, zero deps) for Lead Quality + Pipeline distribution
-- KPI row: Pipeline Value, Meetings, Reply Rate, AI Autopilot
-- Activity feed: 15 items, compact spacing, no scrollbar
-- Campaign reach bars + quick stats grid in one card
-- Score colors: Hot=emerald, Warm=blue, Cold=slate
-
-### Demo login
-- `GET /api/demo-login` — auto-seeds demo data, signs JWT, redirects `/home`
-- Landing page "Try Live Demo →" purple gradient CTA
-- `seed-demo.ts` creates `demo@salesagent.ai` / `demo123456` user alongside `demo@acmecorp.com`
-- `middleware.ts` whitelists `/api/demo-login`
-
-### New pages
-- `/analytics` — pipeline distribution, campaign performance, conversion rates, recent runs table
-- Skeleton loaders for all routes: `/inbox/loading.tsx`, `/agents/loading.tsx`, `/campaigns/loading.tsx`, `/analytics/loading.tsx`, `/scripts/loading.tsx`
-
-### Sidebar reorganization
-- Primary: Dashboard, Inbox (with badge), Campaigns, Leads
-- Secondary: Analytics, Agents, Settings
-- Removed: Scripts, Docs, Audit Log from main nav
-- Mobile nav: brand fixed to "SalesAgent", reordered to match desktop
-
-## Phase 12 — Bugfix Sprint & Polish ✅
-
-> Completed: 2026-06-01
-
-### AI pipeline fixes
-- `apps/web/lib/ai.ts`: 15s AbortController timeout + early throw if `DEEPSEEK_API_KEY` missing
-- `messages/route.ts`: enqueues `conversationQueue` + `emailQueue` after save
-- `campaigns/[id]/start/route.ts`: surfaces Redis errors with 503 status (was silent catch → rollback to draft)
-- `worker/health/route.ts`: fetches real worker health endpoint via `WORKER_HEALTH_URL` env var (was fake DB check)
-
-### Database connection pool fixes
-- All `Promise.all([...])` Prisma queries → sequential `await` across 11 files (connection_limit=1 safe)
-- `layout.tsx`: 3 user queries → 1 `findUnique` with `include: {memberships: {include: {organization: true}}}`
-- `home/page.tsx`: 15 queries → 9 queries (score breakdown from stage grouping, no extra DB round-trips)
-
-### Middleware & auth fixes
-- `middleware.ts`: `rewrite` → `redirect` for `/` → `/home` (browser URL changes, forward/back works)
-- `/login?clear=1` → middleware clears stale session cookie before redirect (breaks infinite redirect loop)
-- `verify/route.ts`: redirect to `/home` not `/`
-- `login/page.tsx`: `router.push("/home")` not `router.push("/")`
-
-### Worker isolation
-- Worker `dev` script → `start` (not picked up by `turbo run dev`)
-- Root `pnpm dev-worker` for explicit worker start
-- eliminates 500K Redis request/day exhaustion from idle worker polling
-
-### Score colors
-- Hot: red → emerald (green) — high score is GOOD
-- Warm: amber → blue
-- Cold: slate (unchanged)
-- Applied across: `lead-table-client.tsx`, `inbox-detail-client.tsx`, `home/page.tsx`, `analytics/page.tsx`
-
-### Bugfix: seed-demo Activity Feed empty
-- `seed-demo.ts` now creates `LeadActivity` records: created, stage_change, email_sent, email_received for each lead/conversation
-- Creates `AuditLog` entries: agent.created ×3, lead.imported, campaign.created, campaign.started, lead.qualified
-- `demo@salesagent.ai` user added to Acme Corp org
-
-## Architecture Summary
+### Monorepo refactor (3 apps + 7 packages)
 
 ```
-apps/web (Next.js 14 App Router)
-  ├── Pages: RSC for data, Client Components for interactivity
-  ├── API: 37 Route Handlers + demo-login + SSE
-  ├── Middleware: JWT guard + rate limiting + / redirect + stale cookie clearing
-  ├── Security: CSP/HSTS, PII-safe logging, JWT revocation, Zod (16 schemas)
-  ├── Identity Stack: DiceBear avatars, presence, IdentityCard, ActivityFeed
-  ├── UI: Collapsible sidebar, unified inbox, dense dashboard, donut charts
-  └── Design: Green accent (#22C55E), glass morphism, Plus Jakarta Sans
-
-apps/worker (Node.js — Railway deployment)
-  └── BullMQ: conversation-jobs, email-jobs, campaign-jobs, scoring-jobs (prefix: "sales-agent")
-
-packages/db (Prisma 6 + PostgreSQL)
-  ├── 10 models in sales_agent schema
-  └── Seed scripts: production, members, verify-alice, demo, clean-org
+apps/                     packages/
+  web   (Next.js 14)        shared-types   — API contract types
+  worker (BullMQ)           domain         — Business entities
+  mobile (Expo, NEW)        ui-tokens      — Luxury Nature palette + Tailwind preset
+                            ai-core        — Unified AI client + prompts + agents
+                            rag-core       — Full RAG pipeline
+                            api-client     — Type-safe fetch client
+                            db             — Prisma + pgvector (expanded)
 ```
+
+### Packages created
+
+| Package | Files | Source |
+|---------|-------|--------|
+| `shared-types` | 7 | Extracted from `apps/web/lib/api-types.ts`, `permissions.ts`, `auth.ts`, `session.ts`, `time.ts`, `feature-flags.ts`, `ai.ts` |
+| `domain` | 6 | New — LeadStage, CampaignStatus, ConversationStatus, MembershipRole, AgentGoal, LeadActivityType |
+| `ui-tokens` | 6 | New — colors, typography, spacing, shadows, Tailwind preset |
+| `ai-core` | 4 | Merged from `apps/web/lib/ai.ts` + `apps/web/lib/prompts.ts` + `apps/worker/src/ai.ts` + `apps/worker/src/index.ts` |
+| `rag-core` | 14 | New — types, parser, pdf/docx/txt/faq-parser, chunker, embeddings, indexer, storage, pgvector-storage, retriever, sources, reranker |
+| `api-client` | 10 | New — client + 8 endpoint modules |
+
+### Knowledge Base (RAG)
+
+- **2 new DB tables**: `Document` + `DocumentChunk` (pgvector embedding column)
+- **3 API routes**: `POST /kb/upload`, `POST /kb/ask`, `GET /kb/documents`
+- **2 new pages**: `/kb` (document list + upload), `/kb/playground` (Q&A + citations)
+- **Embedding fallback**: No EMBEDDING_API_KEY → PostgreSQL `~*` keyword search
+- **pgvector**: Enabled on Supabase, `setup-vector.mjs` script
+
+### Mobile app
+
+- Expo SDK 52 + Expo Router 4
+- 2 tabs: Dashboard (KPI cards) + Inbox (conversation list)
+- Shares: `shared-types`, `domain`, `api-client`, `ui-tokens`
+
+### Color redesign
+
+- Old: `#22C55E` green + slate neutrals → "AI startup" aesthetic
+- New: Luxury Nature palette → "Premium Enterprise SaaS" (Notion/Linear/Stripe/Ramp)
+- 6 core colors: `#265834`, `#579360`, `#1f2b1d`, `#656d4a`, `#E8E6DF`, `#b6ad90`
+- Updated: `globals.css`, `tailwind.config.js`, all dashboard/analytics/skeleton/empty-state components
+
+### AI deduplication
+
+- `apps/web/lib/ai.ts` → DELETED (→ `packages/ai-core/src/client.ts`)
+- `apps/web/lib/prompts.ts` → DELETED (→ `packages/ai-core/src/prompts.ts`)
+- `apps/worker/src/ai.ts` → DELETED (merged into ai-core)
+- Worker inline prompts → replaced with prompt builders (now has `<user_data>` injection armor)
+
+### What was CUT
+
+| Package | Why |
+|---------|-----|
+| memory-core | No real memory system. Build when clients ask. |
+| tool-registry | No tool-calling agent yet. Build with Booking/Support agents. |
+| workflow-engine | Campaign Automation already works. Keep until visual canvas needed. |
+
+---
 
 ## Known Issues / TODOs
 
 1. **Stripe billing** — Not implemented.
 2. **API Key Bearer auth** — Pending (Edge runtime Prisma limitation).
-3. **Upstash Redis free tier** — 500K daily limit. Worker must NOT run continuously on free tier.
-4. **packages/core and packages/ui** — Empty shells for future shared code.
+3. **Upstash Redis free tier** — 500K daily limit.
+4. **Embedding fallback** — Works (keyword search), but vector search needs OpenAI API key.
+5. **DOCX parser** — `mammoth` peer dependency declared, not installed. PDF works.
+6. **Reranker** — Interface reserved, NoopReranker only. Build when needed.
+
+---
+
+## What comes next (V1.5 Milestones)
+
+| Milestone | Description | Priority |
+|-----------|-------------|----------|
+| **B** | RAG Playground polish — better chunk viz, confidence scores | P1 |
+| **C** | Agent Playground — real-time sandbox test for agents | P1 |
+| **D** | FAQ upload support in UI | P2 |
+| **E** | DOCX upload support | P2 |
+| **F** | Mobile KB tab | P3 |
+| **G** | Advanced reranker (Cohere/BGE) | P4 |

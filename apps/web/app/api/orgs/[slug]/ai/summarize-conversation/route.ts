@@ -2,8 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@salesagent/db";
 import { getSession } from "@/lib/session";
 import { requirePermission, checkPermission } from "@/lib/permissions";
-import { callDeepSeekJSON } from "@/lib/ai";
-import { SUMMARIZE_CONVERSATION_SYSTEM, buildSummarizeConversationPrompt } from "@/lib/prompts";
+import { callDeepSeekJSON, SUMMARIZE_CONVERSATION_SYSTEM, buildSummarizeConversationPrompt } from "@salesagent/ai-core";
 import { summarizeConversationSchema } from "@/lib/validation";
 import { isEnabled } from "@/lib/feature-flags";
 

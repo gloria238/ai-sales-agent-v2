@@ -41,17 +41,17 @@ export default async function DashboardHomePage() {
   }
   const coldLeads = leadCount - hotLeads - warmLeads;
   const scoreDonut = [
-    { label: "Hot", value: hotLeads, color: "#34d399" },
-    { label: "Warm", value: warmLeads, color: "#60a5fa" },
-    { label: "Cold", value: coldLeads, color: "#94a3b8" },
+    { label: "Hot", value: hotLeads, color: "#265834" },
+    { label: "Warm", value: warmLeads, color: "#579360" },
+    { label: "Cold", value: coldLeads, color: "#b6ad90" },
   ].filter(s => s.value > 0);
 
   const pipelineDonut = [
-    { label: "New", value: stageMap.new || 0, color: "#94a3b8" },
-    { label: "Contacted", value: stageMap.contacted || 0, color: "#818cf8" },
-    { label: "Qualified", value: stageMap.qualified || 0, color: "#60a5fa" },
-    { label: "Proposal", value: stageMap.proposal || 0, color: "#fbbf24" },
-    { label: "Won", value: stageMap.closed_won || 0, color: "#34d399" },
+    { label: "New", value: stageMap.new || 0, color: "#b6ad90" },
+    { label: "Contacted", value: stageMap.contacted || 0, color: "#656d4a" },
+    { label: "Qualified", value: stageMap.qualified || 0, color: "#579360" },
+    { label: "Proposal", value: stageMap.proposal || 0, color: "#d6d9c3" },
+    { label: "Won", value: stageMap.closed_won || 0, color: "#265834" },
   ].filter(s => s.value > 0);
 
   let totalSent = 0, totalOpened = 0, totalReplied = 0;
@@ -109,9 +109,9 @@ export default async function DashboardHomePage() {
       {/* ── KPI Row ────────────────────────── */}
       <div className="grid grid-cols-4 gap-4 shrink-0 mb-5">
         {[
-          { label: "Pipeline", value: `$${(estimatedRevenue / 1000).toFixed(1)}k`, sub: `${pipelineCount} deals`, icon: Target, color: "text-emerald-400", bg: "bg-emerald-500/10", glow: "shadow-emerald-500/5" },
-          { label: "Meetings", value: meetingsThisMonth, sub: "This month", icon: Sparkles, color: "text-blue-400", bg: "bg-blue-500/10", glow: "shadow-blue-500/5" },
-          { label: "Reply Rate", value: replyRate ? `${replyRate}%` : "—", sub: totalSent > 0 ? `${totalReplied}/${totalSent}` : "No campaigns", icon: Send, color: "text-violet-400", bg: "bg-violet-500/10", glow: "shadow-violet-500/5" },
+          { label: "Pipeline", value: `$${(estimatedRevenue / 1000).toFixed(1)}k`, sub: `${pipelineCount} deals`, icon: Target, color: "text-accent", bg: "bg-accent/10", glow: "shadow-accent/5" },
+          { label: "Meetings", value: meetingsThisMonth, sub: "This month", icon: Sparkles, color: "text-accent-hover", bg: "bg-accent-soft", glow: "shadow-accent-hover/5" },
+          { label: "Reply Rate", value: replyRate ? `${replyRate}%` : "—", sub: totalSent > 0 ? `${totalReplied}/${totalSent}` : "No campaigns", icon: Send, color: "text-accent-secondary", bg: "bg-accent-muted", glow: "shadow-accent-secondary/5" },
           { label: "AI Replies", value: aiResponseRate ? `${aiResponseRate}%` : "—", sub: aiMessageCount > 0 ? `${aiMessageCount} auto` : "Activate agent", icon: Bot, color: "text-accent", bg: "bg-accent/10", glow: "shadow-accent/5" },
         ].map((card, i) => (
           <div
@@ -225,9 +225,9 @@ export default async function DashboardHomePage() {
             {totalSent > 0 ? (
               <div className="grid grid-cols-3 gap-5 mb-5">
                 {[
-                  { label: "Sent", val: totalSent, pct: null, color: "from-slate-400 to-slate-500", bg: "bg-slate-400" },
-                  { label: "Opened", val: totalOpened, pct: openRate, color: "from-blue-400 to-blue-500", bg: "bg-blue-400" },
-                  { label: "Replied", val: totalReplied, pct: replyRate, color: "from-emerald-400 to-emerald-500", bg: "bg-emerald-400" },
+                  { label: "Sent", val: totalSent, pct: null, color: "from-accent-secondary to-accent-secondary/70", bg: "bg-accent-secondary" },
+                  { label: "Opened", val: totalOpened, pct: openRate, color: "from-accent-hover to-accent-hover/70", bg: "bg-accent-hover" },
+                  { label: "Replied", val: totalReplied, pct: replyRate, color: "from-accent to-accent/70", bg: "bg-accent" },
                 ].map((bar) => (
                   <div key={bar.label} className="space-y-2">
                     <div className="flex items-center justify-between text-xs">

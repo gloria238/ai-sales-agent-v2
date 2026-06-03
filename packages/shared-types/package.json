@@ -1,0 +1,16 @@
+{
+  "name": "@salesagent/shared-types",
+  "version": "1.0.0",
+  "private": true,
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./auth": "./src/auth.ts",
+    "./permissions": "./src/permissions.ts",
+    "./api": "./src/api.ts",
+    "./ai": "./src/ai.ts",
+    "./presence": "./src/presence.ts",
+    "./feature-flags": "./src/feature-flags.ts"
+  }
+}

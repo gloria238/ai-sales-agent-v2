@@ -14,12 +14,15 @@ module.exports = {
         accent: {
           DEFAULT: "rgb(var(--accent) / <alpha-value>)",
           hover: "rgb(var(--accent-hover) / <alpha-value>)",
+          secondary: "rgb(var(--accent-secondary) / <alpha-value>)",
           soft: "rgb(var(--accent-soft) / <alpha-value>)",
         },
         bg: {
           DEFAULT: "rgb(var(--bg) / <alpha-value>)",
           card: "rgb(var(--bg-card) / <alpha-value>)",
+          sage: "rgb(var(--bg-sage) / <alpha-value>)",
           subtle: "rgb(var(--bg-subtle) / <alpha-value>)",
+          secondary: "rgb(var(--bg-secondary) / <alpha-value>)",
           muted: "rgb(var(--bg-muted) / <alpha-value>)",
         },
         text: {
@@ -52,9 +55,9 @@ module.exports = {
           border: "var(--sidebar-border)",
         },
         surface: {
-          DEFAULT: "#fafafa",
-          alt: "#f4f4f5",
-          hover: "#e4e4e7",
+          DEFAULT: "#F5F4F0",
+          alt: "#EEEDE8",
+          hover: "#d6d9c3",
         },
       },
       borderRadius: {
@@ -80,16 +83,16 @@ module.exports = {
           "50%": { opacity: "0.6" },
         },
         "flash-green": {
-          "0%": { boxShadow: "inset 0 0 0 0 rgba(16,185,129,0)" },
-          "30%": { boxShadow: "inset 0 0 0 2px rgba(16,185,129,0.4)" },
-          "100%": { boxShadow: "inset 0 0 0 0 rgba(16,185,129,0)" },
+          "0%": { boxShadow: "inset 0 0 0 0 rgba(38,88,52,0)" },
+          "30%": { boxShadow: "inset 0 0 0 2px rgba(38,88,52,0.4)" },
+          "100%": { boxShadow: "inset 0 0 0 0 rgba(38,88,52,0)" },
         },
         "flash-red": {
-          "0%": { boxShadow: "inset 0 0 0 0 rgba(239,68,68,0)" },
-          "20%": { boxShadow: "inset 0 0 0 2px rgba(239,68,68,0.4)" },
-          "40%": { boxShadow: "inset 0 0 0 0 rgba(239,68,68,0)" },
-          "60%": { boxShadow: "inset 0 0 0 2px rgba(239,68,68,0.4)" },
-          "100%": { boxShadow: "inset 0 0 0 0 rgba(239,68,68,0)" },
+          "0%": { boxShadow: "inset 0 0 0 0 rgba(180,70,60,0)" },
+          "20%": { boxShadow: "inset 0 0 0 2px rgba(180,70,60,0.4)" },
+          "40%": { boxShadow: "inset 0 0 0 0 rgba(180,70,60,0)" },
+          "60%": { boxShadow: "inset 0 0 0 2px rgba(180,70,60,0.4)" },
+          "100%": { boxShadow: "inset 0 0 0 0 rgba(180,70,60,0)" },
         },
         "slide-up": {
           "0%": { opacity: "0", transform: "translateY(8px)" },

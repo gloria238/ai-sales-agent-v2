@@ -12,9 +12,15 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
-    "@salesagent/db": "workspace:*",
-    "@salesagent/worker": "workspace:*",
     "@radix-ui/react-slot": "^1.0.0",
+    "@salesagent/ai-core": "workspace:*",
+    "@salesagent/api-client": "workspace:*",
+    "@salesagent/db": "workspace:*",
+    "@salesagent/domain": "workspace:*",
+    "@salesagent/rag-core": "workspace:*",
+    "@salesagent/shared-types": "workspace:*",
+    "@salesagent/ui-tokens": "workspace:*",
+    "@salesagent/worker": "workspace:*",
     "@tanstack/react-query": "^5.100.10",
     "@upstash/ratelimit": "^2.0.8",
     "@upstash/redis": "^1.38.0",
@@ -28,11 +34,12 @@
     "jose": "^5.0.0",
     "lucide-react": "^0.400.0",
     "next": "^14.0.0",
+    "pdf-parse": "^2.4.5",
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
     "sonner": "^2.0.7",
-    "zod": "^4.4.3",
-    "tailwind-merge": "^3.6.0"
+    "tailwind-merge": "^3.6.0",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@playwright/test": "^1.60.0",

@@ -2,8 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@salesagent/db";
 import { getSession } from "@/lib/session";
 import { requirePermission, checkPermission } from "@/lib/permissions";
-import { callDeepSeekJSON } from "@/lib/ai";
-import { GENERATE_SCRIPT_SYSTEM, buildGenerateScriptPrompt } from "@/lib/prompts";
+import { callDeepSeekJSON, GENERATE_SCRIPT_SYSTEM, buildGenerateScriptPrompt } from "@salesagent/ai-core";
 import { generateScriptSchema } from "@/lib/validation";
 import { isEnabled } from "@/lib/feature-flags";
 

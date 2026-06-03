@@ -1,0 +1,26 @@
+{
+  "expo": {
+    "name": "SalesAgent",
+    "slug": "salesagent-mobile",
+    "version": "1.0.0",
+    "scheme": "salesagent",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "splash": {
+      "backgroundColor": "#F5F4F0"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "ai.salesagent.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#F5F4F0"
+      },
+      "package": "ai.salesagent.app"
+    },
+    "plugins": ["expo-router"]
+  }
+}

@@ -47,13 +47,13 @@ export default async function AnalyticsPage() {
   }
 
   const stages = [
-    { key: "new", label: "New", color: "#94a3b8" },
-    { key: "contacted", label: "Contacted", color: "#6366f1" },
-    { key: "qualified", label: "Qualified", color: "#3b82f6" },
-    { key: "proposal", label: "Proposal", color: "#f59e0b" },
-    { key: "negotiation", label: "Negotiation", color: "#f97316" },
-    { key: "closed_won", label: "Won", color: "#10b981" },
-    { key: "closed_lost", label: "Lost", color: "#ef4444" },
+    { key: "new", label: "New", color: "#b6ad90" },
+    { key: "contacted", label: "Contacted", color: "#656d4a" },
+    { key: "qualified", label: "Qualified", color: "#579360" },
+    { key: "proposal", label: "Proposal", color: "#d6d9c3" },
+    { key: "negotiation", label: "Negotiation", color: "#265834" },
+    { key: "closed_won", label: "Won", color: "#265834" },
+    { key: "closed_lost", label: "Lost", color: "#B4463C" },
   ];
   const maxStageCount = Math.max(1, ...stages.map((s) => stageMap[s.key] ?? 0));
 
@@ -67,8 +67,8 @@ export default async function AnalyticsPage() {
       {/* KPI cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="glass-card p-5">
-          <div className="size-10 rounded-xl bg-emerald-500/10 flex items-center justify-center mb-3">
-            <DollarSign className="size-5 text-emerald-400" />
+          <div className="size-10 rounded-xl bg-accent/10 flex items-center justify-center mb-3">
+            <DollarSign className="size-5 text-accent" />
           </div>
           <p className="text-xs text-text-muted mb-1">Pipeline Value</p>
           <p className="text-2xl font-bold text-text">${(pipelineValue / 1000).toFixed(1)}k</p>
@@ -76,8 +76,8 @@ export default async function AnalyticsPage() {
         </div>
 
         <div className="glass-card p-5">
-          <div className="size-10 rounded-xl bg-blue-500/10 flex items-center justify-center mb-3">
-            <CalendarCheck className="size-5 text-blue-400" />
+          <div className="size-10 rounded-xl bg-accent-secondary/10 flex items-center justify-center mb-3">
+            <CalendarCheck className="size-5 text-accent-secondary" />
           </div>
           <p className="text-xs text-text-muted mb-1">Meetings Booked</p>
           <p className="text-2xl font-bold text-text">{meetingsThisMonth}</p>
@@ -87,8 +87,8 @@ export default async function AnalyticsPage() {
         </div>
 
         <div className="glass-card p-5">
-          <div className="size-10 rounded-xl bg-amber-500/10 flex items-center justify-center mb-3">
-            <Target className="size-5 text-amber-400" />
+          <div className="size-10 rounded-xl bg-warning-soft flex items-center justify-center mb-3">
+            <Target className="size-5 text-warning" />
           </div>
           <p className="text-xs text-text-muted mb-1">Conversion Rate</p>
           <p className="text-2xl font-bold text-text">{conversionRate ? `${conversionRate}%` : "—"}</p>
@@ -96,8 +96,8 @@ export default async function AnalyticsPage() {
         </div>
 
         <div className="glass-card p-5">
-          <div className="size-10 rounded-xl bg-indigo-500/10 flex items-center justify-center mb-3">
-            <Bot className="size-5 text-indigo-400" />
+          <div className="size-10 rounded-xl bg-accent-soft flex items-center justify-center mb-3">
+            <Bot className="size-5 text-accent-hover" />
           </div>
           <p className="text-xs text-text-muted mb-1">AI Response Rate</p>
           <p className="text-2xl font-bold text-text">{aiResponseRate ? `${aiResponseRate}%` : "—"}</p>
@@ -203,10 +203,10 @@ export default async function AnalyticsPage() {
                       <td className="py-2 text-text-secondary">{new Date(run.createdAt).toLocaleDateString()}</td>
                       <td className="py-2">
                         <span className={`text-xs px-2 py-0.5 rounded-full ${
-                          run.status === "completed" ? "bg-emerald-500/10 text-emerald-400" :
-                          run.status === "running" ? "bg-blue-500/10 text-blue-400" :
-                          run.status === "failed" ? "bg-red-500/10 text-red-400" :
-                          "bg-slate-500/10 text-slate-400"
+                          run.status === "completed" ? "bg-success-soft text-success" :
+                          run.status === "running" ? "bg-accent-soft text-accent-hover" :
+                          run.status === "failed" ? "bg-danger-soft text-danger" :
+                          "bg-bg-muted text-text-muted"
                         }`}>{run.status}</span>
                       </td>
                       <td className="py-2 text-right text-text">{s.sent || s.completed || 0}</td>

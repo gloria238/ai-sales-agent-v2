@@ -55,8 +55,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Commands
 
 ```bash
-# Development (starts all apps/packages — web only, worker is separate)
-pnpm dev
+# Development
+pnpm dev                        # Start web app (Next.js dev server)
 pnpm dev-worker                 # Start worker explicitly (BullMQ consumers — uses Redis quota)
 
 # Build all packages
@@ -65,59 +65,68 @@ pnpm build
 # Run a specific app
 pnpm --filter @salesagent/web dev
 pnpm --filter @salesagent/worker start
+pnpm --filter @salesagent/mobile start   # Expo dev server
 
 # Database
-pnpm seed                          # Seed demo data (destructive — drops all data)
-pnpm seed-prod <org-slug>          # Non-destructive: 3 scripts + 5 leads (idempotent by name)
-pnpm seed-members <org-slug>       # RBAC test accounts (admin/operator/viewer @salesagent.test / test123456)
-pnpm seed-demo                     # Client presentation demo (Acme Corp: 15 leads, 3 agents, 10 conversations)
-pnpm seed-verify-alice             # Mark alice@example.com as email-verified
-pnpm clean-org <org-slug>          # Delete all conversations + campaigns + leads in an org (FK-safe)
-pnpm --filter @salesagent/db generate # Regenerate Prisma client
-pnpm --filter @salesagent/db push     # Push schema to DB
+pnpm --filter @salesagent/db generate    # Regenerate Prisma client
+pnpm --filter @salesagent/db push        # Push schema to DB
 pnpm --filter @salesagent/db prisma studio  # Open Prisma Studio
+node packages/db/setup-vector.mjs        # Enable pgvector + embedding column
+
+# Seeds
+pnpm seed                          # Reset + seed demo data (destructive)
+pnpm seed-prod <org-slug>          # Non-destructive: 3 scripts + 5 leads
+pnpm seed-members <org-slug>       # RBAC test accounts
+pnpm seed-demo                     # Acme Corp demo (15 leads, 3 agents, 10 conversations)
+pnpm seed-verify-alice             # Mark alice@example.com as email-verified
+pnpm clean-org <org-slug>          # Delete all conversations + campaigns + leads in an org
 
 # Testing
-pnpm --filter @salesagent/web test              # Unit tests (vitest, ~2s): auth, password, permissions, rate-limit, AI prompts, feature flags
-pnpm --filter @salesagent/worker test            # Unit tests (vitest): response composition, intent detection, lead scoring
-pnpm --filter @salesagent/web test:integration  # API integration tests (needs pnpm dev running)
-pnpm --filter @salesagent/web test:e2e          # Playwright E2E (needs Chromium: npx playwright install chromium)
+pnpm --filter @salesagent/web test              # Unit tests (vitest, ~2s): 53 specs
+pnpm --filter @salesagent/worker test            # Unit tests (vitest)
+pnpm --filter @salesagent/web test:integration  # API integration tests
+pnpm --filter @salesagent/web test:e2e          # Playwright E2E
 
-# Add dependencies
-pnpm --filter @salesagent/web add <pkg>
-
-# Deploy (no Git push — GFW blocked)
+# Deploy
 npx vercel --cwd apps/web          # Deploy web app to Vercel
 npx vercel --prod --cwd apps/web   # Deploy to production
+# Worker auto-deploys via Railway on git push to main
 ```
 
 ## Architecture
 
 **SalesAgent AI** is a pnpm + Turborepo monorepo for an AI SDR / outbound sales operating system. AI agents that qualify leads, compose follow-ups, and book meetings — with multi-channel conversation inbox, campaign orchestration, and real-time monitoring.
 
-### Monorepo layout
+### Monorepo layout (V1.5)
 
 ```
 apps/
-  web/         — Next.js 14 app (App Router, RSC, React 18), ~30 API routes
+  web/         — Next.js 14 app (App Router, RSC, React 18), 40+ API routes
   worker/      — BullMQ Worker consuming queues from Upstash Redis (concurrency 5)
+  mobile/      — Expo 52 app (React Native, shared types/tokens/client)
 packages/
-  db/          — Prisma 6 schema + client (PostgreSQL, `sales_agent` schema, 10 models)
-  core/        — (empty)
-  ui/          — (empty)
+  shared-types/ — API contract types extracted from apps/web/lib/
+  domain/       — Business entities (LeadStage, CampaignStatus, etc.)
+  ui-tokens/    — Luxury Nature palette + Tailwind preset + JS tokens for RN
+  ai-core/      — Unified DeepSeek client + prompt builders + agent execution
+  rag-core/     — Full RAG pipeline (parse → chunk → embed → retrieve → cite)
+  api-client/   — Type-safe fetch client (web + mobile share)
+  db/           — Prisma 6 schema + client (PostgreSQL + pgvector, 12 models)
 ```
 
-### Data model (10 models in `sales_agent` PostgreSQL schema)
+### Data model (12 models in `sales_agent` PostgreSQL schema)
 
-- **User / Organization / Membership** — Multi-tenant with 4 roles (owner, admin, operator, viewer) + 10 permissions. User has `emailVerified`, `loginToken`, `loginTokenExpires` for verification flow.
-- **Agent** — AI sales agent configuration per org: personality, tone, knowledge base, goals, isActive flag.
-- **Lead** — CRM leads with stage tracking (new → contacted → qualified → proposal → negotiation → closed_won → closed_lost), AI score, source, assigned owner.
-- **LeadActivity** — Immutable activity log per lead (note, stage_change, assignment, email_sent, email_received).
-- **Conversation** — Thread between agent and lead: channel (email/chat), status (active/closed/archived), subject.
-- **Message** — Individual message in a conversation: direction (inbound/outbound), content, channel, AI metadata (sentiment, intent).
-- **Script** — Sales playbook: name, description, steps (JSON array of triggers/actions/templates).
-- **Campaign** — Outbound campaign: linked to script + agent, target audience filters, schedule, stats (sent/opened/replied/converted).
-- **CampaignRun** — Execution record per campaign: status lifecycle queued → running → completed/failed, per-lead delivery tracking.
+- **User / Organization / Membership** — Multi-tenant with 4 roles + 10+ permissions.
+- **Agent** — AI agent configuration per org: personality, tone, knowledge base, goals, isActive.
+- **Lead** — CRM leads with stage tracking, AI score, source, assigned owner.
+- **LeadActivity** — Immutable activity log per lead.
+- **Conversation** — Thread between agent and lead: channel, status, subject.
+- **Message** — Individual message in a conversation: direction, content, AI metadata.
+- **Script** — Sales playbook: name, description, steps (JSON).
+- **Campaign** — Outbound campaign: linked to script + agent, target audience, schedule, stats.
+- **CampaignRun** — Execution record per campaign.
+- **Document** — KB document (V1.5): name, type, status, chunkCount, metadata.
+- **DocumentChunk** — KB chunk (V1.5): content, embedding (pgvector), metadata.
 - **AuditLog** — Immutable audit trail for org-level actions.
 
 ### Key patterns
@@ -176,10 +185,8 @@ apps/web/lib/session.ts             — Server-side session from JWT cookie
 apps/web/lib/audit.ts               — Audit log write helper (used in all mutation endpoints)
 apps/web/lib/permissions.ts         — 10 RBAC permissions + role matrix (PERMISSION_MAP exported for tests)
 apps/web/lib/rate-limit.ts          — Upstash Redis sliding-window rate limiter (in-memory fallback)
-apps/web/lib/ai.ts                  — DeepSeek API client (callDeepSeek, callDeepSeekJSON, extractBalancedJSON)
-apps/web/lib/feature-flags.ts       — Env-based feature toggles (6 AI + tables + realtime)
+apps/web/lib/feature-flags.ts       — Env-based feature toggles (runtime, types in @salesagent/shared-types)
 apps/web/lib/logger.ts              — Structured JSON logging (PII-safe)
-apps/web/lib/prompts.ts             — AI system prompts + builders (4 prompt pairs: compose, score, summarize, generate-script)
 apps/web/middleware.ts              — JWT guard + Redis rate limiting (100 req/min per IP) + webhook bypass
 apps/web/components/providers/theme-provider.tsx — Dark mode provider with flash prevention
 apps/web/components/providers/theme-toggle.tsx   — Dark/light toggle button
@@ -199,9 +206,17 @@ apps/web/e2e/                       — Playwright E2E specs
 apps/worker/src/queue.ts            — Direct Redis connection + BullMQ Queues (prefix: "sales-agent")
 apps/worker/src/email.ts            — Resend email sender + {{variable}} template resolver + open/click tracking
 apps/worker/src/index.ts            — Worker: AI response composition, lead scoring, campaign delivery, retry, HTTP healthcheck
-apps/worker/src/ai.ts               — DeepSeek client for worker (mirrors web, self-contained)
-packages/db/prisma/schema.prisma    — 10 models + apiKeys JSON field on Organization
+packages/db/prisma/schema.prisma    — 12 models in sales_agent schema (incl. Document + DocumentChunk for RAG)
 packages/db/index.ts                — PrismaClient singleton export
+packages/db/setup-vector.mjs        — Enable pgvector + embedding column on Supabase
+packages/ai-core/src/client.ts      — Unified DeepSeek client (callDeepSeek, callDeepSeekJSON, 15s timeout)
+packages/ai-core/src/prompts.ts     — AI system prompts + builders + PROMPT_ARMOR injection defense
+packages/ai-core/src/agents.ts      — composeResponse(), scoreLead(), generateScript(), summarizeConversation()
+packages/rag-core/src/index.ts      — Full RAG pipeline barrel export
+packages/rag-core/src/pgvector-storage.ts — PostgreSQL pgvector StorageAdapter implementation
+packages/domain/src/lead.ts         — LeadStage, STAGE_TRANSITIONS, LeadScoreLabel
+packages/ui-tokens/src/colors.ts    — Luxury Nature palette (#265834, #579360, #1f2b1d, #656d4a, #E8E6DF, #b6ad90)
+packages/api-client/src/client.ts   — createClient() type-safe fetch wrapper (cookie + bearer auth)
 packages/db/seed-production.ts      — 3 sellable scripts + 5 demo leads (idempotent)
 packages/db/seed-demo.ts            — Client demo: Acme Corp, 15 leads, 3 agents, 10 conversations
 packages/db/seed-members.ts         — RBAC test accounts (admin/operator/viewer @salesagent.test)
@@ -209,7 +224,19 @@ packages/db/seed-verify-alice.ts    — Mark alice@example.com emailVerified=tru
 packages/db/clean-demo-org.ts       — FK-safe org cleanup before re-seed
 ```
 
-### State of the project (2026-05-23)
+### State of the project (2026-06-03)
+
+- **Phase 1-12**: Foundation → CRM → Campaigns → AI → Polish → Testing → Security → UI/UX → Identity Layer → Route hardening → UX Rework → Bugfix Sprint.
+- **Phase 13 (V1.5)**: Monorepo refactor into 3 apps + 7 packages. RAG knowledge base (pgvector). Mobile Expo app. Luxury Nature color palette.
+- **~20,000 lines** across ~300 files. 40+ API routes + SSE + webhook.
+- Web app: ✅ Vercel (JWT, Identity Stack, Knowledge Base, RAG Playground).
+- Worker: ✅ Railway (4 BullMQ workers, `prefix: "sales-agent"`, AI compose, scoring, campaign delivery, healthcheck).
+- Mobile: ✅ Expo scaffold (2 tabs: Dashboard + Inbox, shared types/tokens/client).
+- Email: ✅ Resend verification + AI-composed sales emails with open/click tracking.
+- RAG: ✅ pgvector + embeddings (with keyword search fallback). Full pipeline: parse → chunk → embed → store → retrieve → cite.
+- Design: ✅ Luxury Nature palette (#265834, #579360, #1f2b1d, #656d4a, #E8E6DF, #b6ad90). Premium Enterprise SaaS (Notion/Linear/Stripe/Ramp).
+- Security: Prompt injection armor, auto-send removed, prototype pollution blocked, CSP/HSTS, rate limiting, JWT revocation, Zod (16 schemas).
+- Known: Upstash Redis 500K free limit. API key Bearer auth pending. DOCX parser not installed.
 
 - **Phase 1: Foundation**. Auth + RBAC + DB Schema + package rename (`@opsflow` → `@salesagent`).
 - **Phase 2: CRM + Conversations**. Lead management, conversation inbox, AI-powered messaging.
@@ -239,10 +266,11 @@ packages/db/clean-demo-org.ts       — FK-safe org cleanup before re-seed
 | Command | What it does | Safe to re-run? |
 |---------|-------------|-----------------|
 | `pnpm seed` | Full reset + demo data (destructive) | Drops all data |
-| `pnpm seed-prod <slug>` | 3 scripts + 5 leads, idempotent by name/email | Yes |
-| `pnpm seed-members <slug>` | Test accounts with all 4 roles | Yes (checks duplicates) |
+| `pnpm seed-prod <slug>` | 3 scripts + 5 leads, idempotent | Yes |
+| `pnpm seed-members <slug>` | RBAC test accounts with all 4 roles | Yes |
 | `pnpm seed-verify-alice` | Sets emailVerified=true for alice@example.com | Yes |
-| `pnpm clean-org <slug>` | FK-safe delete of all conversations + campaigns + leads in org | Destructive |
+| `pnpm seed-demo` | Acme Corp demo (15 leads, 3 agents, 10 conversations) | Drop first |
+| `pnpm clean-org <slug>` | FK-safe delete of all conversations + campaigns + leads | Destructive |
 
 ### Vercel deployment gotchas (lessons learned)
 
@@ -307,5 +335,8 @@ Without the prefix, BullMQ queue names will collide with other projects, workers
 | `UPSTASH_REDIS_REST_TOKEN` | Web | Upstash REST API token |
 | `JWT_SECRET` | Web | 64-char random string, NO fallback allowed |
 | `DEEPSEEK_API_KEY` | Web, Worker | DeepSeek AI API |
+| `EMBEDDING_API_KEY` | Web, Worker | OpenAI API key for embeddings (optional — falls back to keyword search) |
+| `EMBEDDING_BASE_URL` | Web | Optional: custom embedding endpoint |
+| `EMBEDDING_MODEL` | Web | Optional: model name (default: text-embedding-3-small) |
 | `RESEND_API_KEY` | Worker | Resend email delivery |
 | `EMAIL_FROM` | Worker | Sender address for AI-composed emails |

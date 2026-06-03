@@ -1,33 +1,15 @@
+import { AIClientError, type DeepSeekMessage, type DeepSeekResponse } from "@salesagent/shared-types";
+
+// Re-export for convenience
+export { AIClientError };
+
 const DEEPSEEK_BASE = "https://api.deepseek.com/v1";
 const MODEL = "deepseek-chat";
-
-interface DeepSeekMessage {
-  role: "system" | "user" | "assistant";
-  content: string;
-}
-
-interface DeepSeekResponse {
-  choices: Array<{
-    message: { content: string };
-    finish_reason: string;
-  }>;
-}
-
-export class AIClientError extends Error {
-  constructor(
-    message: string,
-    public statusCode?: number,
-    public retryable = false,
-  ) {
-    super(message);
-    this.name = "AIClientError";
-  }
-}
 
 export async function callDeepSeek(
   prompt: string,
   system?: string,
-  options?: { temperature?: number; maxTokens?: number },
+  options?: { temperature?: number; maxTokens?: number; timeoutMs?: number },
 ): Promise<string> {
   const apiKey = process.env.DEEPSEEK_API_KEY;
   if (!apiKey) throw new AIClientError("DEEPSEEK_API_KEY not configured — set it in .env.local", 500);
@@ -36,8 +18,9 @@ export async function callDeepSeek(
   if (system) messages.push({ role: "system", content: system });
   messages.push({ role: "user", content: prompt });
 
+  const timeoutMs = options?.timeoutMs ?? 15_000;
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 15000);
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
     const res = await fetch(`${DEEPSEEK_BASE}/chat/completions`, {
@@ -72,7 +55,11 @@ export async function callDeepSeek(
   } catch (err) {
     if (err instanceof AIClientError) throw err;
     if ((err as Error)?.name === "AbortError") {
-      throw new AIClientError("DeepSeek API request timed out after 15s — check your network and DEEPSEEK_API_KEY", 408, true);
+      throw new AIClientError(
+        `DeepSeek API request timed out after ${timeoutMs / 1000}s`,
+        408,
+        true,
+      );
     }
     throw new AIClientError(`AI request failed: ${(err as Error)?.message || "Unknown"}`, 500);
   } finally {
@@ -80,7 +67,7 @@ export async function callDeepSeek(
   }
 }
 
-function extractBalancedJSON(text: string): string | null {
+export function extractBalancedJSON(text: string): string | null {
   const openers = ["{", "["];
   const closers: Record<string, string> = { "{": "}", "[": "]" };
   for (const opener of openers) {
@@ -106,14 +93,13 @@ function extractBalancedJSON(text: string): string | null {
 export async function callDeepSeekJSON<T>(
   prompt: string,
   system?: string,
-  options?: { temperature?: number; maxTokens?: number },
+  options?: { temperature?: number; maxTokens?: number; timeoutMs?: number },
 ): Promise<T> {
   const raw = await callDeepSeek(prompt, system, {
     ...options,
     temperature: options?.temperature ?? 0.3,
   });
 
-  // Extract JSON from markdown code blocks (handles text before/after)
   let cleaned = raw;
   const codeBlock = raw.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
   if (codeBlock) {
@@ -122,13 +108,10 @@ export async function callDeepSeekJSON<T>(
   try {
     return JSON.parse(cleaned) as T;
   } catch {
-    // Fallback: extract balanced JSON object or array using brace counting
     const extracted = extractBalancedJSON(cleaned);
     if (extracted) {
       try { return JSON.parse(extracted) as T; } catch { /* fall through */ }
     }
-    throw new AIClientError(
-      `AI returned invalid JSON: ${cleaned.slice(0, 300)}`,
-    );
+    throw new AIClientError(`AI returned invalid JSON: ${cleaned.slice(0, 300)}`);
   }
 }
