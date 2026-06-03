@@ -2,8 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@salesagent/db";
 import { getSession } from "@/lib/session";
 import { requirePermission, checkPermission } from "@/lib/permissions";
-import { callDeepSeekJSON } from "@/lib/ai";
-import { COMPOSE_RESPONSE_SYSTEM, buildComposeResponsePrompt } from "@/lib/prompts";
+import { callDeepSeekJSON, COMPOSE_RESPONSE_SYSTEM, buildComposeResponsePrompt } from "@salesagent/ai-core";
 import { isEnabled } from "@/lib/feature-flags";
 
 export async function POST(req: NextRequest, { params }: { params: { slug: string; id: string } }) {

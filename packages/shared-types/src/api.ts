@@ -1,19 +1,5 @@
 // ── Auth ──────────────────────────────────────────────────────────
-export interface RegisterRequest {
-  name: string;
-  email: string;
-  password: string;
-}
-
-export interface LoginRequest {
-  email: string;
-  password: string;
-}
-
-export interface AuthResponse {
-  user: { id: string; email: string; name: string };
-  org: { id: string; name: string; slug: string };
-}
+// (RegisterRequest, LoginRequest, AuthResponse are in auth.ts)
 
 // ── Organization ──────────────────────────────────────────────────
 export interface OrgResponse {
@@ -83,6 +69,72 @@ export interface UpdateLeadRequest {
   stage?: string;
   ownerId?: string;
   tags?: Record<string, unknown>;
+}
+
+// ── Agents ────────────────────────────────────────────────────────
+export interface AgentResponse {
+  id: string;
+  name: string;
+  description: string | null;
+  personality: unknown;
+  goals: unknown;
+  knowledgeBase: unknown;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// ── Conversations ─────────────────────────────────────────────────
+export interface ConversationResponse {
+  id: string;
+  leadId: string;
+  agentId: string | null;
+  channel: string;
+  subject: string | null;
+  status: string;
+  lead?: LeadResponse;
+  agent?: AgentResponse;
+  messages?: MessageResponse[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface MessageResponse {
+  id: string;
+  conversationId: string;
+  direction: string;
+  content: string;
+  channel: string;
+  aiMetadata: unknown;
+  createdAt: string;
+}
+
+// ── Campaigns ─────────────────────────────────────────────────────
+export interface CampaignResponse {
+  id: string;
+  name: string;
+  description: string | null;
+  scriptId: string | null;
+  agentId: string | null;
+  status: string;
+  targetAudience: unknown;
+  schedule: unknown;
+  stats: unknown;
+  script?: ScriptResponse;
+  agent?: AgentResponse;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// ── Scripts ───────────────────────────────────────────────────────
+export interface ScriptResponse {
+  id: string;
+  name: string;
+  description: string | null;
+  category: string | null;
+  steps: unknown;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // ── Workflows ─────────────────────────────────────────────────────

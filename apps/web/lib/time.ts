@@ -78,12 +78,12 @@ export function presenceLabel(state: PresenceState): string | null {
  */
 export function presenceColor(state: PresenceState): string {
   switch (state) {
-    case "online": return "bg-emerald-500";
-    case "idle": return "bg-slate-400";
-    case "away": return "bg-slate-300";
-    case "offline": return "bg-slate-200 dark:bg-slate-700";
-    case "ai-processing": return "bg-purple-500";
-    case "handoff-required": return "bg-amber-500";
-    case "syncing": return "bg-sky-400";
+    case "online": return "bg-accent";
+    case "idle": return "bg-accent-secondary";
+    case "away": return "bg-bg-muted";
+    case "offline": return "bg-bg-muted";
+    case "ai-processing": return "bg-accent";
+    case "handoff-required": return "bg-warning";
+    case "syncing": return "bg-accent-hover";
   }
 }

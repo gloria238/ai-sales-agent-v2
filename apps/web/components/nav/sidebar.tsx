@@ -5,7 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard, MessageSquare, Users, Bot, Send, TrendingUp,
-  Settings, PanelLeftClose, PanelLeft, LogOut, ChevronUp,
+  Settings, PanelLeftClose, PanelLeft, LogOut, ChevronUp, BookOpen,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/providers/theme-toggle";
 import { Avatar } from "@/components/identity/avatar";
@@ -19,6 +19,7 @@ const primaryItems = [
 
 const secondaryItems = [
   { href: "/analytics", label: "Analytics", icon: TrendingUp },
+  { href: "/kb", label: "Knowledge Base", icon: BookOpen },
   { href: "/agents", label: "Agents", icon: Bot },
   { href: "/settings", label: "Settings", icon: Settings },
 ];

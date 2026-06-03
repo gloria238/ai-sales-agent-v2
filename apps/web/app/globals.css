@@ -4,72 +4,78 @@
 
 @layer base {
   :root {
-    /* ── Surface ──────────────────────────── */
-    --bg: 248 250 252;
-    --bg-card: 255 255 255;
-    --bg-subtle: 241 245 249;
-    --bg-muted: 226 232 240;
+    /* ── Surface — Luxury Nature ──────────── */
+    --bg: 245 244 240;              /* warm off-white */
+    --bg-card: 232 230 223;         /* #E8E6DF — warm cream */
+    --bg-sage: 214 217 195;         /* #d6d9c3 — sage (badges/highlights only) */
+    --bg-subtle: 238 237 232;
+    --bg-secondary: 101 109 74;     /* #656d4a — olive */
+    --bg-muted: 230 228 220;
 
     /* ── Border ───────────────────────────── */
-    --border: 226 232 240;
-    --border-light: 241 245 249;
+    --border: 200 198 185;
+    --border-light: 214 217 195;
 
-    /* ── Text — higher contrast for professionalism ── */
-    --text: 15 23 42;          /* slate-900 */
-    --text-secondary: 51 65 85; /* slate-700 */
-    --text-muted: 100 116 139; /* slate-500 */
+    /* ── Text ─────────────────────────────── */
+    --text: 31 43 29;               /* #1f2b1d — deep forest */
+    --text-secondary: 74 80 69;
+    --text-muted: 122 128 117;
 
-    /* ── Accent — Green (money/sales/conversion) ── */
-    --accent: 34 197 94;          /* green-500 #22C55E */
-    --accent-hover: 22 163 74;    /* green-600 #16A34A */
-    --accent-soft: 240 253 244;   /* green-50  #F0FDF4 */
-    --accent-muted: 220 252 231;  /* green-100 #DCFCE7 */
+    /* ── Accent — Deep Forest Green ───────── */
+    --accent: 38 88 52;             /* #265834 */
+    --accent-hover: 87 147 96;      /* #579360 */
+    --accent-secondary: 182 173 144;/* #b6ad90 */
+    --accent-soft: 230 240 232;
+    --accent-muted: 210 225 215;
 
     /* ── Semantic ─────────────────────────── */
-    --success: 16 185 129;
-    --success-soft: 236 253 245;
-    --warning: 245 158 11;
-    --warning-soft: 255 251 235;
-    --danger: 239 68 68;
-    --danger-soft: 254 242 242;
+    --success: 38 88 52;
+    --success-soft: 230 240 232;
+    --warning: 182 173 144;
+    --warning-soft: 245 242 235;
+    --danger: 180 70 60;
+    --danger-soft: 250 240 238;
 
     /* ── Glass ────────────────────────────── */
-    --glass-bg: rgba(255, 255, 255, 0.72);
-    --glass-border: rgba(255, 255, 255, 0.6);
+    --glass-bg: rgba(245, 244, 240, 0.72);
+    --glass-border: rgba(200, 198, 185, 0.6);
     --glass-shadow: 0 0 0 1px rgba(0, 0, 0, 0.04), 0 2px 8px -2px rgba(0, 0, 0, 0.06);
     --glass-shadow-hover: 0 0 0 1px rgba(0, 0, 0, 0.06), 0 8px 24px -4px rgba(0, 0, 0, 0.08);
 
     /* ── Sidebar ──────────────────────────── */
-    --sidebar-bg: rgba(248, 250, 252, 0.92);
+    --sidebar-bg: rgba(245, 244, 240, 0.92);
     --sidebar-border: rgba(0, 0, 0, 0.06);
     --sidebar-w: 220px;
   }
 
   .dark {
-    --bg: 2 6 23;
-    --bg-card: 15 23 42;
-    --bg-subtle: 23 31 52;
-    --bg-muted: 30 41 59;
-    --border: 30 41 59;
-    --border-light: 23 31 52;
-    --text: 241 245 249;
-    --text-secondary: 203 213 225;
-    --text-muted: 148 163 184;
-    --accent: 34 197 94;
-    --accent-hover: 22 163 74;
-    --accent-soft: 5 46 22;
-    --accent-muted: 5 46 22;
-    --success: 52 211 153;
-    --success-soft: 6 78 59;
-    --warning: 251 191 36;
-    --warning-soft: 120 53 15;
-    --danger: 248 113 113;
-    --danger-soft: 127 29 29;
-    --glass-bg: rgba(15, 23, 42, 0.72);
+    --bg: 31 43 29;                 /* #1f2b1d */
+    --bg-card: 38 51 36;
+    --bg-sage: 42 56 39;
+    --bg-subtle: 42 56 39;
+    --bg-secondary: 101 109 74;     /* #656d4a */
+    --bg-muted: 48 64 44;
+    --border: 58 74 54;
+    --border-light: 42 56 39;
+    --text: 232 235 230;
+    --text-secondary: 188 196 184;
+    --text-muted: 136 144 128;
+    --accent: 87 147 96;            /* #579360 — lighter for dark */
+    --accent-hover: 109 174 120;
+    --accent-secondary: 182 173 144;
+    --accent-soft: 31 50 28;
+    --accent-muted: 25 45 22;
+    --success: 87 147 96;
+    --success-soft: 25 45 22;
+    --warning: 182 173 144;
+    --warning-soft: 50 45 35;
+    --danger: 220 100 90;
+    --danger-soft: 60 25 25;
+    --glass-bg: rgba(31, 43, 29, 0.72);
     --glass-border: rgba(255, 255, 255, 0.06);
     --glass-shadow: 0 0 0 1px rgba(255, 255, 255, 0.04), 0 2px 8px -2px rgba(0, 0, 0, 0.2);
     --glass-shadow-hover: 0 0 0 1px rgba(255, 255, 255, 0.06), 0 8px 24px -4px rgba(0, 0, 0, 0.4);
-    --sidebar-bg: rgba(2, 6, 23, 0.92);
+    --sidebar-bg: rgba(31, 43, 29, 0.92);
     --sidebar-border: rgba(255, 255, 255, 0.05);
   }
 }
@@ -103,23 +109,23 @@
   }
 
   input:-webkit-autofill {
-    -webkit-box-shadow: 0 0 0 1000px white inset !important;
-    -webkit-text-fill-color: #0f172a !important;
+    -webkit-box-shadow: 0 0 0 1000px #F5F4F0 inset !important;
+    -webkit-text-fill-color: #1f2b1d !important;
     font-size: 0.875rem !important;
-    caret-color: #0f172a;
+    caret-color: #1f2b1d;
   }
   input:-webkit-autofill:focus {
-    -webkit-box-shadow: 0 0 0 1000px white inset !important;
-    -webkit-text-fill-color: #0f172a !important;
+    -webkit-box-shadow: 0 0 0 1000px #F5F4F0 inset !important;
+    -webkit-text-fill-color: #1f2b1d !important;
   }
   .dark input:-webkit-autofill {
-    -webkit-box-shadow: 0 0 0 1000px #0f172a inset !important;
-    -webkit-text-fill-color: #f1f5f9 !important;
-    caret-color: #f1f5f9;
+    -webkit-box-shadow: 0 0 0 1000px #1f2b1d inset !important;
+    -webkit-text-fill-color: #E8E6DF !important;
+    caret-color: #E8E6DF;
   }
   .dark input:-webkit-autofill:focus {
-    -webkit-box-shadow: 0 0 0 1000px #0f172a inset !important;
-    -webkit-text-fill-color: #f1f5f9 !important;
+    -webkit-box-shadow: 0 0 0 1000px #1f2b1d inset !important;
+    -webkit-text-fill-color: #E8E6DF !important;
   }
 }
 
@@ -134,7 +140,7 @@
   }
   .glass-hover:hover {
     box-shadow: var(--glass-shadow-hover);
-    border-color: rgba(148, 163, 184, 0.2);
+    border-color: rgba(182, 173, 144, 0.3);
   }
 
   .glass-card {
@@ -186,8 +192,8 @@
   }
 
   @keyframes ai-pulse {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4); }
-    50% { box-shadow: 0 0 0 8px rgba(34, 197, 94, 0); }
+    0%, 100% { box-shadow: 0 0 0 0 rgba(38, 88, 52, 0.4); }
+    50% { box-shadow: 0 0 0 8px rgba(38, 88, 52, 0); }
   }
 
   @keyframes stream-cursor {
