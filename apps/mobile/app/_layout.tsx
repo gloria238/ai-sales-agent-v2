@@ -1,14 +1,15 @@
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useColorScheme } from "react-native";
-import { colors } from "@salesagent/ui-tokens/colors";
+import { colors } from "@salesagent/ui-tokens";
+import { DemoModeProvider } from "../hooks/use-demo-mode";
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
 
   return (
-    <>
+    <DemoModeProvider>
       <StatusBar style={isDark ? "light" : "dark"} />
       <Stack
         screenOptions={{
@@ -20,7 +21,15 @@ export default function RootLayout() {
       >
         <Stack.Screen name="login" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen
+          name="playground"
+          options={{ headerShown: false, presentation: "card" }}
+        />
+        <Stack.Screen
+          name="system"
+          options={{ headerShown: false, presentation: "card" }}
+        />
       </Stack>
-    </>
+    </DemoModeProvider>
   );
 }

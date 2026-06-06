@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@salesagent/db";
 import { getSession } from "@/lib/session";
 import { checkPermission } from "@/lib/permissions";
-import { callDeepSeekJSON, extractBalancedJSON } from "@salesagent/ai-core";
+import { callDeepSeekJSON, PROMPT_ARMOR, safe } from "@salesagent/ai-core";
 import { createEmbeddingProvider } from "@salesagent/rag-core/embeddings";
 
 export async function POST(req: NextRequest, { params }: { params: { slug: string } }) {
@@ -16,8 +16,8 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
   const _perm = checkPermission(membership.role, "view_agents"); if (_perm) return _perm;
 
   const { question } = (await req.json()) as { question?: string };
-  if (!question || typeof question !== "string") {
-    return NextResponse.json({ error: "question is required" }, { status: 400 });
+  if (!question || typeof question !== "string" || question.length > 2000) {
+    return NextResponse.json({ error: "question is required (max 2000 chars)" }, { status: 400 });
   }
 
   try {
@@ -70,12 +70,19 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
 
     // 3. Build context from retrieved chunks
     const context = chunks.map((c, i) =>
-      `[Source ${i + 1}] (from ${(c.metadata as Record<string,string>)?.title || "Document"}, chunk ${c.chunk_index}):\n${c.content}`
+      `[Source ${i + 1}] (from ${(c.metadata as Record<string,string>)?.title || "Document"}, chunk ${c.chunk_index}):\n${safe(c.content)}`
     ).join("\n\n");
 
-    // 4. Answer with LLM
-    const system = `You are a helpful AI assistant. Answer questions based ONLY on the provided context. If the context doesn't contain the answer, say so. Never make up information. Cite sources using [Source N] notation.`;
-    const prompt = `Context:\n${context}\n\nQuestion: ${question}\n\nAnswer the question based on the context above. Include source citations like [Source 1] in your answer.`;
+    // 4. Answer with LLM — PROMPT_ARMOR + <user_data> wrapping on user question
+    const system = `${PROMPT_ARMOR}
+You are a helpful AI assistant. Answer questions based ONLY on the provided context. If the context doesn't contain the answer, say so. Never make up information. Cite sources using [Source N] notation. Return JSON only.`;
+
+    const prompt = `Context:
+${context}
+
+Question: <user_data>${safe(question)}</user_data>
+
+Answer the question based on the context above. Include source citations like [Source 1] in your answer. Return JSON: { "answer": "..." }`;
 
     const aiAnswer = await callDeepSeekJSON<{ answer: string }>(prompt, system, { temperature: 0.3 });
 
@@ -95,8 +102,7 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
       citations,
       chunks: chunks.map((c) => ({ id: c.id, content: c.content.slice(0, 300), score: Math.round(c.similarity * 100) / 100 })),
     });
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : "Unknown";
-    return NextResponse.json({ error: `Query failed: ${msg}` }, { status: 500 });
+  } catch {
+    return NextResponse.json({ error: "Failed to process your question. Please try again." }, { status: 500 });
   }
 }

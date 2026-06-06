@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@salesagent/db";
 import { getSession } from "@/lib/session";
-import { hasPermission } from "@/lib/permissions";
+import { createOrgSchema } from "@/lib/validation";
 
 export async function GET() {
   const session = await getSession();
@@ -30,10 +30,16 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { name, slug } = await request.json();
+  const body = await request.json();
+  const parsed = createOrgSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json({ error: parsed.error.issues[0]?.message || "Invalid input" }, { status: 400 });
+  }
+  const { name, slug } = parsed.data;
 
-  if (!name || !slug) {
-    return NextResponse.json({ error: "Name and slug are required" }, { status: 400 });
+  const existing = await prisma.organization.findUnique({ where: { slug } });
+  if (existing) {
+    return NextResponse.json({ error: "Slug already taken" }, { status: 409 });
   }
 
   const org = await prisma.organization.create({

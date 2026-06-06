@@ -28,6 +28,12 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Invalid email or password" }, { status: 401 });
     }
 
+    // Reject unverified accounts — email verification link must be clicked first
+    if (!user.emailVerified) {
+      logWarn(ctx, "Login failed: email not verified", { emailHash: hashEmail(email) });
+      return NextResponse.json({ error: "Please verify your email before logging in. Check your inbox for the verification link." }, { status: 403 });
+    }
+
     const membership = await prisma.membership.findFirst({
       where: { userId: user.id },
       include: { organization: true },

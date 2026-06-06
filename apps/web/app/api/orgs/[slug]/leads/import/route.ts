@@ -1,11 +1,10 @@
-// CSV import for leads
 import { NextResponse } from "next/server";
 import { prisma } from "@salesagent/db";
 import { getSession } from "@/lib/session";
-import { requirePermission, checkPermission } from "@/lib/permissions";
+import { checkPermission } from "@/lib/permissions";
+import { leadImportSchema } from "@/lib/validation";
 
 const MAX_ROWS = 500;
-const VALID_STAGES = ["new", "qualified", "proposal", "negotiation", "closed-won", "closed-lost"];
 
 export async function POST(request: Request, { params }: { params: { slug: string } }) {
   const session = await getSession();
@@ -16,29 +15,25 @@ export async function POST(request: Request, { params }: { params: { slug: strin
   });
   if (!membership) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  try { const _perm = checkPermission(membership.role, "manage_leads"); if (_perm) return _perm; }
-  catch { return NextResponse.json({ error: "Forbidden" }, { status: 403 }); }
+  const _perm = checkPermission(membership.role, "manage_leads"); if (_perm) return _perm;
 
   const body = await request.json();
-  const rows = body.rows as Array<Record<string, string>> | undefined;
-
-  if (!rows || !Array.isArray(rows) || rows.length === 0) {
-    return NextResponse.json({ error: "No rows provided" }, { status: 400 });
-  }
-  if (rows.length > MAX_ROWS) {
-    return NextResponse.json({ error: `Maximum ${MAX_ROWS} rows per import` }, { status: 400 });
+  const parsed = leadImportSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json({ error: parsed.error.issues[0]?.message || "Invalid data" }, { status: 400 });
   }
 
+  const rows = parsed.data.rows;
   let imported = 0;
   let skipped = 0;
   const errors: string[] = [];
 
   for (let i = 0; i < rows.length; i++) {
     const row = rows[i];
-    const name = (row.Name || row.name || "").trim();
-    const email = (row.Email || row.email || "").trim() || null;
-    const stage = (row.Stage || row.stage || "new").trim().toLowerCase();
-    const tagsRaw = (row.Tags || row.tags || "").trim();
+    const name = (row.name || row.Name || "").trim();
+    const email = (row.email || row.Email || "").trim() || null;
+    const stage = (row.stage || row.Stage || "new").trim().toLowerCase();
+    const tagsRaw = (row.tags || row.Tags || "").trim();
 
     if (!name) {
       errors.push(`Row ${i + 1}: missing name`);
@@ -47,7 +42,14 @@ export async function POST(request: Request, { params }: { params: { slug: strin
     }
 
     const tags = tagsRaw ? tagsRaw.split(/[,;]/).map((t) => t.trim()).filter(Boolean) : [];
-    const validStage = VALID_STAGES.includes(stage) ? stage : "new";
+    // Normalize hyphenated stage names from CSV to underscore format
+    const NORMALIZE_STAGE: Record<string, string> = {
+      "closed-won": "closed_won",
+      "closed-lost": "closed_lost",
+    };
+    const validStage = NORMALIZE_STAGE[stage] || stage;
+    const VALID_STAGES = ["new", "contacted", "qualified", "proposal", "negotiation", "closed_won", "closed_lost"];
+    const finalStage = VALID_STAGES.includes(validStage) ? validStage : "new";
 
     try {
       await prisma.lead.create({
@@ -55,7 +57,7 @@ export async function POST(request: Request, { params }: { params: { slug: strin
           organizationId: membership.organizationId,
           name,
           email,
-          stage: validStage,
+          stage: finalStage,
           tags,
         },
       });
@@ -71,6 +73,6 @@ export async function POST(request: Request, { params }: { params: { slug: strin
     imported,
     skipped,
     total: rows.length,
-    errors: errors.slice(0, 20), // limit error messages
+    errors: errors.slice(0, 20),
   });
 }

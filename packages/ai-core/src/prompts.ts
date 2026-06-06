@@ -49,7 +49,8 @@ EMAIL TYPES (for compose-response):
 // ── Helpers ──────────────────────────────────────────────────────
 
 /** Strip newlines from single-line fields to prevent prompt injection smuggling */
-function safe(s: string): string {
+/** Strip newlines from single-line fields to prevent prompt injection smuggling */
+export function safe(s: string): string {
   return s.replace(/[\r\n]/g, " ").trim();
 }
 
@@ -185,10 +186,12 @@ export function buildSummarizeConversationPrompt(params: {
 
   return `Summarize this sales conversation:
 
-Lead: ${params.leadName}${params.leadCompany ? ` (${params.leadCompany})` : ""}
+Lead: <user_data>${safe(params.leadName)}${params.leadCompany ? ` (${safe(params.leadCompany)})` : ""}</user_data>
 
 Conversation:
+<user_data>
 ${thread}
+</user_data>
 
 Provide a concise summary with key points, objections, sentiment, buying signals, missing qualifying info, and whether a human SDR should take over.`;
 }
@@ -225,7 +228,7 @@ export function buildGenerateScriptPrompt(params: {
   return `Generate a complete sales playbook script:
 
 DESCRIPTION:
-"${params.description}"
+<user_data>${safe(params.description)}</user_data>
 
 ${params.industry ? `Industry: ${params.industry}` : ""}
 ${params.targetPersona ? `Target Persona: ${params.targetPersona}` : ""}

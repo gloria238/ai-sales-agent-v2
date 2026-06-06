@@ -1,41 +1,53 @@
-import { View, Text, FlatList, StyleSheet, useColorScheme } from "react-native";
-import { colors } from "@salesagent/ui-tokens/colors";
+import { View, Text, FlatList, StyleSheet } from "react-native";
+import { router } from "expo-router";
+import { useSalesTheme } from "../../hooks/use-theme";
 import { ConversationItem } from "../../components/conversation-item";
-
-// Mock data for MVP — in production this comes from api-client
-const MOCK_CONVERSATIONS = [
-  { id: "1", name: "Alice Chen", company: "Acme Corp", preview: "I'd love to learn more about your pricing...", score: 85, time: "2m ago" },
-  { id: "2", name: "Bob Martinez", company: "StartupXYZ", preview: "Can you send me the proposal?", score: 62, time: "15m ago" },
-  { id: "3", name: "Carol Davis", company: "GlobalTech", preview: "Not interested at this time", score: 35, time: "1h ago" },
-  { id: "4", name: "Dave Kim", company: "SaaS Co", preview: "Great demo! When can we start?", score: 91, time: "3h ago" },
-];
+import { EmptyState } from "../../components/empty-state";
+import { MOCK_CONVERSATIONS } from "../../data";
 
 export default function InboxScreen() {
-  const isDark = useColorScheme() === "dark";
-  const bg = isDark ? colors.darkBg : "#F5F4F0";
-  const textColor = isDark ? "#E8EBE6" : "#1F2B1D";
-  const muted = isDark ? "#888080" : "#7A8075";
+  const theme = useSalesTheme();
 
   return (
-    <View style={[styles.container, { backgroundColor: bg }]}>
-      <Text style={[styles.title, { color: textColor }]}>Inbox</Text>
-      <Text style={[styles.subtitle, { color: muted }]}>
-        AI-powered conversations
-      </Text>
+    <View style={[styles.container, { backgroundColor: theme.bg }]}>
+      <View style={styles.header}>
+        <Text style={[styles.title, { color: theme.textColor }]}>Inbox</Text>
+        <Text style={[styles.subtitle, { color: theme.muted }]}>
+          AI Concierge handling conversations
+        </Text>
+      </View>
 
       <FlatList
         data={MOCK_CONVERSATIONS}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => <ConversationItem {...item} isDark={isDark} />}
+        renderItem={({ item }) => (
+          <ConversationItem
+            name={item.name}
+            club={item.club}
+            preview={item.preview}
+            confidence={item.confidence}
+            time={item.time}
+            onPress={() => router.push(`/(tabs)/inbox/${item.id}`)}
+          />
+        )}
         contentContainerStyle={styles.list}
+        ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
+        ListEmptyComponent={
+          <EmptyState
+            icon="chatbubbles"
+            title="No conversations yet"
+            description="AI Concierge will handle incoming messages automatically"
+          />
+        }
       />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20 },
-  title: { fontSize: 28, fontWeight: "700", marginBottom: 4 },
-  subtitle: { fontSize: 14, marginBottom: 20 },
-  list: { gap: 8 },
+  container: { flex: 1 },
+  header: { paddingHorizontal: 24, paddingTop: 20, paddingBottom: 16 },
+  title: { fontSize: 30, fontWeight: "700", marginBottom: 2 },
+  subtitle: { fontSize: 14 },
+  list: { paddingHorizontal: 24, paddingBottom: 24 },
 });

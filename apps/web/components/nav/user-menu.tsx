@@ -1,7 +1,7 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Avatar } from "@/components/ui/avatar";
+import { Avatar } from "@/components/identity/avatar";
 import { LogOut, Settings } from "lucide-react";
 import { useCallback } from "react";
 
@@ -24,7 +24,7 @@ export function UserMenu({ user, org }: UserMenuProps) {
       <DropdownMenu>
         <DropdownMenuTrigger>
           <div className="flex items-center gap-2.5 cursor-pointer rounded-xl px-2.5 py-1.5 hover:bg-bg-subtle transition-all duration-200">
-            <Avatar name={user.name} />
+            <Avatar name={user.name} seed={user.email} size="sm" />
             <div className="text-left hidden sm:block">
               <div className="text-sm font-semibold text-text leading-tight tracking-tight">{user.name}</div>
               <div className="text-xs text-text-muted leading-tight">{org.name}</div>

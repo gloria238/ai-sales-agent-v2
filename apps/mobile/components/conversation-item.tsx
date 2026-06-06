@@ -1,79 +1,107 @@
-import { View, Text, StyleSheet } from "react-native";
-import { colors } from "@salesagent/ui-tokens/colors";
-import { scoreLabel } from "@salesagent/domain/lead";
+import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { useSalesTheme } from "../hooks/use-theme";
 
 interface ConversationItemProps {
   name: string;
-  company: string;
+  club: string;
   preview: string;
-  score: number;
+  confidence: number;
   time: string;
-  isDark: boolean;
+  onPress: () => void;
 }
 
-export function ConversationItem({ name, company, preview, score, time, isDark }: ConversationItemProps) {
-  const cardBg = isDark ? "#263324" : "#E8E6DF";
-  const textColor = isDark ? "#E8EBE6" : "#1F2B1D";
-  const muted = isDark ? "#888080" : "#7A8075";
-  const label = scoreLabel(score);
-  const scoreColor =
-    label === "hot" ? colors.primary :
-    label === "warm" ? colors.primaryHover :
-    colors.warmAccent;
+function confidenceColor(pct: number, isDark: boolean): string {
+  if (pct >= 85) return isDark ? "#579360" : "#265834";
+  if (pct >= 70) return "#b6ad90";
+  return isDark ? "#888080" : "#7A8075";
+}
+
+export function ConversationItem({
+  name,
+  club,
+  preview,
+  confidence,
+  time,
+  onPress,
+}: ConversationItemProps) {
+  const theme = useSalesTheme();
+  const pctColor = confidenceColor(confidence, theme.isDark);
 
   return (
-    <View style={[styles.card, { backgroundColor: cardBg }]}>
+    <TouchableOpacity
+      style={[styles.card, { backgroundColor: theme.cardBg }, theme.shadowLight]}
+      onPress={onPress}
+      activeOpacity={0.7}
+    >
       <View style={styles.avatar}>
         <Text style={styles.avatarText}>{name[0]}</Text>
       </View>
       <View style={styles.info}>
-        <View style={styles.row}>
-          <Text style={[styles.name, { color: textColor }]}>{name}</Text>
-          <View style={[styles.scoreBadge, { backgroundColor: `${scoreColor}20` }]}>
-            <Text style={[styles.scoreText, { color: scoreColor }]}>{label} · {score}</Text>
+        <View style={styles.topRow}>
+          <Text style={[styles.name, { color: theme.textColor }]} numberOfLines={1}>
+            {name}
+          </Text>
+          <View style={[styles.confidencePill, { backgroundColor: theme.accentBg }]}>
+            <Text style={[styles.confidenceText, { color: pctColor }]}>
+              {confidence}%
+            </Text>
           </View>
         </View>
-        <Text style={[styles.company, { color: muted }]}>{company}</Text>
-        <Text style={[styles.preview, { color: muted }]} numberOfLines={1}>
+        <Text style={[styles.club, { color: theme.muted }]}>{club}</Text>
+        <Text style={[styles.preview, { color: theme.secondaryText }]} numberOfLines={2}>
           {preview}
         </Text>
-        <Text style={[styles.time, { color: muted }]}>{time}</Text>
+        <View style={styles.bottomRow}>
+          <Text style={[styles.time, { color: theme.muted }]}>{time}</Text>
+          <Ionicons name="chevron-forward" size={14} color={theme.muted} />
+        </View>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
     flexDirection: "row",
-    borderRadius: 14,
+    borderRadius: 16,
     padding: 14,
     gap: 12,
     alignItems: "center",
   },
   avatar: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 46,
+    height: 46,
+    borderRadius: 23,
     backgroundColor: "#265834",
     alignItems: "center",
     justifyContent: "center",
   },
   avatarText: {
     color: "#FFFFFF",
-    fontSize: 17,
+    fontSize: 18,
     fontWeight: "600",
   },
   info: { flex: 1 },
-  row: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 2 },
-  name: { fontSize: 15, fontWeight: "600" },
-  scoreBadge: {
+  topRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 2,
+  },
+  name: { fontSize: 15, fontWeight: "600", flex: 1 },
+  confidencePill: {
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 10,
   },
-  scoreText: { fontSize: 11, fontWeight: "600" },
-  company: { fontSize: 12, marginBottom: 4 },
-  preview: { fontSize: 13 },
-  time: { fontSize: 11, marginTop: 4 },
+  confidenceText: { fontSize: 11, fontWeight: "700" },
+  club: { fontSize: 12, marginBottom: 4 },
+  preview: { fontSize: 13, lineHeight: 18, marginBottom: 4 },
+  bottomRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  time: { fontSize: 11 },
 });

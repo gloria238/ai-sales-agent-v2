@@ -23,5 +23,5 @@ export default async function KbPage() {
     },
   });
 
-  return <KbClient orgSlug={session.orgSlug} initialDocs={docs} />;
+  return <KbClient orgSlug={session.orgSlug} initialDocs={docs.map(d => ({ ...d, createdAt: d.createdAt.toISOString() }))} />;
 }

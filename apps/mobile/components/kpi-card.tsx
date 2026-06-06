@@ -1,30 +1,26 @@
 import { View, Text, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { colors } from "@salesagent/ui-tokens/colors";
+import { useSalesTheme } from "../hooks/use-theme";
 
 interface KpiCardProps {
   label: string;
   value: string;
   sub: string;
-  isDark: boolean;
   icon: keyof typeof Ionicons.glyphMap;
 }
 
-export function KpiCard({ label, value, sub, isDark, icon }: KpiCardProps) {
-  const cardBg = isDark ? "#263324" : "#E8E6DF";
-  const textColor = isDark ? "#E8EBE6" : "#1F2B1D";
-  const muted = isDark ? "#888080" : "#7A8075";
-  const iconBg = isDark ? "rgba(38,88,52,0.15)" : "rgba(38,88,52,0.08)";
+export function KpiCard({ label, value, sub, icon }: KpiCardProps) {
+  const theme = useSalesTheme();
 
   return (
-    <View style={[styles.card, { backgroundColor: cardBg }]}>
-      <View style={[styles.iconBox, { backgroundColor: iconBg }]}>
-        <Ionicons name={icon} size={20} color={colors.primary} />
+    <View style={[styles.card, { backgroundColor: theme.cardBg }, theme.shadowStyle]}>
+      <View style={[styles.iconBox, { backgroundColor: theme.iconBg }]}>
+        <Ionicons name={icon} size={22} color={theme.isDark ? "#579360" : "#265834"} />
       </View>
       <View style={styles.info}>
-        <Text style={[styles.label, { color: muted }]}>{label}</Text>
-        <Text style={[styles.value, { color: textColor }]}>{value}</Text>
-        <Text style={[styles.sub, { color: muted }]}>{sub}</Text>
+        <Text style={[styles.label, { color: theme.muted }]}>{label}</Text>
+        <Text style={[styles.value, { color: theme.textColor }]}>{value}</Text>
+        <Text style={[styles.sub, { color: theme.muted }]}>{sub}</Text>
       </View>
     </View>
   );
@@ -33,20 +29,22 @@ export function KpiCard({ label, value, sub, isDark, icon }: KpiCardProps) {
 const styles = StyleSheet.create({
   card: {
     flexDirection: "row",
-    borderRadius: 14,
+    borderRadius: 16,
     padding: 16,
     alignItems: "center",
     gap: 14,
+    flex: 1,
+    minWidth: "46%",
   },
   iconBox: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
+    width: 48,
+    height: 48,
+    borderRadius: 14,
     alignItems: "center",
     justifyContent: "center",
   },
   info: { flex: 1 },
   label: { fontSize: 12, marginBottom: 2 },
-  value: { fontSize: 22, fontWeight: "700" },
-  sub: { fontSize: 12, marginTop: 1 },
+  value: { fontSize: 22, fontWeight: "700", marginBottom: 1 },
+  sub: { fontSize: 11 },
 });

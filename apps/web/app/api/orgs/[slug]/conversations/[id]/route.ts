@@ -1,7 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@salesagent/db";
 import { getSession } from "@/lib/session";
-import { requirePermission, checkPermission } from "@/lib/permissions";
+import { checkPermission } from "@/lib/permissions";
+import { z } from "zod";
+
+const updateConversationSchema = z.object({
+  status: z.enum(["active", "closed", "archived"]).optional(),
+  agentId: z.string().uuid().optional(),
+});
 
 export async function GET(req: NextRequest, { params }: { params: { slug: string; id: string } }) {
   const session = await getSession();
@@ -37,7 +43,10 @@ export async function PATCH(req: NextRequest, { params }: { params: { slug: stri
   const _perm = checkPermission(membership.role, "manage_agents"); if (_perm) return _perm;
 
   const body = await req.json();
-  const { status, agentId } = body;
+  const parsed = updateConversationSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json({ error: parsed.error.issues[0]?.message || "Invalid input" }, { status: 400 });
+  }
 
   const conversation = await prisma.conversation.findFirst({
     where: { id: params.id, organizationId: membership.organizationId },
@@ -46,7 +55,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { slug: stri
 
   const updated = await prisma.conversation.update({
     where: { id: params.id },
-    data: { status: status || undefined, agentId: agentId || undefined },
+    data: parsed.data,
   });
 
   return NextResponse.json({ conversation: updated });

@@ -26,5 +26,5 @@ export function SidebarHeader({ currentOrg, orgs }: Props) {
     return <OrgSwitcher currentOrg={currentOrg} orgs={orgs} onSwitch={handleSwitch} />;
   }
 
-  return <div className="text-xs text-gray-500 mt-1">{currentOrg.name}</div>;
+  return <div className="text-xs text-text-muted mt-1">{currentOrg.name}</div>;
 }

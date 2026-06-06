@@ -55,7 +55,7 @@ export function AgentListClient({ agents, orgSlug }: { agents: Agent[]; orgSlug:
   }
 
   return (
-    <div className="p-6 max-w-5xl mx-auto">
+    <div className="max-w-5xl mx-auto p-4 lg:p-6">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-text">AI SDR Agents</h1>

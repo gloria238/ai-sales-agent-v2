@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@salesagent/db";
 import { getSession } from "@/lib/session";
-import { requirePermission, checkPermission } from "@/lib/permissions";
+import { checkPermission } from "@/lib/permissions";
 import { signToken } from "@/lib/auth";
 import { logAudit } from "@/lib/audit";
+import { updateOrgSchema } from "@/lib/validation";
 
 export async function GET(request: Request, { params }: { params: { slug: string } }) {
   const session = await getSession();
@@ -33,19 +34,22 @@ export async function PATCH(request: Request, { params }: { params: { slug: stri
   });
   if (!membership) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  try { const _perm = checkPermission(membership.role, "manage_org"); if (_perm) return _perm; }
-  catch { return NextResponse.json({ error: "Forbidden" }, { status: 403 }); }
+  const _perm = checkPermission(membership.role, "manage_org"); if (_perm) return _perm;
 
   const body = await request.json();
-  const data: Record<string, string> = {};
+  const parsed = updateOrgSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json({ error: parsed.error.issues[0]?.message || "Invalid input" }, { status: 400 });
+  }
 
-  if (body.name) data.name = body.name;
-  if (body.slug) {
-    const exists = await prisma.organization.findUnique({ where: { slug: body.slug } });
+  const data: Record<string, string> = {};
+  if (parsed.data.name) data.name = parsed.data.name;
+  if (parsed.data.slug) {
+    const exists = await prisma.organization.findUnique({ where: { slug: parsed.data.slug } });
     if (exists && exists.id !== membership.organizationId) {
       return NextResponse.json({ error: "Slug already taken" }, { status: 409 });
     }
-    data.slug = body.slug;
+    data.slug = parsed.data.slug;
   }
 
   if (!Object.keys(data).length) {

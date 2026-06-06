@@ -9,6 +9,7 @@ export {
   buildLeadScoringPrompt,
   buildSummarizeConversationPrompt,
   buildGenerateScriptPrompt,
+  safe,
 } from "./prompts";
 export { composeResponse, scoreLead, generateScript, summarizeConversation } from "./agents";
 export type { ComposeResult, ScoreResult } from "@salesagent/shared-types";

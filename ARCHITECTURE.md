@@ -2,7 +2,8 @@
 
 > Multi-tenant AI Agent Platform with Web, Mobile, Worker, and Knowledge Infrastructure.
 > Build and deploy AI Sales, Concierge, and Support Agents on a shared platform.
-> ~20,000 lines across ~300 files. 40+ API routes + SSE.
+> ~24,000 lines across ~340 files. 40+ API routes + SSE.
+> Web: 40+ pages + API routes. Mobile: 6-page Club Concierge showcase. Worker: 4 BullMQ queues.
 
 ---
 
@@ -414,10 +415,44 @@ IdentityCard
 
 ## 14. 移动端
 
-Expo SDK 52 + Expo Router 4:
-- 2 标签页: Dashboard (KPI 卡片) + Inbox (对话列表)
-- 共享包: shared-types, domain, api-client, ui-tokens
-- 主题: 自动亮/暗模式, 使用 ui-tokens 颜色
+Expo SDK 52 + Expo Router 4 — **Club Concierge Showcase**:
+
+### 定位
+Mobile 不是 Web 功能的缩水版。它是一个独立的 Demo/Showcase 层，用 Club Concierge 叙事（不是 Sales Agent 叙事）让客户在 3 分钟内相信这个产品。
+
+```
+Web = 真实产品（不改业务逻辑）
+Mobile = Showcase 层（Club Concierge 叙事）
+Landing Page = 通用 AI Platform 定位
+```
+
+### 6 个页面
+
+| 页面 | 路由 | 叙事 |
+|------|------|------|
+| **Login** | `/login` | "Enter Demo →" 一键进入 |
+| **Dashboard** | `/(tabs)/` | Members, Bookings, AI Resolve, Demo/Live Toggle |
+| **Inbox** | `/(tabs)/inbox` | AI 自动回复会员消息，AI Confidence % |
+| **Inbox Detail** | `/(tabs)/inbox/[id]` | AI 回复 + Source Citation（RAG 能力展示） |
+| **Knowledge Base** | `/(tabs)/kb` | 文档列表 + Stats + Upload Pipeline + Playground 入口 |
+| **AI Playground** | `/playground` | ⭐ 王牌 — 6 步 RAG Pipeline 可视化 |
+| **System Overview** | `/system` | 区分度页面 — 多租户、架构层、技术栈 |
+
+### 架构
+
+```
+apps/mobile/
+  hooks/           use-theme.ts, use-demo-mode.tsx
+  components/      10 个组件（kpi-card, activity-item, conversation-item,
+                   message-bubble, source-citation, document-card,
+                   pipeline-step, stats-card, skeleton, empty-state）
+  data/            5 个 mock 数据文件 + barrel export
+  app/             Expo Router 文件路由
+```
+
+### 共享包: shared-types, domain, api-client, ui-tokens
+### 主题: 自动亮/暗模式, Luxury Nature 调色板
+### 设计: 大留白、软阴影（shadowOpacity 0.06）、无边框卡片、Linear/Notion 产品美学
 
 ---
 

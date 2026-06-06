@@ -1,7 +1,12 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@salesagent/db";
 import { getSession } from "@/lib/session";
-import { requirePermission, checkPermission } from "@/lib/permissions";
+import { checkPermission } from "@/lib/permissions";
+import { z } from "zod";
+
+const createActivitySchema = z.object({
+  content: z.string().min(1, "Content is required").max(5000, "Content too long"),
+});
 
 export async function GET(request: Request, { params }: { params: { slug: string; id: string } }) {
   const session = await getSession();
@@ -12,8 +17,7 @@ export async function GET(request: Request, { params }: { params: { slug: string
   });
   if (!membership) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  try { const _perm = checkPermission(membership.role, "view_leads"); if (_perm) return _perm; }
-  catch { return NextResponse.json({ error: "Forbidden" }, { status: 403 }); }
+  const _perm = checkPermission(membership.role, "view_leads"); if (_perm) return _perm;
 
   const activities = await prisma.leadActivity.findMany({
     where: {
@@ -36,13 +40,12 @@ export async function POST(request: Request, { params }: { params: { slug: strin
   });
   if (!membership) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  try { const _perm = checkPermission(membership.role, "manage_leads"); if (_perm) return _perm; }
-  catch { return NextResponse.json({ error: "Forbidden" }, { status: 403 }); }
+  const _perm = checkPermission(membership.role, "manage_leads"); if (_perm) return _perm;
 
-  const { content } = await request.json();
-
-  if (!content || !content.trim()) {
-    return NextResponse.json({ error: "Content is required" }, { status: 400 });
+  const body = await request.json();
+  const parsed = createActivitySchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json({ error: parsed.error.issues[0]?.message || "Invalid input" }, { status: 400 });
   }
 
   const activity = await prisma.leadActivity.create({
@@ -52,7 +55,7 @@ export async function POST(request: Request, { params }: { params: { slug: strin
       userId: session.userId,
       userName: session.name ?? "Unknown",
       type: "note",
-      content: content.trim(),
+      content: parsed.data.content.trim(),
     },
   });
 

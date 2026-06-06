@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
-import { verifyToken } from "@/lib/auth";
+import { verifyToken, extractJti } from "@/lib/auth";
+import { isTokenRevoked } from "@/lib/token-blacklist";
 
 export interface Session {
   userId: string;
@@ -17,6 +18,10 @@ export async function getSession(): Promise<Session | null> {
 
   const payload = await verifyToken(token);
   if (!payload) return null;
+
+  // Check JWT revocation blacklist — ensures logout actually revokes tokens for API routes
+  const isRevoked = await isTokenRevoked(payload.jti);
+  if (isRevoked) return null;
 
   return {
     userId: payload.userId,

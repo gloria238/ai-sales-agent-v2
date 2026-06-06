@@ -1,7 +1,7 @@
 # SalesAgent AI — Progress Report
 
-> Last updated: 2026-06-03
-> Project: Multi-Tenant AI Agent Platform
+> Last updated: 2026-06-04
+> Project: Multi-Tenant AI Platform (AI Concierge / Sales Agent)
 
 ## Overall Status
 
@@ -21,8 +21,9 @@
 | Phase 11: UX Rework & Demo Login | ✅ Done | 100% |
 | Phase 12: Bugfix Sprint & Polish | ✅ Done | 100% |
 | **Phase 13: V1.5 Agent Platform** | ✅ Done | 100% |
+| **Phase 14: V1.6 Mobile Showcase** | ✅ Done | 100% |
 
-**Total:** ~20,000 lines across ~300 files. 40+ API routes + SSE.
+**Total:** ~24,000 lines across ~340 files. 40+ API routes + SSE.
 **Tests:** 53 unit (100% pass). Build: ✅ green.
 **Infrastructure:** Next.js 14 · React 18 · Expo 52 · Tailwind CSS · Prisma 6 · PostgreSQL (Supabase + pgvector) · Upstash Redis · BullMQ (4 queues, prefix: "sales-agent") · DeepSeek AI · OpenAI Embeddings · Resend email · Vercel + Railway.
 
@@ -93,6 +94,83 @@ apps/                     packages/
 | workflow-engine | Campaign Automation already works. Keep until visual canvas needed. |
 
 ---
+
+## Phase 14 — V1.6 Mobile Showcase ✅
+
+> Completed: 2026-06-04
+
+### 定位
+
+Mobile 不是 Web 功能的缩水版。它是一个独立的 **Club Concierge Demo/Showcase 层**：
+
+```
+Web = 真实产品（不改业务逻辑）
+Mobile = Showcase 层（Club Concierge 叙事）
+Landing Page = 通用 AI Platform 定位
+```
+
+### 6 个页面
+
+| 页面 | 路由 | 一句话 |
+|------|------|--------|
+| **Login** | `/login` | 品牌 + "Enter Demo →" 一键进入 |
+| **Dashboard** | `/(tabs)/` | Members · Bookings · AI Resolve · Demo/Live Toggle |
+| **Inbox 列表** | `/(tabs)/inbox` | AI 对话 + Confidence % + 导航 |
+| **Inbox 详情** | `/(tabs)/inbox/[id]` | AI 回复 + Source Citation |
+| **Knowledge Base** | `/(tabs)/kb` | Stats · 文档列表 · Upload Pipeline · Playground 入口 |
+| **AI Playground** | `/playground` | ⭐ 6 步 RAG Pipeline 可视化（embed→search→rank→sources→generate→answer） |
+| **System Overview** | `/system` | 多租户 · 架构层 · 技术栈（隐藏入口，KB Stats 区域点入） |
+
+### Club Concierge 叙事
+
+```
+Dashboard: 1,247 Members · 38 Bookings · 94% AI Resolve · Active Concierge
+Inbox: Sarah Wilson "Can I bring two guests..." 92% · AI 回复 + Guest Policy.pdf 引用
+KB: Guest Policy.pdf · Court Rules.pdf · Membership Handbook.pdf · 24 docs · 1,382 chunks
+Playground: "What is the guest policy?" → 6 步 Pipeline → Answer + Sources
+System: 3 Clubs · 24 Documents · 42 Conversations · 2 Agents · 4 Workers
+```
+
+### 新增文件（20 个）
+
+```
+hooks/use-theme.ts, use-demo-mode.tsx
+components/activity-item.tsx, message-bubble.tsx, source-citation.tsx,
+          document-card.tsx, pipeline-step.tsx, stats-card.tsx,
+          skeleton.tsx, empty-state.tsx
+data/mock-dashboard.ts, mock-inbox.ts, mock-kb.ts, mock-playground.ts,
+     mock-system.ts, index.ts
+app/playground.tsx, app/system.tsx,
+app/(tabs)/kb.tsx, app/(tabs)/inbox/[id].tsx
+```
+
+### 修改文件（7 个）
+
+```
+app/_layout.tsx      — 注册 playground + system 路由 + DemoModeProvider
+app/(tabs)/_layout.tsx — 3 tabs, tab bar 64px height
+app/(tabs)/index.tsx   — Dashboard 重设计
+app/(tabs)/inbox.tsx   — 升级到 Club Concierge 叙事
+app/login.tsx           — "Enter Demo →" 按钮
+components/kpi-card.tsx — theme hook, 软阴影
+components/conversation-item.tsx — theme hook, AI confidence, onPress
+```
+
+### Metro 配置
+
+`apps/mobile/metro.config.js` — Monorepo workspace package 解析。所有导入使用主入口（`@salesagent/ui-tokens`）而非子路径（`@salesagent/ui-tokens/colors`），因为 Metro 不支持 package.json exports 子路径。
+
+### 设计系统
+
+- Luxury Nature 调色板（#265834, #E8E6DF, #1f2b1d, #656d4a, #b6ad90）
+- 大留白（页面 padding 24px，卡片 padding 16-20px）
+- 软阴影（shadowOpacity 0.06, shadowRadius 8）
+- 无边框卡片（只有气泡 inbound 和分隔线有 border）
+- Linear/Notion/Stripe 产品美学（不是 Admin Dashboard）
+
+---
+
+## Known Issues / TODOs
 
 ## Known Issues / TODOs
 

@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@salesagent/db";
 import { getSession } from "@/lib/session";
-import { requirePermission, checkPermission } from "@/lib/permissions";
+import { checkPermission } from "@/lib/permissions";
 import { logAudit } from "@/lib/audit";
+import { updateMemberRoleSchema } from "@/lib/validation";
 
 export async function PATCH(request: Request, { params }: { params: { slug: string; membershipId: string } }) {
   const session = await getSession();
@@ -13,17 +14,19 @@ export async function PATCH(request: Request, { params }: { params: { slug: stri
   });
   if (!membership) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  try { const _perm = checkPermission(membership.role, "manage_members"); if (_perm) return _perm; }
-  catch { return NextResponse.json({ error: "Forbidden" }, { status: 403 }); }
+  const _perm = checkPermission(membership.role, "manage_members"); if (_perm) return _perm;
 
   const target = await prisma.membership.findFirst({
     where: { id: params.membershipId, organizationId: membership.organizationId },
   });
   if (!target) return NextResponse.json({ error: "Member not found" }, { status: 404 });
 
-  const { role } = await request.json();
-  const validRoles = ["owner", "admin", "operator", "viewer"];
-  if (!validRoles.includes(role)) return NextResponse.json({ error: "Invalid role" }, { status: 400 });
+  const body = await request.json();
+  const parsed = updateMemberRoleSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json({ error: parsed.error.issues[0]?.message || "Invalid input" }, { status: 400 });
+  }
+  const { role } = parsed.data;
 
   // Prevent removing the last owner
   if (target.role === "owner" && role !== "owner") {
@@ -61,8 +64,7 @@ export async function DELETE(request: Request, { params }: { params: { slug: str
   });
   if (!membership) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  try { const _perm = checkPermission(membership.role, "manage_members"); if (_perm) return _perm; }
-  catch { return NextResponse.json({ error: "Forbidden" }, { status: 403 }); }
+  const _perm = checkPermission(membership.role, "manage_members"); if (_perm) return _perm;
 
   const target = await prisma.membership.findFirst({
     where: { id: params.membershipId, organizationId: membership.organizationId },
@@ -77,7 +79,7 @@ export async function DELETE(request: Request, { params }: { params: { slug: str
     if (ownerCount <= 1) return NextResponse.json({ error: "Cannot remove the last owner" }, { status: 400 });
   }
 
-  const removed = await prisma.membership.delete({ where: { id: params.membershipId } });
+  await prisma.membership.delete({ where: { id: params.membershipId } });
 
   await logAudit({
     organizationId: membership.organizationId,

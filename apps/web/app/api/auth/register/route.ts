@@ -75,7 +75,7 @@ export async function POST(request: Request) {
       try {
         const { Resend } = await import("resend");
         const resend = new Resend(process.env.RESEND_API_KEY);
-        const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? request.headers.get("origin") ?? "http://localhost:3000";
+        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
         await resend.emails.send({
           from: process.env.EMAIL_FROM,
           to: email,
@@ -94,7 +94,6 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       requiresVerification: true,
-      verifyUrl, // fallback: shown in UI if email not received
       message: "Account created. Check your email for the verification link.",
     }, { status: 201 });
   } catch (error) {

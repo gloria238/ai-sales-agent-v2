@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@salesagent/db";
 import { getSession } from "@/lib/session";
-import { requirePermission, checkPermission } from "@/lib/permissions";
+import { checkPermission } from "@/lib/permissions";
 import { logAudit } from "@/lib/audit";
+import { inviteMemberSchema } from "@/lib/validation";
 
 export const dynamic = "force-dynamic";
 
@@ -16,8 +17,7 @@ export async function GET(request: Request, { params }: { params: { slug: string
     });
     if (!membership) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-    try { const _perm = checkPermission(membership.role, "view_members"); if (_perm) return _perm; }
-    catch { return NextResponse.json({ error: "Forbidden" }, { status: 403 }); }
+    const _perm = checkPermission(membership.role, "view_members"); if (_perm) return _perm;
 
     const members = await prisma.membership.findMany({
       where: { organizationId: membership.organizationId },
@@ -43,17 +43,17 @@ export async function POST(request: Request, { params }: { params: { slug: strin
     });
     if (!membership) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-    try { const _perm = checkPermission(membership.role, "manage_members"); if (_perm) return _perm; }
-    catch { return NextResponse.json({ error: "Forbidden" }, { status: 403 }); }
+    const _perm = checkPermission(membership.role, "manage_members"); if (_perm) return _perm;
 
-    const { email, role } = await request.json();
-    if (!email || !role) return NextResponse.json({ error: "email and role required" }, { status: 400 });
-
-    const validRoles = ["owner", "admin", "operator", "viewer"];
-    if (!validRoles.includes(role)) return NextResponse.json({ error: "Invalid role" }, { status: 400 });
+    const body = await request.json();
+    const parsed = inviteMemberSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error.issues[0]?.message || "Invalid input" }, { status: 400 });
+    }
+    const { email, role } = parsed.data;
 
     const user = await prisma.user.findUnique({ where: { email } });
-    if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 });
+    if (!user) return NextResponse.json({ error: "User not found. Ask them to register first." }, { status: 404 });
 
     const existing = await prisma.membership.findUnique({
       where: { organizationId_userId: { organizationId: membership.organizationId, userId: user.id } },

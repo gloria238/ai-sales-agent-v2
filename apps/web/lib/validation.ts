@@ -161,7 +161,7 @@ export const installScriptSchema = z.object({
 
 // ── Auth input ───────────────────────────────────────────────────
 export const loginSchema = z.object({
-  email: z.string().min(1, "Email required"),
+  email: z.string().email("Invalid email format").max(320, "Email too long"),
   password: z.string().min(1, "Password required"),
 });
 

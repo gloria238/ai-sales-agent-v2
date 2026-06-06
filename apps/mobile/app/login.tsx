@@ -5,65 +5,76 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  useColorScheme,
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
-import { colors } from "@salesagent/ui-tokens/colors";
 import { router } from "expo-router";
+import { useSalesTheme } from "../hooks/use-theme";
 
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const isDark = useColorScheme() === "dark";
+  const theme = useSalesTheme();
 
-  const bg = isDark ? colors.darkBg : "#F5F4F0";
-  const cardBg = isDark ? "#263324" : "#E8E6DF";
-  const textColor = isDark ? "#E8EBE6" : "#1F2B1D";
-  const muted = isDark ? "#888080" : "#7A8075";
-  const borderColor = isDark ? "#3A4A36" : "#C8C6B9";
-
-  const handleLogin = () => {
-    // TODO: Use api-client for real auth
+  const handleDemoLogin = () => {
     router.replace("/(tabs)");
   };
 
   return (
     <KeyboardAvoidingView
-      style={[styles.container, { backgroundColor: bg }]}
+      style={[styles.container, { backgroundColor: theme.bg }]}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
       <View style={styles.content}>
-        <Text style={[styles.brand, { color: colors.primary }]}>SalesAgent</Text>
-        <Text style={[styles.title, { color: textColor }]}>Welcome back</Text>
-        <Text style={[styles.subtitle, { color: muted }]}>
-          Sign in to your workspace
+        {/* Brand */}
+        <Text style={[styles.brand, { color: "#265834" }]}>Ringible</Text>
+        <Text style={[styles.title, { color: theme.textColor }]}>AI Concierge Platform</Text>
+        <Text style={[styles.subtitle, { color: theme.muted }]}>
+          Multi-Tenant · Knowledge Base · RAG{'\n'}Web + Mobile · Background Workers
         </Text>
 
-        <View style={[styles.card, { backgroundColor: cardBg, borderColor }]}>
+        {/* Login card */}
+        <View style={[styles.card, { backgroundColor: theme.cardBg, borderColor: theme.borderColor }]}>
           <TextInput
-            style={[styles.input, { color: textColor, borderColor }]}
+            style={[styles.input, { color: theme.textColor, borderColor: theme.borderColor, backgroundColor: theme.bg }]}
             placeholder="Email"
-            placeholderTextColor={muted}
+            placeholderTextColor={theme.muted}
             value={email}
             onChangeText={setEmail}
             autoCapitalize="none"
             keyboardType="email-address"
           />
           <TextInput
-            style={[styles.input, { color: textColor, borderColor }]}
+            style={[styles.input, { color: theme.textColor, borderColor: theme.borderColor, backgroundColor: theme.bg }]}
             placeholder="Password"
-            placeholderTextColor={muted}
+            placeholderTextColor={theme.muted}
             value={password}
             onChangeText={setPassword}
             secureTextEntry
           />
           <TouchableOpacity
-            style={[styles.button, { backgroundColor: colors.primary }]}
-            onPress={handleLogin}
+            style={[styles.signInButton, { backgroundColor: "#265834" }]}
           >
-            <Text style={styles.buttonText}>Sign In</Text>
+            <Text style={styles.signInButtonText}>Sign In</Text>
           </TouchableOpacity>
+
+          {/* Divider */}
+          <View style={styles.divider}>
+            <View style={[styles.dividerLine, { backgroundColor: theme.borderColor }]} />
+            <Text style={[styles.dividerText, { color: theme.muted }]}>or</Text>
+            <View style={[styles.dividerLine, { backgroundColor: theme.borderColor }]} />
+          </View>
+
+          {/* Demo Button */}
+          <TouchableOpacity
+            style={[styles.demoButton, { borderColor: "#265834" }]}
+            onPress={handleDemoLogin}
+          >
+            <Text style={[styles.demoButtonText, { color: "#265834" }]}>Enter Demo →</Text>
+          </TouchableOpacity>
+          <Text style={[styles.demoHint, { color: theme.muted }]}>
+            Explore Riverside Club · Elite Tennis · Westside Sports
+          </Text>
         </View>
       </View>
     </KeyboardAvoidingView>
@@ -72,25 +83,45 @@ export default function LoginScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  content: { flex: 1, justifyContent: "center", padding: 24 },
-  brand: { fontSize: 18, fontWeight: "700", marginBottom: 24, textAlign: "center" },
-  title: { fontSize: 24, fontWeight: "700", textAlign: "center", marginBottom: 4 },
-  subtitle: { fontSize: 14, textAlign: "center", marginBottom: 32 },
-  card: { borderRadius: 16, padding: 20, borderWidth: 1 },
+  content: { flex: 1, justifyContent: "center", padding: 28 },
+  brand: { fontSize: 20, fontWeight: "700", marginBottom: 16, textAlign: "center", letterSpacing: 1 },
+  title: { fontSize: 26, fontWeight: "700", textAlign: "center", marginBottom: 8 },
+  subtitle: { fontSize: 13, textAlign: "center", marginBottom: 36, lineHeight: 20 },
+
+  card: { borderRadius: 20, padding: 24, borderWidth: 1 },
   input: {
     height: 48,
     borderWidth: 1,
-    borderRadius: 10,
+    borderRadius: 12,
     paddingHorizontal: 14,
     fontSize: 15,
     marginBottom: 12,
   },
-  button: {
+  signInButton: {
     height: 48,
-    borderRadius: 10,
+    borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
-    marginTop: 8,
+    marginTop: 4,
   },
-  buttonText: { color: "#FFFFFF", fontSize: 16, fontWeight: "600" },
+  signInButtonText: { color: "#FFFFFF", fontSize: 16, fontWeight: "600" },
+
+  divider: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginVertical: 20,
+    gap: 10,
+  },
+  dividerLine: { flex: 1, height: StyleSheet.hairlineWidth },
+  dividerText: { fontSize: 12 },
+
+  demoButton: {
+    height: 48,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1.5,
+  },
+  demoButtonText: { fontSize: 16, fontWeight: "600" },
+  demoHint: { fontSize: 11, textAlign: "center", marginTop: 8 },
 });

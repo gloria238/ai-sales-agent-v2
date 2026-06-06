@@ -65,7 +65,10 @@ pnpm build
 # Run a specific app
 pnpm --filter @salesagent/web dev
 pnpm --filter @salesagent/worker start
-pnpm --filter @salesagent/mobile start   # Expo dev server
+pnpm --filter @salesagent/mobile start   # Expo dev server (scan QR with Expo Go)
+pnpm --filter @salesagent/mobile web     # Web mode on http://localhost:8082
+pnpm --filter @salesagent/mobile android # Android emulator
+pnpm --filter @salesagent/mobile ios     # iOS simulator (macOS only)
 
 # Database
 pnpm --filter @salesagent/db generate    # Regenerate Prisma client
@@ -103,7 +106,7 @@ npx vercel --prod --cwd apps/web   # Deploy to production
 apps/
   web/         — Next.js 14 app (App Router, RSC, React 18), 40+ API routes
   worker/      — BullMQ Worker consuming queues from Upstash Redis (concurrency 5)
-  mobile/      — Expo 52 app (React Native, shared types/tokens/client)
+  mobile/      — Expo 52 app (React Native) — 6-page Club Concierge demo showcase
 packages/
   shared-types/ — API contract types extracted from apps/web/lib/
   domain/       — Business entities (LeadStage, CampaignStatus, etc.)
@@ -203,6 +206,34 @@ apps/web/vitest.integration.config.ts — Integration test config (sequential fi
 apps/web/playwright.config.ts       — Playwright E2E config (Chromium, auto-starts dev server)
 apps/web/lib/__tests__/             — Unit + integration test files
 apps/web/e2e/                       — Playwright E2E specs
+apps/mobile/app/_layout.tsx           — Root layout + theme + DemoModeProvider + playground/system routes
+apps/mobile/app/(tabs)/_layout.tsx    — 3 tabs: Dashboard / Inbox / Knowledge Base
+apps/mobile/app/(tabs)/index.tsx      — Dashboard: 4 KPI cards + recent activity feed + Demo/Live toggle
+apps/mobile/app/(tabs)/inbox.tsx      — Inbox: conversation list with AI confidence %, navigates to detail
+apps/mobile/app/(tabs)/inbox/[id].tsx — Inbox detail: message thread + AI replies + source citations
+apps/mobile/app/(tabs)/kb.tsx         — Knowledge Base: stats row + document list + upload pipeline + Playground entry
+apps/mobile/app/playground.tsx        — ⭐ AI Playground: 6-step RAG pipeline visualization (embed→search→rank→sources→generate→answer)
+apps/mobile/app/system.tsx            — System Overview: multi-tenant, pipeline, architecture layers, tech stack
+apps/mobile/app/login.tsx             — Login: email/password form + "Enter Demo →" CTA
+apps/mobile/hooks/use-theme.ts        — Shared theme hook (all components use this)
+apps/mobile/hooks/use-demo-mode.tsx   — Demo/Live toggle Context
+apps/mobile/components/kpi-card.tsx   — KPI card (icon + value + label, soft shadow, no border)
+apps/mobile/components/activity-item.tsx — Activity feed row with icon + description + time
+apps/mobile/components/conversation-item.tsx — Conversation list row with AI confidence % + onPress
+apps/mobile/components/message-bubble.tsx   — Chat bubble (inbound/outbound) with AI label + source citations
+apps/mobile/components/source-citation.tsx  — RAG source block: document name, chunk #, score, excerpt
+apps/mobile/components/document-card.tsx    — Document card: file icon, type badge, status dot, chunk count
+apps/mobile/components/pipeline-step.tsx    — Pipeline step component (used in Playground, KB, System Overview)
+apps/mobile/components/stats-card.tsx       — Compact stat card (icon + value + label)
+apps/mobile/components/skeleton.tsx         — Skeleton loaders (KPI, conversation, document variants)
+apps/mobile/components/empty-state.tsx      — Empty state with icon, title, description
+apps/mobile/data/index.ts             — Barrel export for all mock data
+apps/mobile/data/mock-dashboard.ts    — Club Concierge KPI + activity mock data
+apps/mobile/data/mock-inbox.ts        — 5 conversations with full message threads + RAG sources
+apps/mobile/data/mock-kb.ts           — 24 documents + stats mock data
+apps/mobile/data/mock-playground.ts   — Pre-scripted Q&A pairs with citations
+apps/mobile/data/mock-system.ts       — System architecture mock data
+apps/mobile/metro.config.js           — Metro bundler config for monorepo resolution
 apps/worker/src/queue.ts            — Direct Redis connection + BullMQ Queues (prefix: "sales-agent")
 apps/worker/src/email.ts            — Resend email sender + {{variable}} template resolver + open/click tracking
 apps/worker/src/index.ts            — Worker: AI response composition, lead scoring, campaign delivery, retry, HTTP healthcheck
@@ -228,10 +259,11 @@ packages/db/clean-demo-org.ts       — FK-safe org cleanup before re-seed
 
 - **Phase 1-12**: Foundation → CRM → Campaigns → AI → Polish → Testing → Security → UI/UX → Identity Layer → Route hardening → UX Rework → Bugfix Sprint.
 - **Phase 13 (V1.5)**: Monorepo refactor into 3 apps + 7 packages. RAG knowledge base (pgvector). Mobile Expo app. Luxury Nature color palette.
+- **Phase 14 (V1.6)**: Mobile Showcase — 6-page Club Concierge Demo (Dashboard, Inbox, Inbox Detail, Knowledge Base, AI Playground, System Overview). Demo/Live toggle, RAG Pipeline visualization, Luxury Nature theme throughout.
 - **~20,000 lines** across ~300 files. 40+ API routes + SSE + webhook.
 - Web app: ✅ Vercel (JWT, Identity Stack, Knowledge Base, RAG Playground).
 - Worker: ✅ Railway (4 BullMQ workers, `prefix: "sales-agent"`, AI compose, scoring, campaign delivery, healthcheck).
-- Mobile: ✅ Expo scaffold (2 tabs: Dashboard + Inbox, shared types/tokens/client).
+- Mobile: ✅ Expo 52 (6 pages: Dashboard, Inbox, Inbox Detail, Knowledge Base, AI Playground, System Overview). Club Concierge demo narrative. RAG pipeline visualization. Demo/Live toggle. Shared types/tokens/client.
 - Email: ✅ Resend verification + AI-composed sales emails with open/click tracking.
 - RAG: ✅ pgvector + embeddings (with keyword search fallback). Full pipeline: parse → chunk → embed → store → retrieve → cite.
 - Design: ✅ Luxury Nature palette (#265834, #579360, #1f2b1d, #656d4a, #E8E6DF, #b6ad90). Premium Enterprise SaaS (Notion/Linear/Stripe/Ramp).

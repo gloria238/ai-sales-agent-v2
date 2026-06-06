@@ -9,12 +9,12 @@ const p = new PrismaClient({ datasources: { db: { url } } });
 
 const r = await p.$queryRawUnsafe(
   `SELECT column_name FROM information_schema.columns
-   WHERE table_schema='sales_agent' AND table_name='document_chunks' AND column_name='embedding'`
+   WHERE table_schema='sales_agent' AND table_name='DocumentChunk' AND column_name='embedding'`
 );
 
 if (r.length === 0) {
-  await p.$executeRawUnsafe("ALTER TABLE sales_agent.document_chunks ADD COLUMN embedding vector");
-  console.log("✓ embedding column added");
+  await p.$executeRawUnsafe(`ALTER TABLE sales_agent."DocumentChunk" ADD COLUMN embedding vector`);
+  console.log("✓ embedding column added to sales_agent.DocumentChunk");
 } else {
   console.log("✓ embedding column already exists");
 }

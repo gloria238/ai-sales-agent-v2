@@ -23,24 +23,24 @@ export function MobileNav() {
   return (
     <>
       <button
-        className="lg:hidden p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+        className="lg:hidden p-2 rounded-lg hover:bg-bg-subtle transition-colors"
         onClick={() => setOpen(true)}
         aria-label="Open menu"
       >
-        <Menu className="size-5 text-zinc-600 dark:text-zinc-400" />
+        <Menu className="size-5 text-text-secondary" />
       </button>
 
       {open && (
         <div className="fixed inset-0 z-50 lg:hidden">
           <div className="absolute inset-0 bg-black/30" onClick={() => setOpen(false)} />
-          <div className="absolute left-0 top-0 bottom-0 w-64 bg-white dark:bg-zinc-900 shadow-xl p-4 flex flex-col">
+          <div className="absolute left-0 top-0 bottom-0 w-64 bg-bg-card shadow-xl p-4 flex flex-col">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-2">
                 <div className="size-7 rounded-md bg-accent flex items-center justify-center text-white text-xs font-bold">S</div>
-                <span className="font-semibold text-sm dark:text-white">SalesAgent</span>
+                <span className="font-semibold text-sm text-text">SalesAgent</span>
               </div>
-              <button onClick={() => setOpen(false)} className="p-1 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800">
-                <X className="size-5 text-zinc-500" />
+              <button onClick={() => setOpen(false)} className="p-1 rounded hover:bg-bg-subtle transition-colors">
+                <X className="size-5 text-text-muted" />
               </button>
             </div>
             <nav className="space-y-0.5 flex-1">
@@ -51,8 +51,9 @@ export function MobileNav() {
                   <Link key={item.href} href={item.href} onClick={() => setOpen(false)}
                     className={cn(
                       "flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-all",
-                      active ? "bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
-                        : "text-zinc-500 hover:text-zinc-800 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:text-zinc-200 dark:hover:bg-zinc-800",
+                      active
+                        ? "bg-accent/10 text-accent"
+                        : "text-text-muted hover:text-text hover:bg-bg-subtle",
                     )}
                   >
                     <Icon className="size-4 shrink-0" /> {item.label}
@@ -60,7 +61,7 @@ export function MobileNav() {
                 );
               })}
             </nav>
-            <div className="border-t border-zinc-200 dark:border-zinc-800 pt-3 flex justify-center">
+            <div className="border-t border-border pt-3 flex justify-center">
               <ThemeToggle />
             </div>
           </div>

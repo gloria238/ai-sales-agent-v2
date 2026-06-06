@@ -4,10 +4,26 @@ interface CardProps {
   children: React.ReactNode;
   className?: string;
   onClick?: () => void;
+  hoverable?: boolean;
 }
 
-export function Card({ children, className, onClick }: CardProps) {
-  return <div className={cn("rounded-xl border border-border bg-bg-card", className)} onClick={onClick}>{children}</div>;
+export function Card({ children, className, onClick, hoverable }: CardProps) {
+  return (
+    <div
+      className={cn(
+        "rounded-xl border border-border bg-bg-card",
+        hoverable && "transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card-hover hover:border-accent/30",
+        onClick && "cursor-pointer",
+        className,
+      )}
+      onClick={onClick}
+      role={onClick ? "button" : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      onKeyDown={onClick ? (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onClick(); } } : undefined}
+    >
+      {children}
+    </div>
+  );
 }
 
 export function CardHeader({ children, className }: CardProps) {
