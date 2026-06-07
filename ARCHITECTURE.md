@@ -1,9 +1,10 @@
-# SalesAgent AI — Architecture Document (V1.5)
+# SalesAgent AI — Architecture Document (V1.6)
 
 > Multi-tenant AI Agent Platform with Web, Mobile, Worker, and Knowledge Infrastructure.
 > Build and deploy AI Sales, Concierge, and Support Agents on a shared platform.
-> ~24,000 lines across ~340 files. 40+ API routes + SSE.
+> ~25,000 lines across ~350 files. 40+ API routes + SSE.
 > Web: 40+ pages + API routes. Mobile: 6-page Club Concierge showcase. Worker: 4 BullMQ queues.
+> Latest: Phase 15 — Security audit (165 findings, 32 fixed) + Vercel build hardening.
 
 ---
 
@@ -309,7 +310,7 @@ generateScript()      — 脚本生成
 ```
 PDF/TXT/MD/FAQ
        ↓
-  parser.ts    — 类型检测 → 特定解析器
+  parser.ts    — 类型检测 → 特定解析器 (pdf-parse v2 PDFParse 类)
        ↓
   chunker.ts   — 递归字符分割 (段落 → 句子 → 固定大小)
        ↓

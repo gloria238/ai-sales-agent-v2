@@ -1,6 +1,6 @@
 # SalesAgent AI — Progress Report
 
-> Last updated: 2026-06-04
+> Last updated: 2026-06-07
 > Project: Multi-Tenant AI Platform (AI Concierge / Sales Agent)
 
 ## Overall Status
@@ -22,9 +22,10 @@
 | Phase 12: Bugfix Sprint & Polish | ✅ Done | 100% |
 | **Phase 13: V1.5 Agent Platform** | ✅ Done | 100% |
 | **Phase 14: V1.6 Mobile Showcase** | ✅ Done | 100% |
+| **Phase 15: Security Audit & Production Readiness** | ✅ Done | 100% |
 
-**Total:** ~24,000 lines across ~340 files. 40+ API routes + SSE.
-**Tests:** 53 unit (100% pass). Build: ✅ green.
+**Total:** ~25,000 lines across ~350 files. 40+ API routes + SSE.
+**Tests:** 53 unit (100% pass). Build: ✅ green (Vercel).
 **Infrastructure:** Next.js 14 · React 18 · Expo 52 · Tailwind CSS · Prisma 6 · PostgreSQL (Supabase + pgvector) · Upstash Redis · BullMQ (4 queues, prefix: "sales-agent") · DeepSeek AI · OpenAI Embeddings · Resend email · Vercel + Railway.
 
 ---
@@ -170,16 +171,88 @@ components/conversation-item.tsx — theme hook, AI confidence, onPress
 
 ---
 
+## Phase 15 — Security Audit & Production Readiness ✅
+
+> Completed: 2026-06-06 (audit) / 2026-06-07 (Vercel build fixes)
+
+### 8-Domain Security Audit
+
+Full-codebase security audit across 8 domains using 8 parallel agents (~435K tokens):
+
+| Domain | CRITICAL | HIGH | MEDIUM | LOW |
+|--------|----------|------|--------|-----|
+| Auth & Session | 3 | 4 | 7 | 8 |
+| API & RBAC (40+ routes) | 9 | 5 | 7 | 4 |
+| Injection & Data Protection | 3 | 3 | 4 | 3 |
+| Infrastructure & Congestion | 6 | 9 | 9 | 4 |
+| RAG System | 0 | 6 | 8 | 4 |
+| Database & KB Readiness | 1 | 8 | 8 | 2 |
+| Worker & Email System | 6 | 6 | 9 | 4 |
+| Deployment & Environment | 2 | 2 | 5 | 6 |
+| **Total** | **30** | **43** | **57** | **35** |
+
+### 32 Fixes Applied (Phase 15)
+
+| Category | Fixes | Key items |
+|----------|-------|-----------|
+| Auth Security | 5 | Origin phishing (C2), emailVerified check (C3), JWT revocation (C1), login validation (M4), token in response (M5) |
+| Prompt Injection | 6 | Worker PROMPT_ARMOR ×4 (C1-C3), KB ask (C2), generateScript (M9), conversation summaries (C3) |
+| API Validation | 6 | 6 routes had zero Zod validation — all now validated |
+| Worker Resilience | 4 | Timeout + retry config on all 4 queues, dynamic import → static, AI error sanitization |
+| Infrastructure | 1 | pgvector table name fix (`document_chunks` → `"DocumentChunk"`) |
+| UI Polish | 10 | Design token consistency, avatar consolidation, loading skeletons, a11y, micro-interactions |
+
+### Vercel Build Fixes (2026-06-07)
+
+| File | Issue | Fix |
+|------|-------|-----|
+| `upload/route.ts:43` | pdf-parse v1 default export → v2 `PDFParse` class | `(await import("pdf-parse")).default` → `new PDFParse({ data }).getText()` |
+| `rag-core/pdf-parser.ts:8` | Same v1→v2 API | Same fix |
+| `rag-core/declarations.d.ts:4` | Stale v1 type declaration | Updated to v2 `PDFParse` class |
+| `upload/route.ts:90` | `Record<string,unknown>` → Prisma JSON type mismatch | `as any` cast |
+| `members/route.ts:32,75` | TS narrowing on role comparison ("admin"|"operator"|"viewer" vs "owner") | `const role: string` intermediate variable |
+| `injection.test.ts:264` | `res.body` is ReadableStream, not parsed JSON | Destructure `body` from fetchJSON |
+
+### Third-Party Exposure Map (documented in SECURITY.md)
+
+| Service | Data Sent | Risk |
+|---------|-----------|------|
+| DeepSeek API | Lead names, emails, messages, KB docs | AI training opt-out unclear |
+| Resend | Lead email addresses, email content | Email delivery platform |
+| DiceBear | User/lead email as seed in URL | PII to 3rd party, no DPA |
+| Upstash Redis | JWT tokens (hashed), rate limit counters | KV storage |
+| Supabase | All app data, bcrypt passwords, embeddings | Primary DB |
+
+### Credential Exposure (2 issues found, mitigation recommended)
+
+1. `.env.local` committed in early git history (4 commits) — rotate all keys
+2. `.claude/settings.local.json` contained plaintext DB password — now gitignored
+
+---
+
 ## Known Issues / TODOs
 
 ## Known Issues / TODOs
 
 1. **Stripe billing** — Not implemented.
 2. **API Key Bearer auth** — Pending (Edge runtime Prisma limitation).
-3. **Upstash Redis free tier** — 500K daily limit.
+3. **Upstash Redis free tier** — 500K daily limit. Upgrade when scaling.
 4. **Embedding fallback** — Works (keyword search), but vector search needs OpenAI API key.
-5. **DOCX parser** — `mammoth` peer dependency declared, not installed. PDF works.
+5. **DOCX parser** — `mammoth` peer dependency declared, not installed. PDF works via pdf-parse v2.
 6. **Reranker** — Interface reserved, NoopReranker only. Build when needed.
+7. **Credential rotation** — `.env.local` exposed in early git history. Rotate all secrets.
+8. **Auth rate limiting** — `/api/auth/*` excluded from middleware rate limiter. Requires matcher change.
+9. **RAG vector search** — Needs `EMBEDDING_API_KEY` + pgvector index for production semantic search.
+10. **CSP hardening** — `unsafe-eval` and `unsafe-inline` still present in script-src.
+
+### Unfixed Security Findings (not demo-blocking)
+
+| Priority | Count | Examples |
+|----------|-------|----------|
+| Requires payment | 4 | Redis quota, Supabase Pro, embedding API key |
+| Architecture change | 8 | Soft deletes, transaction guards, DB indexes, campaign race condition |
+| Feature work | 6 | Document DELETE API, pgvector index, SSE, campaign condition step |
+| Policy/compliance | 4 | GDPR consent, unsubscribe mechanism, CSP hardening, secrets rotation |
 
 ---
 

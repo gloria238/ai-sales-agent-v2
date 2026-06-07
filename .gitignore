@@ -10,3 +10,4 @@ dist
 .vercel
 /apps/web/.env.local
 .expo
+SECURITY.md

@@ -206,6 +206,7 @@ apps/web/vitest.integration.config.ts — Integration test config (sequential fi
 apps/web/playwright.config.ts       — Playwright E2E config (Chromium, auto-starts dev server)
 apps/web/lib/__tests__/             — Unit + integration test files
 apps/web/e2e/                       — Playwright E2E specs
+SECURITY.md                          — Phase 15 audit report (165 findings, 32 fixed) [gitignored]
 apps/mobile/app/_layout.tsx           — Root layout + theme + DemoModeProvider + playground/system routes
 apps/mobile/app/(tabs)/_layout.tsx    — 3 tabs: Dashboard / Inbox / Knowledge Base
 apps/mobile/app/(tabs)/index.tsx      — Dashboard: 4 KPI cards + recent activity feed + Demo/Live toggle
@@ -255,12 +256,13 @@ packages/db/seed-verify-alice.ts    — Mark alice@example.com emailVerified=tru
 packages/db/clean-demo-org.ts       — FK-safe org cleanup before re-seed
 ```
 
-### State of the project (2026-06-03)
+### State of the project (2026-06-07)
 
 - **Phase 1-12**: Foundation → CRM → Campaigns → AI → Polish → Testing → Security → UI/UX → Identity Layer → Route hardening → UX Rework → Bugfix Sprint.
 - **Phase 13 (V1.5)**: Monorepo refactor into 3 apps + 7 packages. RAG knowledge base (pgvector). Mobile Expo app. Luxury Nature color palette.
 - **Phase 14 (V1.6)**: Mobile Showcase — 6-page Club Concierge Demo (Dashboard, Inbox, Inbox Detail, Knowledge Base, AI Playground, System Overview). Demo/Live toggle, RAG Pipeline visualization, Luxury Nature theme throughout.
-- **~20,000 lines** across ~300 files. 40+ API routes + SSE + webhook.
+- **Phase 15 (Production Readiness)**: 8-domain security audit (165 findings, 32 fixed). Prompt injection armor (all worker/web paths). API validation on 6 unvalidated routes. Worker timeout + retry config. Vercel build fixes (pdf-parse v2 API migration, TypeScript strict mode errors). SECURITY.md audit report (gitignored — sensitive findings).
+- **~25,000 lines** across ~350 files. 40+ API routes + SSE + webhook.
 - Web app: ✅ Vercel (JWT, Identity Stack, Knowledge Base, RAG Playground).
 - Worker: ✅ Railway (4 BullMQ workers, `prefix: "sales-agent"`, AI compose, scoring, campaign delivery, healthcheck).
 - Mobile: ✅ Expo 52 (6 pages: Dashboard, Inbox, Inbox Detail, Knowledge Base, AI Playground, System Overview). Club Concierge demo narrative. RAG pipeline visualization. Demo/Live toggle. Shared types/tokens/client.
@@ -323,6 +325,8 @@ packages/db/clean-demo-org.ts       — FK-safe org cleanup before re-seed
 15. **Seed scripts bypass `@salesagent/db` singleton**: All 5 seed scripts (`seed-demo.ts`, `seed-production.ts`, `seed-members.ts`, `seed-verify-alice.ts`, `clean-demo-org.ts`) create their own `new PrismaClient()` directly from `@prisma/client` — this bypasses `packages/db/index.ts` which auto-appends `connection_limit=1`. Each script must manually inject `connection_limit=1` via `datasources.db.url`. Without it, parallel writes (e.g. `Promise.all(leadData.map(...))`) exhaust the pgBouncer pool and throw P1001 "Can't reach database server".
 16. **Inbox height calc**: Dashboard layout header is `h-14` (3.5rem), not 4rem. `<main>` has `p-4 lg:p-8`. Inbox pages use a wrapper `<div className="-m-4 lg:-m-8 h-[calc(100vh-3.5rem)]">` to negate main padding and fill the viewport correctly. Inner containers use `h-full`.
 17. **sendMessageSchema**: `conversationId` is optional — the ID comes from the URL path `/api/orgs/{slug}/conversations/{id}/messages`, not the request body. Client sends only `{ content, channel }`.
+18. **pdf-parse v2 API**: The installed version is 2.4.5 which uses a class-based API (`new PDFParse({ data }).getText()`), NOT the v1 default export function (`await pdfParse(buffer)`). Import `{ PDFParse }` (named), not default. See `packages/rag-core/src/pdf-parser.ts` for reference.
+19. **SECURITY.md is gitignored**: Contains detailed vulnerability findings including credential names. Kept locally for reference, never committed.
 
 ### Railway deployment (worker)
 
