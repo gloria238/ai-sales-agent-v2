@@ -87,7 +87,7 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
           organizationId: membership.organizationId,
           content: chunk.content,
           chunkIndex: chunk.index,
-          metadata: chunk.metadata as Record<string, unknown>,
+          metadata: chunk.metadata as any,
         },
       });
       if (embeddings[i]) {

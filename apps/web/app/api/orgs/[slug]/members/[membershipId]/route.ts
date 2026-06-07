@@ -29,7 +29,8 @@ export async function PATCH(request: Request, { params }: { params: { slug: stri
   const { role } = parsed.data;
 
   // Prevent removing the last owner
-  if (target.role === "owner" && role !== "owner") {
+  const targetRole: string = target.role;
+  if (targetRole === "owner" && (role as string) !== "owner") {
     const ownerCount = await prisma.membership.count({
       where: { organizationId: membership.organizationId, role: "owner" },
     });
@@ -72,7 +73,8 @@ export async function DELETE(request: Request, { params }: { params: { slug: str
   if (!target) return NextResponse.json({ error: "Member not found" }, { status: 404 });
 
   // Prevent removing the last owner
-  if (target.role === "owner") {
+  const targetRoleDel: string = target.role;
+  if (targetRoleDel === "owner") {
     const ownerCount = await prisma.membership.count({
       where: { organizationId: membership.organizationId, role: "owner" },
     });

@@ -256,13 +256,13 @@ describe("Input Validation", () => {
   });
 
   it("rejects negative score values", async () => {
-    const { res } = await fetchJSON(`${BASE}/api/orgs/${orgSlug}/leads`, {
+    const { res, body } = await fetchJSON(`${BASE}/api/orgs/${orgSlug}/leads`, {
       method: "POST", headers: { Cookie: adminCookie },
       body: JSON.stringify({ name: "Bad Score", email: `score-${Date.now()}@test.com`, stage: "new" }),
     });
     // Create first
-    if (res.status === 201 && res.body?.lead) {
-      const { res: patchRes } = await fetchJSON(`${BASE}/api/orgs/${orgSlug}/leads/${res.body.id}`, {
+    if (res.status === 201 && body?.lead) {
+      const { res: patchRes } = await fetchJSON(`${BASE}/api/orgs/${orgSlug}/leads/${body.id}`, {
         method: "PATCH", headers: { Cookie: adminCookie },
         body: JSON.stringify({ score: -999 }),
       });
