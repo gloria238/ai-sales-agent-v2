@@ -2,8 +2,11 @@
 // pdf-parse and mammoth are only needed if the consuming app uses
 // PDF/DOCX parsing. The parsers handle missing modules gracefully.
 declare module "pdf-parse" {
-  function pdfParse(buffer: Buffer): Promise<{ text: string; numpages: number }>;
-  export default pdfParse;
+  export class PDFParse {
+    constructor(options: { data: Buffer | Uint8Array });
+    getText(params?: Record<string, unknown>): Promise<{ text: string; pages: Array<{ num: number; text: string }>; total: number }>;
+    destroy(): Promise<void>;
+  }
 }
 
 declare module "mammoth" {

@@ -40,9 +40,10 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
     // 2. Parse content based on type
     let content = "";
     if (fileType === "pdf") {
-      const pdfParse = (await import("pdf-parse")).default;
-      const data = await pdfParse(buffer);
-      content = data.text || "";
+      const { PDFParse } = await import("pdf-parse");
+      const pdf = new PDFParse({ data: buffer });
+      const result = await pdf.getText();
+      content = result.text || "";
     } else if (fileType === "faq") {
       const text = buffer.toString("utf-8");
       try {
