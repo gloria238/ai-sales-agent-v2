@@ -14,7 +14,7 @@ interface PipelineStepProps {
 export function PipelineStep({ step, label, description, isActive, isDone }: PipelineStepProps) {
   const theme = useSalesTheme();
 
-  const dotColor = isDone || isActive ? "#265834" : theme.borderColor;
+  const dotColor = isDone || isActive ? "#166534" : theme.borderColor;
   const bgColor = isActive
     ? theme.iconBg
     : isDone

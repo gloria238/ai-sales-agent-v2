@@ -52,9 +52,9 @@ export const tailwindPreset = {
           border: "var(--sidebar-border)",
         },
         surface: {
-          DEFAULT: "#F5F4F0",
-          alt: "#EEEDE8",
-          hover: "#d6d9c3",
+          DEFAULT: "#F8F9FA",
+          alt: "#F1F5F9",
+          hover: "#e8f0ea",
         },
       },
       fontFamily: {
@@ -86,16 +86,16 @@ export const tailwindPreset = {
           "50%": { opacity: "0.6" },
         },
         "flash-green": {
-          "0%": { boxShadow: "inset 0 0 0 0 rgba(38,88,52,0)" },
-          "30%": { boxShadow: "inset 0 0 0 2px rgba(38,88,52,0.4)" },
-          "100%": { boxShadow: "inset 0 0 0 0 rgba(38,88,52,0)" },
+          "0%": { boxShadow: "inset 0 0 0 0 rgba(22,101,52,0)" },
+          "30%": { boxShadow: "inset 0 0 0 2px rgba(22,101,52,0.4)" },
+          "100%": { boxShadow: "inset 0 0 0 0 rgba(22,101,52,0)" },
         },
         "flash-red": {
-          "0%": { boxShadow: "inset 0 0 0 0 rgba(180,70,60,0)" },
-          "20%": { boxShadow: "inset 0 0 0 2px rgba(180,70,60,0.4)" },
-          "40%": { boxShadow: "inset 0 0 0 0 rgba(180,70,60,0)" },
-          "60%": { boxShadow: "inset 0 0 0 2px rgba(180,70,60,0.4)" },
-          "100%": { boxShadow: "inset 0 0 0 0 rgba(180,70,60,0)" },
+          "0%": { boxShadow: "inset 0 0 0 0 rgba(185,45,40,0)" },
+          "20%": { boxShadow: "inset 0 0 0 2px rgba(185,45,40,0.4)" },
+          "40%": { boxShadow: "inset 0 0 0 0 rgba(185,45,40,0)" },
+          "60%": { boxShadow: "inset 0 0 0 2px rgba(185,45,40,0.4)" },
+          "100%": { boxShadow: "inset 0 0 0 0 rgba(185,45,40,0)" },
         },
         "slide-up": {
           "0%": { opacity: "0", transform: "translateY(8px)" },

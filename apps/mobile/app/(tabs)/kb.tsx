@@ -25,7 +25,7 @@ export default function KBScreen() {
           </Text>
         </View>
         <TouchableOpacity
-          style={[styles.askBtn, { backgroundColor: "#265834" }, theme.shadowStyle]}
+          style={[styles.askBtn, { backgroundColor: "#166534" }, theme.shadowStyle]}
           onPress={() => router.push("/playground")}
         >
           <Ionicons name="sparkles" size={16} color="#FFF" />
@@ -151,7 +151,7 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: "#579360",
+    backgroundColor: "#4ADE80",
   },
   syncText: { fontSize: 12 },
 });

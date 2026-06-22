@@ -34,8 +34,8 @@ function initials(name: string): string {
     .join("");
 }
 
-const diceBearUrl = (seed: string) =>
-  `https://api.dicebear.com/7.x/notionists/svg?seed=${encodeURIComponent(seed)}&backgroundColor=transparent`;
+const pravatarUrl = (seed: string, size = 150) =>
+  `https://i.pravatar.cc/${size}?u=${encodeURIComponent(seed)}`;
 
 interface Props {
   name: string;
@@ -64,9 +64,8 @@ export function Avatar({ name, size = "md", presence, seed, className }: Props) 
           {initials(name)}
         </span>
       ) : (
-        /* DiceBear avatar */
         <img
-          src={diceBearUrl(seed || name)}
+          src={pravatarUrl(seed || name, 150)}
           alt={name}
           className={cn("rounded-full object-cover bg-bg-subtle", dim.container)}
           onError={() => setImgError(true)}

@@ -1,10 +1,32 @@
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from "react-native";
+import { useState } from "react";
+import { View, Text, Image, ScrollView, StyleSheet, TouchableOpacity } from "react-native";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useSalesTheme } from "../hooks/use-theme";
 import { StatsCard } from "../components/stats-card";
 import { PipelineStep } from "../components/pipeline-step";
 import { MOCK_SYSTEM_STATS, PIPELINE_STEPS, TECH_STACK, ARCHITECTURE_LAYERS } from "../data";
+
+function TenantAvatar({ name }: { name: string }) {
+  const theme = useSalesTheme();
+  const [imgError, setImgError] = useState(false);
+
+  return (
+    <View style={[styles.tenantAvatar, { backgroundColor: theme.iconBg }]}>
+      {imgError ? (
+        <Text style={[styles.tenantAvatarText, { color: theme.isDark ? "#4ADE80" : "#166534" }]}>
+          {name[0]}
+        </Text>
+      ) : (
+        <Image
+          source={{ uri: `https://i.pravatar.cc/68?u=${encodeURIComponent(name)}` }}
+          style={styles.tenantAvatarImg}
+          onError={() => setImgError(true)}
+        />
+      )}
+    </View>
+  );
+}
 
 export default function SystemOverviewScreen() {
   const theme = useSalesTheme();
@@ -45,11 +67,7 @@ export default function SystemOverviewScreen() {
       <View style={[styles.tenantCard, { backgroundColor: theme.cardBg }, theme.shadowStyle]}>
         {["Riverside Club", "Elite Tennis", "Westside Sports"].map((name) => (
           <View key={name} style={[styles.tenantRow, { borderBottomColor: theme.borderColor }]}>
-            <View style={[styles.tenantAvatar, { backgroundColor: theme.iconBg }]}>
-              <Text style={[styles.tenantAvatarText, { color: theme.isDark ? "#579360" : "#265834" }]}>
-                {name[0]}
-              </Text>
-            </View>
+            <TenantAvatar name={name} />
             <Text style={[styles.tenantName, { color: theme.textColor }]}>{name}</Text>
             <View style={styles.tenantDot} />
             <Text style={[styles.tenantStatus, { color: theme.muted }]}>Active</Text>
@@ -82,7 +100,7 @@ export default function SystemOverviewScreen() {
               <Text style={[styles.archDesc, { color: theme.muted }]}>{layer.description}</Text>
             </View>
             <View style={[styles.archTech, { backgroundColor: theme.iconBg }]}>
-              <Text style={[styles.archTechText, { color: theme.isDark ? "#579360" : "#265834" }]}>
+              <Text style={[styles.archTechText, { color: theme.isDark ? "#4ADE80" : "#166534" }]}>
                 {layer.tech}
               </Text>
             </View>
@@ -148,6 +166,12 @@ const styles = StyleSheet.create({
     borderRadius: 17,
     alignItems: "center",
     justifyContent: "center",
+    overflow: "hidden",
+  },
+  tenantAvatarImg: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
   },
   tenantAvatarText: {
     fontSize: 15,
@@ -162,7 +186,7 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: "#579360",
+    backgroundColor: "#4ADE80",
   },
   tenantStatus: { fontSize: 12 },
 

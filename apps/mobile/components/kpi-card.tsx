@@ -15,7 +15,7 @@ export function KpiCard({ label, value, sub, icon }: KpiCardProps) {
   return (
     <View style={[styles.card, { backgroundColor: theme.cardBg }, theme.shadowStyle]}>
       <View style={[styles.iconBox, { backgroundColor: theme.iconBg }]}>
-        <Ionicons name={icon} size={22} color={theme.isDark ? "#579360" : "#265834"} />
+        <Ionicons name={icon} size={22} color={theme.isDark ? "#4ADE80" : "#166534"} />
       </View>
       <View style={styles.info}>
         <Text style={[styles.label, { color: theme.muted }]}>{label}</Text>

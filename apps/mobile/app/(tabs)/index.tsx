@@ -33,10 +33,10 @@ export default function DashboardScreen() {
         <View
           style={[
             styles.togglePill,
-            isDemo && { backgroundColor: theme.isDark ? "rgba(87,147,96,0.2)" : "rgba(38,88,52,0.12)" },
+            isDemo && { backgroundColor: theme.isDark ? "rgba(74,222,128,0.2)" : "rgba(22,101,52,0.12)" },
           ]}
         >
-          <View style={[styles.toggleDot, { backgroundColor: isDemo ? (theme.isDark ? "#579360" : "#265834") : theme.muted }]} />
+          <View style={[styles.toggleDot, { backgroundColor: isDemo ? (theme.isDark ? "#4ADE80" : "#166534") : theme.muted }]} />
           <Text style={[styles.toggleText, { color: isDemo ? theme.textColor : theme.muted }]}>
             Demo Data
           </Text>
@@ -44,10 +44,10 @@ export default function DashboardScreen() {
         <View
           style={[
             styles.togglePill,
-            !isDemo && { backgroundColor: theme.isDark ? "rgba(87,147,96,0.2)" : "rgba(38,88,52,0.12)" },
+            !isDemo && { backgroundColor: theme.isDark ? "rgba(74,222,128,0.2)" : "rgba(22,101,52,0.12)" },
           ]}
         >
-          <View style={[styles.toggleDot, { backgroundColor: !isDemo ? (theme.isDark ? "#579360" : "#265834") : theme.muted }]} />
+          <View style={[styles.toggleDot, { backgroundColor: !isDemo ? (theme.isDark ? "#4ADE80" : "#166534") : theme.muted }]} />
           <Text style={[styles.toggleText, { color: !isDemo ? theme.textColor : theme.muted }]}>
             Live API
           </Text>

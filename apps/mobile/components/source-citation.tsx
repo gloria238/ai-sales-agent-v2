@@ -8,9 +8,9 @@ interface SourceCitationProps {
 }
 
 function scoreColor(score: number, isDark: boolean): string {
-  if (score >= 0.85) return isDark ? "#579360" : "#265834";
-  if (score >= 0.7) return "#b6ad90";
-  return isDark ? "#888080" : "#7A8075";
+  if (score >= 0.85) return isDark ? "#4ADE80" : "#166534";
+  if (score >= 0.7) return "#849b70";
+  return isDark ? "#888080" : "#94A3B8";
 }
 
 export function SourceCitation({ sources }: SourceCitationProps) {
@@ -19,8 +19,8 @@ export function SourceCitation({ sources }: SourceCitationProps) {
   return (
     <View style={[styles.container, { backgroundColor: theme.accentBg, borderColor: theme.borderColor }]}>
       <View style={styles.header}>
-        <Ionicons name="link" size={12} color={theme.isDark ? "#579360" : "#265834"} />
-        <Text style={[styles.headerText, { color: theme.isDark ? "#579360" : "#265834" }]}>
+        <Ionicons name="link" size={12} color={theme.isDark ? "#4ADE80" : "#166534"} />
+        <Text style={[styles.headerText, { color: theme.isDark ? "#4ADE80" : "#166534" }]}>
           Sources
         </Text>
       </View>
@@ -30,15 +30,15 @@ export function SourceCitation({ sources }: SourceCitationProps) {
           style={[styles.sourceRow, idx > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.borderColor }]}
         >
           <View style={styles.sourceHeader}>
-            <View style={[styles.badge, { backgroundColor: theme.isDark ? "rgba(87,147,96,0.2)" : "rgba(38,88,52,0.12)" }]}>
-              <Text style={[styles.badgeText, { color: theme.isDark ? "#579360" : "#265834" }]}>
+            <View style={[styles.badge, { backgroundColor: theme.isDark ? "rgba(74,222,128,0.2)" : "rgba(22,101,52,0.12)" }]}>
+              <Text style={[styles.badgeText, { color: theme.isDark ? "#4ADE80" : "#166534" }]}>
                 {idx + 1}
               </Text>
             </View>
             <Text style={[styles.docName, { color: theme.textColor }]} numberOfLines={1}>
               {source.documentName}
             </Text>
-            <View style={[styles.scorePill, { backgroundColor: theme.isDark ? "rgba(87,147,96,0.15)" : "rgba(38,88,52,0.08)" }]}>
+            <View style={[styles.scorePill, { backgroundColor: theme.isDark ? "rgba(74,222,128,0.15)" : "rgba(22,101,52,0.08)" }]}>
               <Text style={[styles.scoreText, { color: scoreColor(source.score, theme.isDark) }]}>
                 {(source.score * 100).toFixed(0)}%
               </Text>

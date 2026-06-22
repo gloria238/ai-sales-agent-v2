@@ -41,17 +41,17 @@ export default async function DashboardHomePage() {
   }
   const coldLeads = leadCount - hotLeads - warmLeads;
   const scoreDonut = [
-    { label: "Hot", value: hotLeads, color: "#265834" },
-    { label: "Warm", value: warmLeads, color: "#579360" },
-    { label: "Cold", value: coldLeads, color: "#b6ad90" },
+    { label: "Hot", value: hotLeads, color: "#166534" },
+    { label: "Warm", value: warmLeads, color: "#15803d" },
+    { label: "Cold", value: coldLeads, color: "#849b70" },
   ].filter(s => s.value > 0);
 
   const pipelineDonut = [
-    { label: "New", value: stageMap.new || 0, color: "#b6ad90" },
-    { label: "Contacted", value: stageMap.contacted || 0, color: "#656d4a" },
-    { label: "Qualified", value: stageMap.qualified || 0, color: "#579360" },
-    { label: "Proposal", value: stageMap.proposal || 0, color: "#d6d9c3" },
-    { label: "Won", value: stageMap.closed_won || 0, color: "#265834" },
+    { label: "New", value: stageMap.new || 0, color: "#849b70" },
+    { label: "Contacted", value: stageMap.contacted || 0, color: "#475540" },
+    { label: "Qualified", value: stageMap.qualified || 0, color: "#15803d" },
+    { label: "Proposal", value: stageMap.proposal || 0, color: "#e8f0ea" },
+    { label: "Won", value: stageMap.closed_won || 0, color: "#166534" },
   ].filter(s => s.value > 0);
 
   let totalSent = 0, totalOpened = 0, totalReplied = 0;

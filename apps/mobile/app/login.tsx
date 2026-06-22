@@ -27,7 +27,7 @@ export default function LoginScreen() {
     >
       <View style={styles.content}>
         {/* Brand */}
-        <Text style={[styles.brand, { color: "#265834" }]}>Ringible</Text>
+        <Text style={[styles.brand, { color: "#166534" }]}>Ringible</Text>
         <Text style={[styles.title, { color: theme.textColor }]}>AI Concierge Platform</Text>
         <Text style={[styles.subtitle, { color: theme.muted }]}>
           Multi-Tenant · Knowledge Base · RAG{'\n'}Web + Mobile · Background Workers
@@ -53,7 +53,7 @@ export default function LoginScreen() {
             secureTextEntry
           />
           <TouchableOpacity
-            style={[styles.signInButton, { backgroundColor: "#265834" }]}
+            style={[styles.signInButton, { backgroundColor: "#166534" }]}
           >
             <Text style={styles.signInButtonText}>Sign In</Text>
           </TouchableOpacity>
@@ -67,10 +67,10 @@ export default function LoginScreen() {
 
           {/* Demo Button */}
           <TouchableOpacity
-            style={[styles.demoButton, { borderColor: "#265834" }]}
+            style={[styles.demoButton, { borderColor: "#166534" }]}
             onPress={handleDemoLogin}
           >
-            <Text style={[styles.demoButtonText, { color: "#265834" }]}>Enter Demo →</Text>
+            <Text style={[styles.demoButtonText, { color: "#166534" }]}>Enter Demo →</Text>
           </TouchableOpacity>
           <Text style={[styles.demoHint, { color: theme.muted }]}>
             Explore Riverside Club · Elite Tennis · Westside Sports

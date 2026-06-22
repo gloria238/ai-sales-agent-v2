@@ -64,8 +64,8 @@ export default function InboxDetailScreen() {
           <View style={styles.headerTop}>
             <Text style={[styles.name, { color: theme.textColor }]}>{conversation.name}</Text>
             <View style={[styles.confidenceBadge, { backgroundColor: theme.accentBg }]}>
-              <Ionicons name="sparkles" size={11} color={theme.isDark ? "#579360" : "#265834"} />
-              <Text style={[styles.confidenceText, { color: theme.isDark ? "#579360" : "#265834" }]}>
+              <Ionicons name="sparkles" size={11} color={theme.isDark ? "#4ADE80" : "#166534"} />
+              <Text style={[styles.confidenceText, { color: theme.isDark ? "#4ADE80" : "#166534" }]}>
                 {conversation.confidence}%
               </Text>
             </View>
@@ -97,7 +97,7 @@ export default function InboxDetailScreen() {
           placeholder="Type a message..."
           placeholderTextColor={theme.muted}
         />
-        <TouchableOpacity style={[styles.sendBtn, { backgroundColor: "#265834" }]}>
+        <TouchableOpacity style={[styles.sendBtn, { backgroundColor: "#166534" }]}>
           <Ionicons name="send" size={16} color="#FFF" />
         </TouchableOpacity>
       </View>

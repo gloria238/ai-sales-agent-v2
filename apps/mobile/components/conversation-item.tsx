@@ -1,4 +1,5 @@
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { useState } from "react";
+import { View, Text, Image, StyleSheet, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSalesTheme } from "../hooks/use-theme";
 
@@ -8,13 +9,18 @@ interface ConversationItemProps {
   preview: string;
   confidence: number;
   time: string;
+  seed?: string;
   onPress: () => void;
 }
 
+function pravatarUrl(seed: string, size = 100): string {
+  return `https://i.pravatar.cc/${size}?u=${encodeURIComponent(seed)}`;
+}
+
 function confidenceColor(pct: number, isDark: boolean): string {
-  if (pct >= 85) return isDark ? "#579360" : "#265834";
-  if (pct >= 70) return "#b6ad90";
-  return isDark ? "#888080" : "#7A8075";
+  if (pct >= 85) return isDark ? "#4ADE80" : "#166534";
+  if (pct >= 70) return "#849b70";
+  return isDark ? "#888080" : "#94A3B8";
 }
 
 export function ConversationItem({
@@ -23,10 +29,12 @@ export function ConversationItem({
   preview,
   confidence,
   time,
+  seed,
   onPress,
 }: ConversationItemProps) {
   const theme = useSalesTheme();
   const pctColor = confidenceColor(confidence, theme.isDark);
+  const [imgError, setImgError] = useState(false);
 
   return (
     <TouchableOpacity
@@ -34,8 +42,16 @@ export function ConversationItem({
       onPress={onPress}
       activeOpacity={0.7}
     >
-      <View style={styles.avatar}>
-        <Text style={styles.avatarText}>{name[0]}</Text>
+      <View style={[styles.avatar, { backgroundColor: theme.iconBg }]}>
+        {imgError ? (
+          <Text style={[styles.avatarText, { color: theme.successColor }]}>{name[0]}</Text>
+        ) : (
+          <Image
+            source={{ uri: pravatarUrl(seed || name, 100) }}
+            style={styles.avatarImg}
+            onError={() => setImgError(true)}
+          />
+        )}
       </View>
       <View style={styles.info}>
         <View style={styles.topRow}>
@@ -73,12 +89,16 @@ const styles = StyleSheet.create({
     width: 46,
     height: 46,
     borderRadius: 23,
-    backgroundColor: "#265834",
     alignItems: "center",
     justifyContent: "center",
+    overflow: "hidden",
+  },
+  avatarImg: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
   },
   avatarText: {
-    color: "#FFFFFF",
     fontSize: 18,
     fontWeight: "600",
   },

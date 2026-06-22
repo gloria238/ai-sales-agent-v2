@@ -110,7 +110,7 @@ apps/
 packages/
   shared-types/ — API contract types extracted from apps/web/lib/
   domain/       — Business entities (LeadStage, CampaignStatus, etc.)
-  ui-tokens/    — Luxury Nature palette + Tailwind preset + JS tokens for RN
+  ui-tokens/    — Corporate Green palette + Tailwind preset + JS tokens for RN
   ai-core/      — Unified DeepSeek client + prompt builders + agent execution
   rag-core/     — Full RAG pipeline (parse → chunk → embed → retrieve → cite)
   api-client/   — Type-safe fetch client (web + mobile share)
@@ -143,8 +143,8 @@ packages/
 - **AI**: DeepSeek API client. 4 AI endpoints: compose-response, score-lead, summarize-conversation, generate-script. Feature flags via `lib/feature-flags.ts`.
 - **Email**: Resend SDK. `apps/worker/src/email.ts` — template variable resolution (`{{lead.email}}`) + send. Worker composes AI responses and sends via Resend.
 - **DB**: PrismaClient singleton cached on `globalThis`. `experimental.serverComponentsExternalPackages: ["@prisma/client"]` in next.config for Vercel.
-- **Design system**: CSS custom properties in `globals.css` (RGB triplets for Tailwind opacity support). All colors registered in `tailwind.config.js` as `rgb(var(--x) / <alpha-value>)`. 11 UI components in `components/ui/` use design tokens exclusively — never hardcoded colors. Glass morphism via `.glass-card` utility class.
-- **Identity Stack**: Operational Customer Identity Layer — every customer-facing entity shows: avatar (DiceBear `notionists` + gradient fallback), presence state (derived from `updatedAt` recency), AI ownership (agent name + confidence %), lead intent (score bar), activity timestamp. `IdentityCard` component (compact/expanded variants) used consistently across inbox, leads, and dashboard. Presence states: online/idle/away/offline/ai-processing/handoff-required/syncing. No new DB columns — presence is pure logic on existing timestamps; avatars use free DiceBear API seeded by email.
+- **Design system**: CSS custom properties in `globals.css` (RGB triplets for Tailwind opacity support). All colors registered in `tailwind.config.js` as `rgb(var(--x) / <alpha-value>)`. 11 UI components in `components/ui/` use design tokens exclusively — never hardcoded colors. Glass morphism via `.glass-card` utility class. Typography: Inter (Google Font, loaded via next/font). Corporate Green palette (green-800/700/400 + slate) — evolved from Luxury Nature for professional SaaS feel.
+- **Identity Stack**: Operational Customer Identity Layer — every customer-facing entity shows: avatar (pravatar.cc real human photos + gradient fallback), presence state (derived from `updatedAt` recency), AI ownership (agent name + confidence %), lead intent (score bar), activity timestamp. `IdentityCard` component (compact/expanded variants) used consistently across inbox, leads, and dashboard. Presence states: online/idle/away/offline/ai-processing/handoff-required/syncing. No new DB columns — presence is pure logic on existing timestamps; avatars use pravatar.cc deterministic by email seed.
 
 ### RBAC permissions (10 permissions)
 
@@ -197,7 +197,7 @@ apps/web/components/nav/sidebar.tsx              — Collapsible sidebar (ChatGP
 apps/web/components/nav/page-title.tsx           — Page title from path segment (no UUIDs in header)
 apps/web/components/nav/mobile-nav.tsx           — Mobile hamburger menu with slide-out drawer
 apps/web/components/leads/import-button.tsx      — CSV import dialog with file upload
-apps/web/components/identity/avatar.tsx          — DiceBear notionists avatar + gradient fallback + presence dot
+apps/web/components/identity/avatar.tsx          — Pravatar.cc real photo avatar + gradient fallback + presence dot
 apps/web/components/identity/identity-card.tsx   — Operational Identity Cell (compact list + expanded header)
 apps/web/components/identity/presence.tsx        — Presence dot with pulse animation for AI states
 apps/web/lib/time.ts                            — relativeTime(), presenceFromDate(), presenceLabel()
@@ -247,7 +247,7 @@ packages/ai-core/src/agents.ts      — composeResponse(), scoreLead(), generate
 packages/rag-core/src/index.ts      — Full RAG pipeline barrel export
 packages/rag-core/src/pgvector-storage.ts — PostgreSQL pgvector StorageAdapter implementation
 packages/domain/src/lead.ts         — LeadStage, STAGE_TRANSITIONS, LeadScoreLabel
-packages/ui-tokens/src/colors.ts    — Luxury Nature palette (#265834, #579360, #1f2b1d, #656d4a, #E8E6DF, #b6ad90)
+packages/ui-tokens/src/colors.ts    — Corporate Green palette (#166534, #4ADE80, #0a1108, #475540, #FFFFFF, #849b70)
 packages/api-client/src/client.ts   — createClient() type-safe fetch wrapper (cookie + bearer auth)
 packages/db/seed-production.ts      — 3 sellable scripts + 5 demo leads (idempotent)
 packages/db/seed-demo.ts            — Client demo: Acme Corp, 15 leads, 3 agents, 10 conversations
@@ -268,7 +268,7 @@ packages/db/clean-demo-org.ts       — FK-safe org cleanup before re-seed
 - Mobile: ✅ Expo 52 (6 pages: Dashboard, Inbox, Inbox Detail, Knowledge Base, AI Playground, System Overview). Club Concierge demo narrative. RAG pipeline visualization. Demo/Live toggle. Shared types/tokens/client.
 - Email: ✅ Resend verification + AI-composed sales emails with open/click tracking.
 - RAG: ✅ pgvector + embeddings (with keyword search fallback). Full pipeline: parse → chunk → embed → store → retrieve → cite.
-- Design: ✅ Luxury Nature palette (#265834, #579360, #1f2b1d, #656d4a, #E8E6DF, #b6ad90). Premium Enterprise SaaS (Notion/Linear/Stripe/Ramp).
+- Design: ✅ Corporate Green palette (#166534, #4ADE80, #0a1108, #475540, #FFFFFF, #849b70). Premium Enterprise SaaS (Notion/Linear/Stripe/Ramp). Inter typography. Real human avatars via pravatar.cc.
 - Security: Prompt injection armor, auto-send removed, prototype pollution blocked, CSP/HSTS, rate limiting, JWT revocation, Zod (16 schemas).
 - Known: Upstash Redis 500K free limit. API key Bearer auth pending. DOCX parser not installed.
 

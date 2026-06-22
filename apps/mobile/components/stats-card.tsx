@@ -15,7 +15,7 @@ export function StatsCard({ label, value, icon }: StatsCardProps) {
   return (
     <View style={[styles.card, { backgroundColor: theme.cardBg }, theme.shadowLight]}>
       <View style={[styles.iconBox, { backgroundColor: theme.iconBg }]}>
-        <Ionicons name={icon} size={18} color={theme.isDark ? "#579360" : "#265834"} />
+        <Ionicons name={icon} size={18} color={theme.isDark ? "#4ADE80" : "#166534"} />
       </View>
       <Text style={[styles.value, { color: theme.textColor }]}>{value}</Text>
       <Text style={[styles.label, { color: theme.muted }]}>{label}</Text>

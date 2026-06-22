@@ -17,7 +17,7 @@ export function ActivityItem({ type, description, memberName, time }: ActivityIt
   return (
     <View style={[styles.row, { borderBottomColor: theme.borderColor }]}>
       <View style={[styles.iconCircle, { backgroundColor: theme.iconBg }]}>
-        <Ionicons name={icon} size={16} color={theme.isDark ? "#579360" : "#265834"} />
+        <Ionicons name={icon} size={16} color={theme.isDark ? "#4ADE80" : "#166534"} />
       </View>
       <View style={styles.content}>
         <Text style={[styles.description, { color: theme.textColor }]}>

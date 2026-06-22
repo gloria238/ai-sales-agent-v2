@@ -13,10 +13,10 @@ interface DocumentCardProps {
 
 function statusColor(status: string, isDark: boolean): string {
   switch (status) {
-    case "Ready": return isDark ? "#579360" : "#265834";
-    case "Processing": return "#b6ad90";
-    case "Failed": return "#B4463C";
-    default: return "#7A8075";
+    case "Ready": return isDark ? "#4ADE80" : "#166534";
+    case "Processing": return "#849b70";
+    case "Failed": return "#B92D28";
+    default: return "#94A3B8";
   }
 }
 
@@ -40,7 +40,7 @@ export function DocumentCard({ name, type, status, chunks, createdAt, onPress }:
       activeOpacity={onPress ? 0.7 : 1}
     >
       <View style={[styles.fileIconBox, { backgroundColor: theme.iconBg }]}>
-        <Ionicons name={fileIcon(type)} size={22} color={theme.isDark ? "#579360" : "#265834"} />
+        <Ionicons name={fileIcon(type)} size={22} color={theme.isDark ? "#4ADE80" : "#166534"} />
       </View>
       <View style={styles.info}>
         <Text style={[styles.name, { color: theme.textColor }]} numberOfLines={1}>
@@ -48,7 +48,7 @@ export function DocumentCard({ name, type, status, chunks, createdAt, onPress }:
         </Text>
         <View style={styles.meta}>
           <View style={[styles.typeBadge, { backgroundColor: theme.accentBg }]}>
-            <Text style={[styles.typeText, { color: theme.isDark ? "#579360" : "#265834" }]}>
+            <Text style={[styles.typeText, { color: theme.isDark ? "#4ADE80" : "#166534" }]}>
               {type}
             </Text>
           </View>

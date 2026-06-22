@@ -10,11 +10,11 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: isDark ? "#579360" : "#265834",
-        tabBarInactiveTintColor: isDark ? "#66775E" : "#8A9080",
+        tabBarActiveTintColor: isDark ? "#4ADE80" : "#166534",
+        tabBarInactiveTintColor: isDark ? "#5C6E55" : "#94A3B8",
         tabBarStyle: {
-          backgroundColor: isDark ? colors.darkBg : "#F5F4F0",
-          borderTopColor: isDark ? "#2A3D28" : "#D8D6CF",
+          backgroundColor: isDark ? colors.darkBg : "#F8F9FA",
+          borderTopColor: isDark ? "#1A2814" : "#CBD5E1",
           borderTopWidth: 0.5,
           paddingTop: 8,
           paddingBottom: 10,
@@ -25,9 +25,9 @@ export default function TabLayout() {
           marginTop: 2,
         },
         headerStyle: {
-          backgroundColor: isDark ? colors.darkBg : "#F5F4F0",
+          backgroundColor: isDark ? colors.darkBg : "#F8F9FA",
         },
-        headerTintColor: isDark ? "#E8EBE6" : "#1F2B1D",
+        headerTintColor: isDark ? "#F1F5F9" : "#0F172A",
         headerShown: false,
       }}
     >

@@ -23,14 +23,14 @@ export function MessageBubble({ content, direction, isAI, timestamp, sources }: 
           styles.bubble,
           isInbound
             ? [styles.inbound, { backgroundColor: theme.cardBg, borderColor: theme.borderColor }]
-            : [styles.outbound, { backgroundColor: "#265834" }],
+            : [styles.outbound, { backgroundColor: "#166534" }],
           isInbound ? styles.bubbleLeft : styles.bubbleRight,
         ]}
       >
         {isAI && (
           <View style={styles.aiLabel}>
-            <Ionicons name="sparkles" size={11} color={isInbound ? "#265834" : "rgba(255,255,255,0.8)"} />
-            <Text style={[styles.aiText, { color: isInbound ? "#265834" : "rgba(255,255,255,0.7)" }]}>
+            <Ionicons name="sparkles" size={11} color={isInbound ? "#166534" : "rgba(255,255,255,0.8)"} />
+            <Text style={[styles.aiText, { color: isInbound ? "#166534" : "rgba(255,255,255,0.7)" }]}>
               AI Concierge
             </Text>
           </View>

@@ -119,7 +119,7 @@ export default function PlaygroundScreen() {
             editable={!isRunning}
           />
           <TouchableOpacity
-            style={[styles.sendBtn, { backgroundColor: "#265834", opacity: isRunning ? 0.5 : 1 }]}
+            style={[styles.sendBtn, { backgroundColor: "#166534", opacity: isRunning ? 0.5 : 1 }]}
             onPress={handleAsk}
             disabled={isRunning || !question.trim()}
           >
@@ -179,8 +179,8 @@ export default function PlaygroundScreen() {
         {sources.length > 0 && (currentStep === "sources" || currentStep === "generating" || currentStep === "done") && (
           <View style={[styles.sourcesCard, { backgroundColor: theme.cardBg, borderColor: theme.borderColor }, theme.shadowStyle]}>
             <View style={styles.sourcesHeader}>
-              <Ionicons name="link" size={13} color={theme.isDark ? "#579360" : "#265834"} />
-              <Text style={[styles.sourcesTitle, { color: theme.isDark ? "#579360" : "#265834" }]}>
+              <Ionicons name="link" size={13} color={theme.isDark ? "#4ADE80" : "#166534"} />
+              <Text style={[styles.sourcesTitle, { color: theme.isDark ? "#4ADE80" : "#166534" }]}>
                 RETRIEVED SOURCES
               </Text>
             </View>
@@ -188,11 +188,11 @@ export default function PlaygroundScreen() {
               <View key={idx} style={[styles.source, idx > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.borderColor }]}>
                 <View style={styles.sourceTop}>
                   <View style={[styles.sourceNum, { backgroundColor: theme.iconBg }]}>
-                    <Text style={[styles.sourceNumText, { color: theme.isDark ? "#579360" : "#265834" }]}>{idx + 1}</Text>
+                    <Text style={[styles.sourceNumText, { color: theme.isDark ? "#4ADE80" : "#166534" }]}>{idx + 1}</Text>
                   </View>
                   <Text style={[styles.sourceName, { color: theme.textColor }]}>{src.documentName}</Text>
                   <View style={[styles.scorePill, { backgroundColor: theme.accentBg }]}>
-                    <Text style={[styles.scoreText, { color: theme.isDark ? "#579360" : "#265834" }]}>
+                    <Text style={[styles.scoreText, { color: theme.isDark ? "#4ADE80" : "#166534" }]}>
                       {(src.score * 100).toFixed(0)}%
                     </Text>
                   </View>
@@ -216,7 +216,7 @@ export default function PlaygroundScreen() {
                 <Text style={[styles.footerSourcesLabel, { color: theme.muted }]}>Sources</Text>
                 {sources.map((src, idx) => (
                   <View key={idx} style={styles.footerSourceRow}>
-                    <Text style={[styles.footerNum, { color: theme.isDark ? "#579360" : "#265834" }]}>[{idx + 1}]</Text>
+                    <Text style={[styles.footerNum, { color: theme.isDark ? "#4ADE80" : "#166534" }]}>[{idx + 1}]</Text>
                     <Text style={[styles.footerDoc, { color: theme.secondaryText }]}>
                       {src.documentName}, Chunk #{src.chunkIndex}
                     </Text>
