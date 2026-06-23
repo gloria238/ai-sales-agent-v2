@@ -86,8 +86,7 @@ const FOOTER_LINKS = {
 
 /* ── Video URLs ───────────────────────────────────────────────────────────── */
 
-const HERO_VIDEO =
-  "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260309_042944_4a2205b7-b061-490a-852b-92d9e9955ce9.mp4";
+const HERO_VIDEO = "/videos/hero.mp4";
 const FEATURES_HLS =
   "https://stream.mux.com/Jwr2RhmsNrd6GEspBNgm02vJsRZAGlaoQIh4AucGdASw.m3u8";
 const CHESS_HLS =

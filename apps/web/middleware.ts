@@ -72,7 +72,13 @@ export async function middleware(request: NextRequest) {
   }
 
   // Allow static files and Next.js internals
-  if (pathname.startsWith("/_next") || pathname.startsWith("/favicon")) {
+  if (
+    pathname.startsWith("/_next") ||
+    pathname.startsWith("/favicon") ||
+    pathname.startsWith("/videos/") ||
+    pathname.startsWith("/images/") ||
+    pathname.startsWith("/fonts/")
+  ) {
     return NextResponse.next();
   }
 
@@ -102,5 +108,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!api/auth|_next/static|_next/image|favicon.ico).*)"],
+  matcher: ["/((?!api/auth|_next/static|_next/image|favicon.ico|videos/|images/|fonts/).*)"],
 };
