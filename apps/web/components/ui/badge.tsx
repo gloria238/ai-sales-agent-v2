@@ -7,10 +7,10 @@ interface BadgeProps {
 }
 
 const variantStyles = {
-  default: "bg-bg-subtle text-text-secondary",
-  success: "bg-success-soft text-success",
-  warning: "bg-warning-soft text-warning",
-  danger: "bg-danger-soft text-danger",
+  default: "bg-white/[0.05] text-text-secondary border border-lp-border/20",
+  success: "bg-success-soft text-success border border-success/20",
+  warning: "bg-warning-soft text-warning border border-warning/20",
+  danger: "bg-danger-soft text-danger border border-danger/20",
 };
 
 export function Badge({ children, variant = "default", className }: BadgeProps) {

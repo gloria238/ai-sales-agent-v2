@@ -83,13 +83,13 @@ export function DialogContent({ children, title }: { children: React.ReactNode; 
       className={`fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm transition-opacity duration-200 ${closing ? "opacity-0" : "opacity-100 animate-fade-in"}`}
       onMouseDown={(e) => { if (e.target === overlayRef.current) setOpen(false); }}
     >
-      <div className={`bg-bg-card rounded-xl shadow-lg border border-border w-full max-w-md mx-4 overflow-visible transition-all duration-200 ${closing ? "opacity-0 scale-95" : "opacity-100 animate-scale-in"}`}>
+      <div className={`glass-card rounded-xl shadow-xl w-full max-w-md mx-4 overflow-visible transition-all duration-200 ${closing ? "opacity-0 scale-95" : "opacity-100 animate-scale-in"}`}>
         {title && (
-          <div className="flex items-center justify-between px-5 py-3.5 border-b border-border">
+          <div className="flex items-center justify-between px-5 py-3.5 border-b border-lp-border/30">
             <h3 className="font-semibold text-text">{title}</h3>
             <button
               onClick={() => setOpen(false)}
-              className="text-text-muted hover:text-text text-lg leading-none transition-colors p-1 rounded hover:bg-bg-subtle"
+              className="text-text-muted hover:text-text text-lg leading-none transition-colors p-1 rounded hover:bg-white/[0.04]"
               aria-label="Close dialog"
             >&times;</button>
           </div>

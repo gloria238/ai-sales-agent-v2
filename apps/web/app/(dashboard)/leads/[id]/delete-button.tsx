@@ -38,7 +38,7 @@ export function DeleteButton({ leadId, leadName, orgSlug }: Props) {
         <Button variant="destructive" size="sm">Delete</Button>
       </DialogTrigger>
       <DialogContent title="Delete Lead">
-        <p className="text-sm text-gray-600 mb-4">
+        <p className="text-sm text-text-secondary mb-4">
           Are you sure you want to delete <strong>{leadName}</strong>? This action cannot be undone.
         </p>
         <div className="flex justify-end gap-2">

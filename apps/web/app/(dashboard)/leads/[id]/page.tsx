@@ -42,9 +42,9 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
 
   const canManage = ["owner", "admin", "operator"].includes(membership.role);
   const scoreLabel = lead.score !== null ? (lead.score >= 70 ? "Hot" : lead.score >= 40 ? "Warm" : "Cold") : null;
-  const scoreColor = scoreLabel === "Hot" ? "bg-red-500/10 text-red-400 border-red-500/20" :
-    scoreLabel === "Warm" ? "bg-amber-500/10 text-amber-400 border-amber-500/20" :
-    "bg-blue-500/10 text-blue-400 border-blue-500/20";
+  const scoreColor = scoreLabel === "Hot" ? "bg-accent-soft text-accent border-accent/20" :
+    scoreLabel === "Warm" ? "bg-warning-soft text-warning border-warning/20" :
+    "bg-bg-subtle text-text-muted border-lp-border/20";
 
   return (
     <div className="max-w-6xl mx-auto space-y-6 p-4 lg:p-6">
@@ -141,10 +141,10 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
                   <div key={a.id} className="flex gap-3 text-sm">
                     <div className="mt-1.5 shrink-0">
                       <div className={cn("w-2 h-2 rounded-full", {
-                        note: "bg-blue-400", stage_change: "bg-purple-400",
-                        email_sent: "bg-green-400", email_received: "bg-amber-400",
-                        meeting_booked: "bg-accent", created: "bg-slate-300",
-                      }[a.type] || "bg-slate-300")} />
+                        note: "bg-lp-hero-sub", stage_change: "bg-accent-secondary",
+                        email_sent: "bg-accent", email_received: "bg-warning",
+                        meeting_booked: "bg-accent", created: "bg-bg-muted",
+                      }[a.type] || "bg-bg-muted")} />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
@@ -203,7 +203,7 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
                     <div key={d.label} className="flex items-center gap-2">
                       <span className="text-[10px] text-text-muted w-14">{d.label}</span>
                       <div className="flex-1 h-1.5 bg-bg-subtle rounded-full overflow-hidden">
-                        <div className={cn("h-full rounded-full", d.val >= 70 ? "bg-red-400" : d.val >= 40 ? "bg-amber-400" : "bg-blue-400")}
+                        <div className={cn("h-full rounded-full", d.val >= 70 ? "bg-accent" : d.val >= 40 ? "bg-warning" : "bg-bg-muted")}
                           style={{ width: `${d.val}%` }} />
                       </div>
                       <span className="text-[10px] text-text-muted w-6 text-right">{Math.round(d.val)}</span>
@@ -219,7 +219,7 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-text-secondary">Sentiment</span>
-                  <Badge className="text-[10px] bg-green-500/10 text-green-400" variant="default">
+                  <Badge className="text-[10px] bg-accent-soft text-accent" variant="default">
                     <ThumbsUp className="size-2.5 mr-1" /> Positive
                   </Badge>
                 </div>
@@ -227,13 +227,13 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
                   {lead.stage === "qualified" || lead.stage === "proposal" ? (
                     ["Strong product interest", "Decision-maker contact", "Budget confirmed"].map((s) => (
                       <div key={s} className="flex items-center gap-1.5 text-xs text-text-muted">
-                        <div className="size-1 rounded-full bg-green-400" />{s}
+                        <div className="size-1 rounded-full bg-accent" />{s}
                       </div>
                     ))
                   ) : (
                     ["Website visit detected", "Opened pricing page", "Mid-market company"].map((s) => (
                       <div key={s} className="flex items-center gap-1.5 text-xs text-text-muted">
-                        <div className="size-1 rounded-full bg-amber-400" />{s}
+                        <div className="size-1 rounded-full bg-warning" />{s}
                       </div>
                     ))
                   )}
@@ -257,8 +257,8 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
                     : "Keep nurturing. Share valuable content. Check in every 2 weeks."}
                 </p>
                 <div className="flex items-center gap-1.5 mt-2 pt-2 border-t border-border/50">
-                  <Clock className="size-3 text-amber-400" />
-                  <span className="text-[10px] text-amber-400">Follow up within {lead.stage === "qualified" ? "24" : "48"} hours</span>
+                  <Clock className="size-3 text-warning" />
+                  <span className="text-[10px] text-warning">Follow up within {lead.stage === "qualified" ? "24" : "48"} hours</span>
                 </div>
               </div>
             </div>

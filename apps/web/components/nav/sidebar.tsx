@@ -50,12 +50,12 @@ export function Sidebar({ currentOrg, orgs, user, SidebarHeader }: Props) {
 
   return (
     <aside className={cn(
-      "hidden lg:flex flex-col border-r border-sidebar-border bg-sidebar-bg/95 backdrop-blur-xl shrink-0 transition-all duration-200",
+      "hidden lg:flex flex-col border-r border-lp-border/30 bg-sidebar-bg/95 backdrop-blur-xl shrink-0 transition-all duration-200",
       sidebarWidth,
     )}>
       {/* Logo + collapse button */}
       <div className={cn(
-        "flex items-center border-b border-sidebar-border shrink-0 transition-all duration-200",
+        "flex items-center border-b border-lp-border/30 shrink-0 transition-all duration-200",
         collapsed ? "px-3 py-4 justify-center" : "px-4 py-4 justify-between",
       )}>
         {!collapsed && (
@@ -84,7 +84,7 @@ export function Sidebar({ currentOrg, orgs, user, SidebarHeader }: Props) {
         {!collapsed && (
           <button
             onClick={() => setCollapsed(true)}
-            className="p-1.5 rounded-lg hover:bg-bg-subtle text-text-muted hover:text-text transition-colors"
+            className="p-1.5 rounded-lg hover:bg-white/[0.04] text-text-muted hover:text-text transition-colors"
             title="Collapse sidebar"
           >
             <PanelLeftClose className="size-3.5" />
@@ -115,7 +115,7 @@ export function Sidebar({ currentOrg, orgs, user, SidebarHeader }: Props) {
                   "text-[13px] font-medium",
                   isActive
                     ? "bg-accent/10 text-accent"
-                    : "text-text-secondary hover:text-text hover:bg-bg-subtle/80",
+                    : "text-text-secondary hover:text-text hover:bg-white/[0.04]",
                 )}
                 title={collapsed ? item.label : undefined}
               >
@@ -130,7 +130,7 @@ export function Sidebar({ currentOrg, orgs, user, SidebarHeader }: Props) {
           })}
         </div>
 
-        <div className={cn("my-3 border-t border-sidebar-border", collapsed ? "mx-1" : "mx-2")} />
+        <div className={cn("my-3 border-t border-lp-border/30", collapsed ? "mx-1" : "mx-2")} />
 
         <div className="space-y-0.5">
           {secondaryItems.map((item) => {
@@ -146,7 +146,7 @@ export function Sidebar({ currentOrg, orgs, user, SidebarHeader }: Props) {
                   "text-[13px] font-medium",
                   isActive
                     ? "bg-accent/10 text-accent"
-                    : "text-text-muted hover:text-text-secondary hover:bg-bg-subtle/80",
+                    : "text-text-muted hover:text-text-secondary hover:bg-white/[0.04]",
                 )}
                 title={collapsed ? item.label : undefined}
               >
@@ -163,7 +163,7 @@ export function Sidebar({ currentOrg, orgs, user, SidebarHeader }: Props) {
 
       {/* Footer: User + Theme */}
       <div className={cn(
-        "border-t border-sidebar-border",
+        "border-t border-lp-border/30",
         collapsed ? "px-2 py-3" : "px-3 py-2",
       )}>
         {/* Theme toggle */}
@@ -186,7 +186,7 @@ export function Sidebar({ currentOrg, orgs, user, SidebarHeader }: Props) {
           <button
             onClick={() => setUserOpen(!userOpen)}
             className={cn(
-              "w-full flex items-center rounded-lg hover:bg-bg-subtle transition-colors",
+              "w-full flex items-center rounded-lg hover:bg-white/[0.04] transition-colors",
               collapsed ? "justify-center p-1.5" : "gap-2.5 px-2 py-1.5",
             )}
           >
@@ -216,13 +216,13 @@ export function Sidebar({ currentOrg, orgs, user, SidebarHeader }: Props) {
                 </div>
                 <button
                   onClick={() => { router.push("/settings"); setUserOpen(false); }}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-xs text-text-secondary hover:bg-bg-subtle transition-colors"
+                  className="w-full flex items-center gap-2 px-3 py-2 text-xs text-text-secondary hover:bg-white/[0.04] transition-colors"
                 >
                   <Settings className="size-3.5 text-text-muted" /> Settings
                 </button>
                 <button
                   onClick={handleLogout}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-xs text-text-secondary hover:bg-bg-subtle transition-colors"
+                  className="w-full flex items-center gap-2 px-3 py-2 text-xs text-text-secondary hover:bg-white/[0.04] transition-colors"
                 >
                   <LogOut className="size-3.5" /> Sign out
                 </button>

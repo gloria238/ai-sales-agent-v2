@@ -44,47 +44,47 @@ export function AIInsightsCard({ leadId, orgSlug }: Props) {
   }, [fetchScore]);
 
   const scoreColor = result?.label === "hot"
-    ? "bg-red-500" : result?.label === "warm"
-    ? "bg-yellow-500" : "bg-gray-400";
+    ? "bg-danger" : result?.label === "warm"
+    ? "bg-warning" : "bg-bg-muted";
 
   const badgeColor = result?.label === "hot"
-    ? "bg-red-100 text-red-700" : result?.label === "warm"
-    ? "bg-yellow-100 text-yellow-700" : "bg-gray-100 text-gray-600";
+    ? "bg-danger-soft text-danger" : result?.label === "warm"
+    ? "bg-warning-soft text-warning" : "bg-bg-subtle text-text-muted";
 
   return (
-    <div className="rounded-lg border p-4">
+    <div className="rounded-xl glass-card p-4">
       <div className="flex items-center justify-between mb-3">
-        <p className="text-sm text-gray-500">AI Insights</p>
+        <p className="text-sm text-text-muted">AI Insights</p>
         {!loading && (
-          <button onClick={fetchScore} className="text-xs text-blue-600 hover:underline">
+          <button onClick={fetchScore} className="text-xs text-accent hover:underline">
             Refresh
           </button>
         )}
       </div>
       {loading ? (
-        <p className="text-sm text-gray-400">Analyzing...</p>
+        <p className="text-sm text-text-muted">Analyzing...</p>
       ) : error ? (
-        <div className="text-sm text-red-500 space-y-1.5">
+        <div className="text-sm text-danger space-y-1.5">
           <p>{error}</p>
-          <button onClick={fetchScore} className="text-xs underline hover:text-red-700">Retry</button>
+          <button onClick={fetchScore} className="text-xs underline hover:text-danger/80">Retry</button>
         </div>
       ) : result ? (
         <div className="space-y-3">
           <div className="flex items-center gap-3">
-            <div className={`flex items-center justify-center w-14 h-14 rounded-full text-lg font-bold text-white ${scoreColor}`}>
+            <div className={`flex items-center justify-center w-14 h-14 rounded-full text-lg font-bold text-white shadow-sm ${scoreColor}`}>
               {result.score}
             </div>
             <div>
               <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${badgeColor}`}>
                 {result.label.toUpperCase()}
               </span>
-              <p className="text-sm text-gray-600 mt-1">{result.reason}</p>
+              <p className="text-sm text-text-secondary mt-1">{result.reason}</p>
             </div>
           </div>
           {result.nextAction && (
-            <div className="rounded-lg bg-blue-50 border border-blue-100 p-3">
-              <p className="text-xs font-semibold text-blue-700 uppercase mb-1">Suggested Next Action</p>
-              <p className="text-sm text-blue-900">{result.nextAction}</p>
+            <div className="rounded-lg bg-accent-soft border border-accent/20 p-3">
+              <p className="text-xs font-semibold text-accent uppercase mb-1">Suggested Next Action</p>
+              <p className="text-sm text-text">{result.nextAction}</p>
             </div>
           )}
         </div>

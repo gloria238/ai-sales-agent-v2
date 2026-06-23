@@ -2,14 +2,14 @@ import { cn } from "@/lib/utils";
 
 export function Table({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className={cn("rounded-xl border border-border overflow-hidden", className)}>
+    <div className={cn("rounded-xl border border-lp-border/30 overflow-hidden", className)}>
       <table className="w-full">{children}</table>
     </div>
   );
 }
 
 export function TableHeader({ children }: { children: React.ReactNode }) {
-  return <thead className="bg-bg-subtle border-b border-border">{children}</thead>;
+  return <thead className="bg-white/[0.03] border-b border-lp-border/30">{children}</thead>;
 }
 
 export function TableBody({ children }: { children: React.ReactNode }) {
@@ -22,7 +22,7 @@ export function TableRow({ children, className, onClick }: {
   onClick?: () => void;
 }) {
   return (
-    <tr className={cn("border-b border-border last:border-b-0 hover:bg-bg-subtle transition-colors", className)} onClick={onClick}>
+    <tr className={cn("border-b border-lp-border/30 last:border-b-0 hover:bg-white/[0.03] transition-colors", className)} onClick={onClick}>
       {children}
     </tr>
   );

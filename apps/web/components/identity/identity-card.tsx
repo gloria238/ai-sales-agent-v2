@@ -25,22 +25,22 @@ export interface Customer {
 // ── Stage config ──────────────────────────────────────────────
 
 const STAGE_CONFIG: Record<string, { dot: string; color: string }> = {
-  new:          { dot: "bg-slate-400", color: "text-slate-400" },
-  contacted:    { dot: "bg-indigo-500", color: "text-indigo-500" },
-  qualified:    { dot: "bg-blue-500", color: "text-blue-500" },
-  proposal:     { dot: "bg-amber-500", color: "text-amber-500" },
-  negotiation:  { dot: "bg-orange-500", color: "text-orange-500" },
-  closed_won:   { dot: "bg-emerald-500", color: "text-emerald-500" },
-  closed_lost:  { dot: "bg-red-400", color: "text-red-400" },
+  new:          { dot: "bg-text-muted", color: "text-text-muted" },
+  contacted:    { dot: "bg-lp-hero-sub", color: "text-lp-hero-sub" },
+  qualified:    { dot: "bg-lp-hero-sub", color: "text-lp-hero-sub" },
+  proposal:     { dot: "bg-warning", color: "text-warning" },
+  negotiation:  { dot: "bg-warning", color: "text-warning" },
+  closed_won:   { dot: "bg-accent", color: "text-accent" },
+  closed_lost:  { dot: "bg-danger", color: "text-danger" },
 };
 
 const SCORE_LABEL = (s: number) => (s >= 70 ? "Hot" : s >= 40 ? "Warm" : "Cold");
 const SCORE_BG = (s: number) =>
   s >= 70
-    ? "bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400"
+    ? "bg-accent-soft text-accent"
     : s >= 40
-    ? "bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400"
-    : "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400";
+    ? "bg-warning-soft text-warning"
+    : "bg-bg-subtle text-text-muted";
 
 // ── Sub-components ─────────────────────────────────────────────
 
@@ -111,7 +111,7 @@ function AIState({ customer, compact }: { customer: Customer; compact?: boolean 
     const presence = presenceFromDate(customer.lastSeenAt);
     if (presence === "offline") {
       return (
-        <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 dark:bg-amber-900/30 px-2 py-0.5 text-[10px] font-medium text-amber-600 dark:text-amber-400 mt-1">
+        <span className="inline-flex items-center gap-1 rounded-full bg-warning-soft px-2 py-0.5 text-[10px] font-medium text-warning mt-1">
           <User className="size-2.5" />
           Needs human review
         </span>

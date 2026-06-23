@@ -59,6 +59,24 @@ module.exports = {
           alt: "#F1F5F9",
           hover: "#e8f0ea",
         },
+        /* ── APEX Landing Page Colors (HSL) ── */
+        "lp-background": "hsl(var(--lp-background))",
+        "lp-foreground": "hsl(var(--lp-foreground))",
+        "lp-primary": {
+          DEFAULT: "hsl(var(--lp-primary))",
+          foreground: "hsl(var(--lp-primary-foreground))",
+        },
+        "lp-secondary": "hsl(var(--lp-secondary))",
+        "lp-border": "hsl(var(--lp-border))",
+        "lp-card": "hsl(var(--lp-card))",
+        "lp-muted": {
+          DEFAULT: "hsl(var(--lp-muted))",
+          foreground: "hsl(var(--lp-muted-foreground))",
+        },
+        "lp-hero": {
+          heading: "hsl(var(--lp-hero-heading))",
+          sub: "hsl(var(--lp-hero-sub))",
+        },
       },
       borderRadius: {
         DEFAULT: "0.75rem",
@@ -118,6 +136,10 @@ module.exports = {
           "0%, 100%": { opacity: "1" },
           "50%": { opacity: "0.4" },
         },
+        "marquee": {
+          "0%": { transform: "translateX(0%)" },
+          "100%": { transform: "translateX(-50%)" },
+        },
       },
       animation: {
         "pulse-soft": "pulse-soft 2s ease-in-out infinite",
@@ -129,6 +151,7 @@ module.exports = {
         "scale-in": "scale-in 0.2s ease-out",
         "draw-line": "draw-line 1s linear forwards",
         "skeleton": "skeleton 2s ease-in-out infinite",
+        "marquee": "marquee 20s linear infinite",
       },
     },
   },

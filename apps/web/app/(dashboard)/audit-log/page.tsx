@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -43,16 +43,16 @@ function actionVariant(action: string): "success" | "warning" | "danger" | "defa
 function UserAvatar({ name }: { name: string | null }) {
   const initials = (name || "S").slice(0, 2).toUpperCase();
   const colors = [
-    "bg-blue-100 text-blue-700",
-    "bg-emerald-100 text-emerald-700",
-    "bg-amber-100 text-amber-700",
-    "bg-purple-100 text-purple-700",
-    "bg-rose-100 text-rose-700",
-    "bg-cyan-100 text-cyan-700",
+    "bg-accent-soft text-accent",
+    "bg-warning-soft text-warning",
+    "bg-danger-soft text-danger",
+    "bg-bg-subtle text-text-secondary",
+    "bg-lp-hero-sub/10 text-lp-hero-sub",
+    "bg-white/[0.06] text-text-muted",
   ];
   const colorIdx = (name || "").length % colors.length;
   return (
-    <div className={cn("size-8 rounded-full flex items-center justify-center text-xs font-semibold shrink-0 ring-2 ring-white", colors[colorIdx])}>
+    <div className={cn("size-8 rounded-full flex items-center justify-center text-xs font-semibold shrink-0 ring-2 ring-lp-background", colors[colorIdx])}>
       {initials}
     </div>
   );
@@ -121,8 +121,8 @@ export default function AuditLogPage() {
     return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-xl font-semibold text-zinc-900">Audit Log</h1>
-          <p className="text-sm text-zinc-500 mt-1">Track all changes across your organization.</p>
+          <h1 className="text-xl font-semibold text-text">Audit Log</h1>
+          <p className="text-sm text-text-muted mt-1">Track all changes across your organization.</p>
         </div>
         <Card>
           <EmptyState
@@ -139,8 +139,8 @@ export default function AuditLogPage() {
     <div className="p-4 lg:p-6 space-y-6">
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-xl font-semibold text-zinc-900">Audit Log</h1>
-          <p className="text-sm text-zinc-500 mt-1">Track all changes across your organization.</p>
+          <h1 className="text-xl font-semibold text-text">Audit Log</h1>
+          <p className="text-sm text-text-muted mt-1">Track all changes across your organization.</p>
         </div>
         <Button
           variant="outline"
@@ -155,7 +155,7 @@ export default function AuditLogPage() {
       {error && (
         <Card>
           <CardContent className="p-5 text-center">
-            <p className="text-sm text-red-600 mb-3">Failed to load audit log</p>
+            <p className="text-sm text-danger mb-3">Failed to load audit log</p>
             <Button
               variant="outline"
               size="sm"
@@ -195,38 +195,38 @@ export default function AuditLogPage() {
 
       {!error && logs.length > 0 && (
         <Card>
-          <CardContent className="p-0 divide-y divide-zinc-100">
+          <CardContent className="p-0 divide-y divide-lp-border/20">
             {logs.map((entry) => (
-              <div key={entry.id} className="flex gap-4 px-5 py-4 hover:bg-zinc-50/50 transition-colors">
+              <div key={entry.id} className="flex gap-4 px-5 py-4 hover:bg-white/[0.02] transition-colors">
                 <UserAvatar name={entry.userName} />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-sm font-medium text-zinc-900">
+                    <span className="text-sm font-medium text-text">
                       {entry.userName || "System"}
                     </span>
                     <Badge variant={actionVariant(entry.action)} className="text-[11px] px-1.5 py-0">
                       {entry.action}
                     </Badge>
-                    <span className="text-xs text-zinc-400">on</span>
-                    <span className="text-xs font-medium text-zinc-600">{entry.targetType}</span>
+                    <span className="text-xs text-text-muted">on</span>
+                    <span className="text-xs font-medium text-text-secondary">{entry.targetType}</span>
                     {entry.targetId && (
-                      <span className="text-[11px] text-zinc-400 font-mono">#{entry.targetId.slice(0, 8)}</span>
+                      <span className="text-[11px] text-text-muted font-mono">#{entry.targetId.slice(0, 8)}</span>
                     )}
                   </div>
                   {entry.metadata ? (
-                    <div className="mt-2 text-xs text-zinc-500 bg-zinc-50 rounded-md p-3 font-mono leading-relaxed overflow-x-auto">
+                    <div className="mt-2 text-xs text-text-muted bg-bg-subtle rounded-md p-3 font-mono leading-relaxed overflow-x-auto">
                       {typeof entry.metadata === "string"
                         ? entry.metadata
                         : Object.entries(entry.metadata as Record<string, unknown>).map(([k, v]) => (
                             <div key={k} className="flex gap-2">
-                              <span className="text-zinc-400 shrink-0">{k}:</span>
-                              <span className="text-zinc-700">{typeof v === "object" ? JSON.stringify(v) : String(v)}</span>
+                              <span className="text-text-muted shrink-0">{k}:</span>
+                              <span className="text-text-secondary">{typeof v === "object" ? JSON.stringify(v) : String(v)}</span>
                             </div>
                           ))}
                     </div>
                   ) : null}
                 </div>
-                <div className="text-xs text-zinc-400 shrink-0 text-right whitespace-nowrap pt-0.5">
+                <div className="text-xs text-text-muted shrink-0 text-right whitespace-nowrap pt-0.5">
                   <div>{formatTimestamp(entry.createdAt)}</div>
                 </div>
               </div>
@@ -236,10 +236,10 @@ export default function AuditLogPage() {
       )}
 
       {totalPages > 1 && (
-        <div className="flex items-center justify-between border-t border-zinc-100 pt-4">
-          <span className="text-sm text-zinc-500">
+        <div className="flex items-center justify-between border-t border-lp-border/20 pt-4">
+          <span className="text-sm text-text-muted">
             Page {page} of {totalPages}
-            <span className="text-zinc-300 mx-1">·</span>
+            <span className="text-text-muted mx-1">·</span>
             {total} total entries
           </span>
           <div className="flex gap-2">

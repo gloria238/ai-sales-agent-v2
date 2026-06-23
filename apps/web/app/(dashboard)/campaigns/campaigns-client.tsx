@@ -29,9 +29,9 @@ export function CampaignListClient({ campaigns, orgSlug }: { campaigns: Campaign
   }
 
   const statusBadge = (s: string) => ({
-    draft: "bg-bg-card text-text-muted", active: "bg-green-500/10 text-green-400 border-green-500/20",
-    paused: "bg-amber-500/10 text-amber-400 border-amber-500/20", completed: "bg-blue-500/10 text-blue-400 border-blue-500/20",
-  }[s] || "bg-bg-card text-text-muted");
+    draft: "bg-bg-subtle text-text-muted", active: "bg-accent-soft text-accent border-accent/20",
+    paused: "bg-warning-soft text-warning border-warning/20", completed: "bg-bg-subtle text-text-secondary border-lp-border/20",
+  }[s] || "bg-bg-subtle text-text-muted");
 
   return (
     <div className="p-6 max-w-5xl mx-auto">

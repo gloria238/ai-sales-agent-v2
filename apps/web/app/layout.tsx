@@ -1,5 +1,9 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import "@fontsource/geist-sans/400.css";
+import "@fontsource/geist-sans/500.css";
+import "@fontsource/geist-sans/600.css";
+import "@fontsource/geist-sans/700.css";
 import "./globals.css";
 import { QueryProvider } from "@/components/providers/query-provider";
 import { ThemeProvider } from "@/components/providers/theme-provider";
@@ -14,8 +18,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "SalesAgent AI — AI SDR Platform",
-  description: "AI sales agents that qualify, follow up, and book meetings automatically. Multi-channel inbox, campaign orchestration, and real-time monitoring.",
+  title: "APEX — Revenue Acceleration Platform",
+  description: "Drive your funnel forward with clever workflows, analytics, and seamless lead management. AI-powered revenue acceleration for modern GTM teams.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -28,7 +32,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               (function() {
                 try {
                   var t = localStorage.getItem('theme');
-                  if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                  if (t === 'light') {
+                    /* user explicitly picked light — respect it */;
+                  } else {
                     document.documentElement.classList.add('dark');
                   }
                 } catch(e) {}
@@ -37,7 +43,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           }}
         />
       </head>
-      <body>
+      <body style={{ fontFamily: "'Geist Sans', 'Inter', system-ui, sans-serif" }}>
         <NavProgress />
         <ThemeProvider>
           <QueryProvider>{children}</QueryProvider>

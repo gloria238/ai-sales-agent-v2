@@ -14,12 +14,12 @@ const SIZE_MAP: Record<AvatarSize, { container: string; text: string }> = {
 };
 
 const AVATAR_GRADIENTS = [
-  "from-emerald-400 to-teal-500",
-  "from-blue-400 to-indigo-500",
-  "from-violet-400 to-purple-500",
-  "from-amber-400 to-orange-500",
-  "from-rose-400 to-pink-500",
-  "from-cyan-400 to-sky-500",
+  "from-accent/70 to-accent/20",
+  "from-accent/50 to-accent-secondary/20",
+  "from-lp-hero-sub/40 to-lp-hero-sub/10",
+  "from-accent-secondary/60 to-accent/20",
+  "from-lp-hero-sub/30 to-accent/30",
+  "from-accent/40 to-lp-hero-sub/20",
 ];
 
 function avatarGradient(name: string): string {

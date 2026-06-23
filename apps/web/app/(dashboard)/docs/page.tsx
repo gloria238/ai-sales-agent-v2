@@ -66,33 +66,33 @@ export default async function DocsPage() {
   ];
 
   const methodColor = (m: string) => ({
-    GET: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
-    POST: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-    PUT: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
-    PATCH: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
-    DELETE: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
-  }[m] || "bg-gray-100 text-gray-600");
+    GET: "bg-accent-soft text-accent",
+    POST: "bg-bg-subtle text-lp-hero-sub",
+    PUT: "bg-warning-soft text-warning",
+    PATCH: "bg-warning-soft text-warning",
+    DELETE: "bg-danger-soft text-danger",
+  }[m] || "bg-bg-subtle text-text-muted");
 
   const sections = ["Auth", "Organizations", "Leads", "Conversations", "Agents", "Campaigns", "Scripts", "Members & Settings", "AI"];
 
   return (
     <div className="max-w-4xl p-4 lg:p-6">
-      <h1 className="text-2xl font-bold text-zinc-900 dark:text-white mb-2">API Reference</h1>
-      <p className="text-zinc-500 dark:text-zinc-400 mb-8">
+      <h1 className="text-2xl font-bold text-text mb-2">API Reference</h1>
+      <p className="text-text-muted mb-8">
         {endpoints.length} endpoints across auth, leads, conversations, agents, campaigns, and AI.
       </p>
       <div className="space-y-6">
         {sections.map((section) => (
           <div key={section}>
-            <h2 className="text-lg font-semibold text-zinc-900 dark:text-white mb-3">{section}</h2>
-            <div className="rounded-xl border border-zinc-200/60 dark:border-zinc-800 overflow-hidden">
+            <h2 className="text-lg font-semibold text-text mb-3">{section}</h2>
+            <div className="rounded-xl border border-lp-border/30 overflow-hidden">
               <table className="w-full text-sm">
-                <thead className="bg-zinc-50 dark:bg-zinc-900">
+                <thead className="bg-bg-subtle">
                   <tr>
-                    <th className="text-left px-4 py-2 text-xs font-medium text-zinc-500 dark:text-zinc-400 w-16">Method</th>
-                    <th className="text-left px-4 py-2 text-xs font-medium text-zinc-500 dark:text-zinc-400">Path</th>
-                    <th className="text-left px-4 py-2 text-xs font-medium text-zinc-500 dark:text-zinc-400 w-20">Auth</th>
-                    <th className="text-left px-4 py-2 text-xs font-medium text-zinc-500 dark:text-zinc-400">Description</th>
+                    <th className="text-left px-4 py-2 text-xs font-medium text-text-muted w-16">Method</th>
+                    <th className="text-left px-4 py-2 text-xs font-medium text-text-muted">Path</th>
+                    <th className="text-left px-4 py-2 text-xs font-medium text-text-muted w-20">Auth</th>
+                    <th className="text-left px-4 py-2 text-xs font-medium text-text-muted">Description</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -111,11 +111,11 @@ export default async function DocsPage() {
                       return false;
                     })
                     .map((e) => (
-                      <tr key={e.method + e.path} className="border-t border-zinc-100 dark:border-zinc-800">
+                      <tr key={e.method + e.path} className="border-t border-lp-border/20">
                         <td className="px-4 py-2"><span className={`rounded px-1.5 py-0.5 text-[10px] font-bold ${methodColor(e.method)}`}>{e.method}</span></td>
-                        <td className="px-4 py-2 font-mono text-xs text-zinc-700 dark:text-zinc-300">{e.path}</td>
-                        <td className="px-4 py-2 text-xs text-zinc-500 dark:text-zinc-400">{e.auth}</td>
-                        <td className="px-4 py-2 text-xs text-zinc-500 dark:text-zinc-400">{e.desc}</td>
+                        <td className="px-4 py-2 font-mono text-xs text-text-secondary">{e.path}</td>
+                        <td className="px-4 py-2 text-xs text-text-muted">{e.auth}</td>
+                        <td className="px-4 py-2 text-xs text-text-muted">{e.desc}</td>
                       </tr>
                     ))}
                 </tbody>

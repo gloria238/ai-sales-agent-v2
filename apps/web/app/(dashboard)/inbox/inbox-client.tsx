@@ -45,8 +45,8 @@ function AITypingIndicator() {
 function LeadPopover({ lead }: { lead: any }) {
   const [show, setShow] = useState(false);
   const sl = lead.score != null ? (lead.score >= 70 ? "Hot" : lead.score >= 40 ? "Warm" : "Cold") : null;
-  const sc = sl === "Hot" ? "text-emerald-400 bg-emerald-500/10" :
-    sl === "Warm" ? "text-blue-400 bg-blue-500/10" : "text-slate-400 bg-slate-500/10";
+  const sc = sl === "Hot" ? "text-accent bg-accent-soft" :
+    sl === "Warm" ? "text-warning bg-warning-soft" : "text-text-muted bg-bg-subtle";
 
   return (
     <div className="relative inline-flex items-center">
@@ -121,9 +121,9 @@ function DetailHeader({ lead, agent, conversation }: { lead: any; agent: any; co
         )}
         {lead.score != null && (
           <span className={cn("inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold",
-            sl === "Hot" ? "text-emerald-400 bg-emerald-500/10" :
-            sl === "Warm" ? "text-blue-400 bg-blue-500/10" :
-            "text-slate-400 bg-slate-500/10",
+            sl === "Hot" ? "text-accent bg-accent-soft" :
+            sl === "Warm" ? "text-warning bg-warning-soft" :
+            "text-text-muted bg-bg-subtle",
           )}>
             <Star className="size-2.5" />{lead.score}
           </span>

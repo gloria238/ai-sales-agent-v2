@@ -51,10 +51,10 @@ function AITypingIndicator() {
 // ── Stage badge ────────────────────────────────────────────
 function StageBadge({ stage }: { stage: string | null }) {
   const map: Record<string, string> = {
-    new: "bg-slate-500/10 text-slate-400", contacted: "bg-indigo-500/10 text-indigo-400",
-    qualified: "bg-blue-500/10 text-blue-400", proposal: "bg-amber-500/10 text-amber-400",
-    negotiation: "bg-orange-500/10 text-orange-400", closed_won: "bg-green-500/10 text-green-400",
-    closed_lost: "bg-red-500/10 text-red-400",
+    new: "bg-bg-subtle text-text-muted", contacted: "bg-white/[0.04] text-lp-hero-sub",
+    qualified: "bg-white/[0.04] text-lp-hero-sub", proposal: "bg-warning-soft text-warning",
+    negotiation: "bg-warning-soft text-warning", closed_won: "bg-accent-soft text-accent",
+    closed_lost: "bg-danger-soft text-danger",
   };
   return <Badge className={cn("text-[10px]", map[stage || "new"])} variant="default">{stage || "new"}</Badge>;
 }
@@ -62,9 +62,9 @@ function StageBadge({ stage }: { stage: string | null }) {
 // ── Score badge ────────────────────────────────────────────
 function ScoreBadge({ score }: { score: number | null }) {
   if (score === null) return <Badge variant="default" className="text-[10px]">Not scored</Badge>;
-  const c = score >= 70 ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" :
-    score >= 40 ? "bg-blue-500/10 text-blue-400 border-blue-500/20" :
-    "bg-slate-500/10 text-slate-400 border-slate-500/20";
+  const c = score >= 70 ? "bg-accent-soft text-accent border-accent/20" :
+    score >= 40 ? "bg-warning-soft text-warning border-warning/20" :
+    "bg-bg-subtle text-text-muted border-lp-border/20";
   const label = score >= 70 ? "Hot" : score >= 40 ? "Warm" : "Cold";
   return <Badge className={cn("text-[10px] px-1.5 py-0", c)} variant="default">{label} &middot; {score}</Badge>;
 }
@@ -276,9 +276,9 @@ export function InboxDetailClient({ conversation, conversations, orgSlug }: Prop
           <div className="flex items-center gap-3 mb-3">
             <div className={cn(
               "size-14 rounded-2xl flex items-center justify-center text-lg font-bold",
-              scoreLabel === "Hot" ? "bg-emerald-500/10 text-emerald-400" :
-              scoreLabel === "Warm" ? "bg-blue-500/10 text-blue-400" :
-              "bg-slate-500/10 text-slate-400",
+              scoreLabel === "Hot" ? "bg-accent-soft text-accent" :
+              scoreLabel === "Warm" ? "bg-warning-soft text-warning" :
+              "bg-bg-subtle text-text-muted",
             )}>
               {lead.score ?? "—"}
             </div>
@@ -301,7 +301,7 @@ export function InboxDetailClient({ conversation, conversations, orgSlug }: Prop
                   <div className="flex-1 h-1.5 bg-bg-subtle rounded-full overflow-hidden">
                     <div className={cn(
                       "h-full rounded-full transition-all",
-                      d.val >= 70 ? "bg-emerald-400" : d.val >= 40 ? "bg-blue-400" : "bg-slate-400",
+                      d.val >= 70 ? "bg-accent" : d.val >= 40 ? "bg-warning" : "bg-bg-muted",
                     )} style={{ width: `${d.val}%` }} />
                   </div>
                   <span className="text-[10px] text-text-muted w-6 text-right">{Math.round(d.val)}</span>
@@ -345,18 +345,18 @@ export function InboxDetailClient({ conversation, conversations, orgSlug }: Prop
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-xs text-text-secondary">Sentiment</span>
-              <Badge className="text-[10px] bg-green-500/10 text-green-400 border-green-500/20" variant="default">
+              <Badge className="text-[10px] bg-accent-soft text-accent" variant="default">
                 <ThumbsUp className="size-2.5 mr-1" /> Positive
               </Badge>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-xs text-text-secondary">Buying signals</span>
-              <span className="text-xs font-medium text-green-400">3 detected</span>
+              <span className="text-xs font-medium text-accent">3 detected</span>
             </div>
             <div className="space-y-1 mt-1">
               {["Asked about pricing", "Mentioned timeline urgency", "Decision-maker title"].map((s) => (
                 <div key={s} className="flex items-center gap-1.5 text-xs text-text-muted">
-                  <div className="size-1 rounded-full bg-green-400" />
+                  <div className="size-1 rounded-full bg-accent" />
                   {s}
                 </div>
               ))}
@@ -380,8 +380,8 @@ export function InboxDetailClient({ conversation, conversations, orgSlug }: Prop
                 : "Follow up within 48 hours. Send personalized proposal with pricing options. Address any objections from the last conversation."}
             </p>
             <div className="flex items-center gap-1.5 mt-2 pt-2 border-t border-border/50">
-              <Clock className="size-3 text-amber-400" />
-              <span className="text-[10px] text-amber-400">Follow up within 24 hours</span>
+              <Clock className="size-3 text-warning" />
+              <span className="text-[10px] text-warning">Follow up within 24 hours</span>
             </div>
           </div>
         </div>

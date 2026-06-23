@@ -1,205 +1,606 @@
-import Link from "next/link";
-import { DemoLoginButton } from "@/components/demo-login-button";
+import { ChevronRight } from "lucide-react";
+import HlsBackground from "@/components/landing/hls-background";
 
-const features = [
-  { icon: "🤖", title: "AI Lead Qualification", desc: "AI agents score every lead across intent, budget, authority, need, and timeline. Hot leads auto-route to human SDRs." },
-  { icon: "📨", title: "AI Follow-up Sequences", desc: "Multi-step outbound campaigns with AI-personalized emails. Detects replies and pauses sequences automatically." },
-  { icon: "💬", title: "Conversation Memory", desc: "AI remembers every interaction. Full context across email threads — no repetitive questions, no lost context." },
-  { icon: "📊", title: "Multi-Channel Outreach", desc: "Email today. Chat and SMS coming soon. Unified inbox for all channels with AI draft suggestions." },
-  { icon: "🎯", title: "Campaign Orchestration", desc: "Schedule sequences with delays, retries, and conditional branching. AI personalizes every email at send time." },
-  { icon: "📈", title: "Real-Time Monitoring", desc: "Live dashboard: active conversations, response rate, qualified leads, booked meetings, campaign analytics." },
+/* ──────────────────────────────────────────────────────────────────────────────
+   SalesAgent AI Landing Page — Revenue Acceleration Platform
+   Dark "liquid glass" aesthetic with green accent, video backgrounds, and
+   7 marketing sections. SalesAgent = AI SDR agents that qualify, follow up,
+   and book meetings automatically.
+   ─────────────────────────────────────────────────────────────────────────── */
+
+/* ── Crosshair Logo Icon ──────────────────────────────────────────────────── */
+
+function CrosshairIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      strokeWidth="2" strokeLinecap="round" className={className}
+    >
+      <circle cx="12" cy="12" r="10" />
+      <line x1="12" y1="2" x2="12" y2="8" />
+      <line x1="12" y1="16" x2="12" y2="22" />
+      <line x1="2" y1="12" x2="8" y2="12" />
+      <line x1="16" y1="12" x2="22" y2="12" />
+    </svg>
+  );
+}
+
+/* ── Data ─────────────────────────────────────────────────────────────────── */
+
+const BRANDS = [
+  "Acme Corp", "ScaleUp AI", "GrowthLabs", "NordicTech",
+  "PipelineIQ", "OutboundOS",
+];
+const MARQUEE_ITEMS = [...BRANDS, ...BRANDS];
+
+const FEATURES = [
+  {
+    title: "AI Lead Qualification",
+    desc: "AI agents score every lead across intent, budget, authority, need, and timeline. Hot leads auto-route to human SDRs — no manual triage.",
+    stat: "94.2%",
+    label: "response rate on managed conversations",
+  },
+  {
+    title: "Campaign Orchestration",
+    desc: "Schedule multi-step sequences with delays, retries, and conditional branching. AI personalizes every email at send time and pauses on reply.",
+    stat: "3,241",
+    label: "meetings booked by AI agents monthly",
+  },
+  {
+    title: "Real-Time Monitoring",
+    desc: "Live dashboard: active conversations, response rate, qualified leads, booked meetings, campaign analytics. All streaming via SSE in real time.",
+    stat: "12,847",
+    label: "AI-qualified leads processed monthly",
+  },
 ];
 
-const useCases = [
-  { title: "Inbound Lead Response", desc: "AI SDR responds to inbound inquiries within minutes. Qualifies, answers questions, and books meetings — 24/7." },
-  { title: "Cold Outbound at Scale", desc: "Launch personalized cold email campaigns to hundreds of leads. AI writes each email, handles replies, and tracks results." },
-  { title: "Re-engagement Campaigns", desc: "Win back cold leads with AI-crafted re-engagement sequences. New features, case studies, check-ins — on autopilot." },
-  { title: "Meeting Booking", desc: "AI handles the back-and-forth of scheduling. Finds mutual availability, sends calendar invites, and confirms." },
+const TESTIMONIALS = [
+  {
+    quote:
+      "We replaced 3 SDRs with one AI agent. Our reply rate went from 12% to 38%. The ROI was visible in week one.",
+    initials: "SC",
+    name: "Sarah Chen",
+    role: "Head of Growth, ScaleUp AI",
+  },
+  {
+    quote:
+      "SalesAgent handles our entire inbound funnel. Leads get a response within 2 minutes, 24/7. Our meeting book rate tripled.",
+    initials: "MK",
+    name: "Marcus Kline",
+    role: "VP Sales, NordicTech",
+  },
+  {
+    quote:
+      "The multi-channel orchestration is what sold us. Email today, SMS tomorrow — all coordinated by one AI brain. Game changer.",
+    initials: "EL",
+    name: "Elena Rossi",
+    role: "CRO, PipelineIQ",
+  },
 ];
 
-const audiences = [
-  { label: "SaaS Startups", icon: "🚀" }, { label: "SDR Teams", icon: "📞" },
-  { label: "Agencies", icon: "🏢" }, { label: "Founders", icon: "💡" },
-  { label: "RevOps", icon: "📈" }, { label: "Outbound", icon: "📨" },
-];
+const FOOTER_LINKS = {
+  Product: ["Features", "Pricing", "Integrations", "Changelog", "Roadmap"],
+  Company: ["About", "Blog", "Careers", "Press"],
+  Resources: ["Documentation", "Community", "Support", "Status"],
+};
+
+/* ── Video URLs ───────────────────────────────────────────────────────────── */
+
+const HERO_VIDEO =
+  "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260309_042944_4a2205b7-b061-490a-852b-92d9e9955ce9.mp4";
+const FEATURES_HLS =
+  "https://stream.mux.com/Jwr2RhmsNrd6GEspBNgm02vJsRZAGlaoQIh4AucGdASw.m3u8";
+const CHESS_HLS =
+  "https://stream.mux.com/1CCfG6mPC7LbMOAs6iBOfPeNd3WaKlZuHuKHp00G62j8.m3u8";
+const REVERSE_CHESS_HLS =
+  "https://stream.mux.com/f0001qPDy00mvqP023lqK3lWx31uHvxirFCHK1yNLczzqxY.m3u8";
+const NUMBERS_HLS =
+  "https://stream.mux.com/Kec29dVyJgiPdtWaQtPuEiiGHkJIYQAVUJcNiIHUYeo.m3u8";
+const CTA_HLS =
+  "https://stream.mux.com/tLkHO1qZoaaQOUeVWo8hEBeGQfySP02EPS02BmnNFyXys.m3u8";
+
+/* ── Reusable Components ──────────────────────────────────────────────────── */
+
+function AnnouncementBadge({ text, link }: { text: string; link?: string }) {
+  return (
+    <div className="liquid-glass inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm">
+      <span className="text-lp-foreground font-medium">{text}</span>
+      {link && (
+        <span className="inline-flex items-center gap-1 text-lp-primary font-semibold">
+          {link}
+          <ChevronRight className="size-3.5" />
+        </span>
+      )}
+    </div>
+  );
+}
+
+function FeatureCard({
+  title,
+  desc,
+  stat,
+  label,
+}: {
+  title: string;
+  desc: string;
+  stat: string;
+  label: string;
+}) {
+  return (
+    <div className="liquid-glass rounded-3xl p-8 flex flex-col justify-between hover:bg-white/[0.03] transition-colors duration-300">
+      <div>
+        <h3 className="text-lp-hero-heading text-xl font-semibold mb-3">{title}</h3>
+        <p className="text-lp-hero-sub text-sm leading-relaxed">{desc}</p>
+      </div>
+      <div className="mt-8 pt-6 border-t border-lp-border/50">
+        <p className="text-lp-hero-heading text-3xl font-semibold tracking-tight">{stat}</p>
+        <p className="text-lp-muted-foreground text-sm mt-1">{label}</p>
+      </div>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   PAGE
+   ═══════════════════════════════════════════════════════════════════════════ */
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-bg text-text">
-      {/* Glass navbar */}
-      <header className="sticky top-0 z-50 border-b border-border bg-glass-bg backdrop-blur-xl">
-        <div className="max-w-6xl mx-auto flex items-center justify-between px-6 h-14">
-          <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="size-8 rounded-xl bg-accent flex items-center justify-center text-white text-sm font-bold shadow-sm shadow-accent/20">S</div>
-            <span className="font-bold text-lg tracking-tight">SalesAgent</span>
-          </Link>
-          <div className="flex items-center gap-3">
-            <Link href="/login" className="text-sm font-medium text-text-secondary hover:text-text transition-colors px-3 py-2">Sign in</Link>
-            <Link href="/register" className="rounded-xl bg-accent text-white text-sm font-semibold px-4 py-2 hover:bg-accent-hover transition-all duration-200 shadow-sm shadow-accent/20 active:scale-[0.98]">Get started</Link>
-            <DemoLoginButton variant="nav" />
+    <div
+      className="bg-lp-background text-lp-foreground antialiased"
+      style={{ fontFamily: "'Geist Sans', 'Inter', system-ui, sans-serif" }}
+    >
+      {/* Force dark for landing */}
+      <script
+        dangerouslySetInnerHTML={{
+          __html: `document.documentElement.classList.add('dark');`,
+        }}
+      />
+
+      {/* ════════════════════════════════════════════════════════════════════════
+          SECTION 1: HERO
+          ════════════════════════════════════════════════════════════════════ */}
+
+      <section className="relative min-h-screen flex flex-col overflow-hidden">
+        <video
+          className="absolute inset-0 w-full h-full object-cover"
+          autoPlay loop muted playsInline
+        >
+          <source src={HERO_VIDEO} type="video/mp4" />
+        </video>
+
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background:
+              "linear-gradient(to bottom, transparent 0%, transparent 30%, hsl(260 87% 3% / 0.1) 45%, hsl(260 87% 3% / 0.4) 60%, hsl(260 87% 3% / 0.75) 75%, hsl(260 87% 3%) 95%)",
+          }}
+        />
+
+        {/* Navbar */}
+        <header className="relative z-20 flex justify-center pt-6 px-4">
+          <nav className="liquid-glass rounded-3xl w-full max-w-[850px] flex items-center justify-between px-5 py-3">
+            <div className="flex items-center gap-2.5">
+              <div className="w-7 h-7 rounded-lg bg-gradient-to-b from-lp-secondary to-lp-muted flex items-center justify-center">
+                <CrosshairIcon className="size-4 text-lp-primary" />
+              </div>
+              <span className="text-xl font-semibold text-lp-foreground">
+                SalesAgent
+              </span>
+            </div>
+
+            <div className="hidden md:flex items-center gap-1">
+              <button className="text-sm text-lp-hero-sub hover:text-lp-foreground px-3 py-2 rounded-lg transition-colors inline-flex items-center gap-0.5">
+                Features
+                <ChevronRight className="size-3 rotate-90 text-lp-muted-foreground" />
+              </button>
+              <button className="text-sm text-lp-hero-sub hover:text-lp-foreground px-3 py-2 rounded-lg transition-colors">
+                Solutions
+              </button>
+              <button className="text-sm text-lp-hero-sub hover:text-lp-foreground px-3 py-2 rounded-lg transition-colors">
+                Plans
+              </button>
+              <button className="text-sm text-lp-hero-sub hover:text-lp-foreground px-3 py-2 rounded-lg transition-colors inline-flex items-center gap-0.5">
+                Docs
+                <ChevronRight className="size-3 rotate-90 text-lp-muted-foreground" />
+              </button>
+            </div>
+
+            <a
+              href="/register"
+              className="inline-flex items-center rounded-full bg-lp-primary text-lp-primary-foreground px-5 py-2 text-sm font-semibold hover:bg-lp-primary/90 transition-colors"
+            >
+              Sign Up
+            </a>
+          </nav>
+        </header>
+
+        {/* Hero Content */}
+        <div className="relative z-10 flex-1 flex flex-col items-center justify-center text-center px-4 pb-32 pt-32">
+          <AnnouncementBadge text="AI SDR v2 Launched!" link="Explore" />
+
+          <h1 className="text-lp-hero-heading text-4xl sm:text-6xl lg:text-7xl font-semibold leading-[1.05] tracking-tight max-w-5xl mt-6">
+            AI sales agents that
+            <br />
+            qualify, follow up, and
+            <br />
+            book meetings automatically
+          </h1>
+
+          <p className="text-lp-hero-sub text-lg max-w-md mt-4 opacity-80">
+            AI SDRs handle inbound leads, run outbound campaigns, and schedule
+            meetings — while your team focuses on closing.
+          </p>
+
+          <div className="flex items-center gap-4 mt-8">
+            <a
+              href="/register"
+              className="inline-flex items-center rounded-full bg-lp-primary text-lp-primary-foreground px-6 py-3 text-base font-medium hover:bg-lp-primary/90 transition-colors"
+            >
+              Start Free Right Now
+            </a>
+            <a
+              href="/api/demo-login"
+              className="liquid-glass inline-flex items-center rounded-full px-6 py-3 text-base font-normal text-lp-foreground hover:bg-white/5 transition-colors"
+            >
+              Try Live Demo →
+            </a>
           </div>
         </div>
-      </header>
 
-      {/* Hero */}
-      <section className="max-w-3xl mx-auto px-6 pt-28 pb-16 text-center">
-        <div className="inline-flex items-center gap-2 rounded-full bg-accent-soft border border-accent/10 px-4 py-1.5 text-sm font-medium text-accent mb-8">
-          <span className="relative flex size-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-50" />
-            <span className="relative inline-flex rounded-full size-2 bg-accent" />
-          </span>
-          AI SDR Infrastructure
-        </div>
-        <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight leading-[1.05]">
-          AI sales agents that{" "}
-          <span className="bg-gradient-to-r from-accent to-accent-hover bg-clip-text text-transparent [background-clip:text] [-webkit-background-clip:text]">
-            qualify, follow up, and book meetings
-          </span>{" "}
-          automatically.
-        </h1>
-        <p className="mt-8 text-xl text-text-secondary max-w-xl mx-auto leading-relaxed">
-          AI SDRs handle inbound leads, run outbound campaigns, and schedule meetings — while your team focuses on closing.
-        </p>
-        <div className="mt-10 flex items-center justify-center gap-4">
-          <DemoLoginButton />
-          <Link href="/register" className="rounded-xl bg-accent text-white font-semibold px-7 py-3.5 text-base hover:bg-accent-hover transition-all duration-200 shadow-md shadow-accent/20 active:scale-[0.98]">
-            Start your AI SDR
-          </Link>
-          <Link href="/login" className="rounded-xl border border-border bg-bg-card text-text font-semibold px-7 py-3.5 text-base hover:bg-bg-subtle transition-all duration-200">
-            Sign in
-          </Link>
-        </div>
-        <p className="mt-6 text-sm text-text-muted">Free to start. No credit card required.</p>
-      </section>
-
-      {/* Built for */}
-      <section className="max-w-3xl mx-auto px-6 pb-28">
-        <p className="text-xs font-semibold text-text-muted uppercase tracking-[0.2em] text-center mb-7">Built for</p>
-        <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
-          {audiences.map((a) => (
-            <div key={a.label} className="glass-card p-4 text-center group cursor-default hover:border-accent/30 transition-all duration-200">
-              <div className="text-xl mb-2 group-hover:scale-110 transition-transform duration-200">{a.icon}</div>
-              <p className="text-xs font-semibold text-text-secondary tracking-tight">{a.label}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Trusted by */}
-      <section className="max-w-4xl mx-auto px-6 pb-24">
-        <p className="text-xs font-semibold text-text-muted uppercase tracking-[0.2em] text-center mb-7">Trusted by modern GTM teams</p>
-        <div className="flex flex-wrap items-center justify-center gap-x-10 gap-y-4 opacity-40">
-          {["Acme Corp", "ScaleUp AI", "SaaS Founders", "GrowthLabs", "NordicTech", "PipelineIQ", "OutboundOS", "RevOps Co"].map((name) => (
-            <span key={name} className="text-sm font-bold text-text-secondary tracking-tight">{name}</span>
-          ))}
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 mt-12">
-          {[
-            { stat: "12,847", label: "AI-qualified leads this month", icon: "target" },
-            { stat: "3,241", label: "Meetings booked by AI agents", icon: "calendar" },
-            { stat: "94.2%", label: "Response rate on managed conversations", icon: "zap" },
-          ].map((s) => (
-            <div key={s.label} className="glass-card p-5 text-center">
-              <div className="size-10 rounded-xl bg-accent-soft flex items-center justify-center mx-auto mb-3">
-                <div className="size-4 rounded-sm bg-accent/20" />
+        {/* Social Proof Bar */}
+        <div className="relative z-10 w-full pb-10 px-4">
+          <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-start sm:items-center gap-6">
+            <p className="text-lp-hero-sub/50 text-sm leading-snug shrink-0">
+              Trusted by modern
+              <br />
+              GTM teams worldwide
+            </p>
+            <div className="flex-1 overflow-hidden relative">
+              <div className="absolute left-0 top-0 bottom-0 w-12 bg-gradient-to-r from-lp-background to-transparent z-10 pointer-events-none" />
+              <div className="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-lp-background to-transparent z-10 pointer-events-none" />
+              <div className="flex animate-marquee gap-8">
+                {MARQUEE_ITEMS.map((name, i) => (
+                  <div key={`${name}-${i}`} className="flex items-center gap-2.5 shrink-0">
+                    <div className="liquid-glass w-6 h-6 rounded-lg flex items-center justify-center text-xs font-semibold text-lp-hero-sub">
+                      {name[0]}
+                    </div>
+                    <span className="text-sm font-medium text-lp-hero-sub/60">{name}</span>
+                  </div>
+                ))}
               </div>
-              <p className="text-2xl font-bold text-text tracking-tight">{s.stat}</p>
-              <p className="text-xs text-text-muted mt-1">{s.label}</p>
             </div>
-          ))}
-        </div>
-        <div className="mt-8 text-center">
-          <blockquote className="glass-card inline-block max-w-lg p-5 text-sm text-text-secondary italic">
-            "We replaced 3 SDRs with one AI agent. Our reply rate went from 12% to 38%. The ROI was visible in week one."
-            <footer className="mt-2 text-xs text-text-muted not-italic font-medium">— Sarah Chen, Head of Growth at ScaleUp AI</footer>
-          </blockquote>
+          </div>
         </div>
       </section>
 
-      {/* Features */}
-      <section className="max-w-6xl mx-auto px-6 pb-32">
-        <p className="text-xs font-semibold text-text-muted uppercase tracking-[0.2em] text-center mb-5">Capabilities</p>
-        <h2 className="text-3xl sm:text-4xl font-bold text-center mb-5 tracking-tight">Everything your SDR team needs, automated</h2>
-        <p className="text-base text-text-secondary text-center mb-16 max-w-xl mx-auto leading-relaxed">
-          AI agents that work 24/7 — qualifying leads, sending follow-ups, and booking meetings while your team sleeps.
-        </p>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {features.map((f, i) => (
-            <div key={f.title} className="glass-card p-7 group hover:border-accent/40 transition-all duration-300" style={{ animationDelay: `${i * 60}ms` }}>
-              <div className="size-12 rounded-2xl bg-accent-soft flex items-center justify-center text-xl mb-5 group-hover:scale-110 transition-transform duration-300">{f.icon}</div>
-              <h3 className="font-semibold text-text mb-2.5 text-base">{f.title}</h3>
-              <p className="text-sm text-text-secondary leading-relaxed">{f.desc}</p>
+      {/* ════════════════════════════════════════════════════════════════════════
+          SECTION 2: FEATURES (3-Card Grid + HLS Background)
+          ════════════════════════════════════════════════════════════════════ */}
+
+      <section id="features" className="relative py-28">
+        <HlsBackground
+          src={FEATURES_HLS}
+          overlayClass="bg-gradient-to-b from-lp-background via-lp-background/80 to-transparent"
+        >
+          <div className="absolute inset-0 pointer-events-none z-10 bg-gradient-to-t from-lp-background via-lp-background/80 to-transparent" />
+          <div className="absolute inset-0 bg-lp-background/40 z-0" />
+
+          <div className="relative z-10 max-w-6xl mx-auto px-6">
+            <div className="text-center mb-16">
+              <div className="liquid-glass inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm mb-6">
+                <span className="text-lp-foreground/70">Core Platform</span>
+                <ChevronRight className="size-3 text-lp-muted-foreground" />
+                <span className="text-lp-primary">Capabilities</span>
+              </div>
+              <h2 className="text-lp-hero-heading text-3xl sm:text-5xl font-semibold leading-[1.1] max-w-3xl mx-auto">
+                Built for Teams That Ship Relentlessly
+              </h2>
+              <p className="text-lp-hero-sub text-base mt-4 max-w-xl mx-auto">
+                Three pillars that keep your revenue engine humming — AI agents
+                working 24/7 while your team sleeps.
+              </p>
             </div>
-          ))}
+
+            <div className="grid md:grid-cols-3 gap-6">
+              {FEATURES.map((f) => (
+                <FeatureCard key={f.title} {...f} />
+              ))}
+            </div>
+          </div>
+        </HlsBackground>
+      </section>
+
+      {/* ════════════════════════════════════════════════════════════════════════
+          SECTION 3: CHESS (Video Left, Content Right)
+          ════════════════════════════════════════════════════════════════════ */}
+
+      <section className="py-32 px-4">
+        <div className="max-w-6xl mx-auto grid lg:grid-cols-2 gap-20 items-center">
+          <div className="liquid-glass rounded-3xl aspect-[4/3] overflow-hidden order-1">
+            <HlsBackground src={CHESS_HLS}>
+              <div className="aspect-[4/3]" />
+            </HlsBackground>
+          </div>
+
+          <div className="order-2">
+            <div className="liquid-glass inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-sm mb-6">
+              <span className="text-lp-foreground/70">Smart Routing</span>
+              <span className="text-lp-primary text-xs font-semibold bg-lp-primary/10 px-2 py-0.5 rounded-full">
+                New
+              </span>
+            </div>
+            <h2 className="text-lp-hero-heading text-3xl sm:text-4xl font-semibold leading-[1.1] mb-6">
+              Every Lead Finds Its Perfect Path
+            </h2>
+            <p className="text-lp-hero-sub text-base leading-relaxed mb-8">
+              AI-powered lead scoring meets adaptive routing. Each prospect is
+              matched to the rep, sequence, and cadence most likely to convert —
+              in real time.
+            </p>
+            <ul className="space-y-4 mb-8">
+              {[
+                "AI-scored lead qualification (BANT framework)",
+                "Dynamic SDR rep assignment",
+                "Multi-touch attribution across channels",
+              ].map((item) => (
+                <li key={item} className="flex items-center gap-3 text-lp-hero-sub">
+                  <span className="w-1.5 h-1.5 rounded-full bg-lp-primary shrink-0" />
+                  {item}
+                </li>
+              ))}
+            </ul>
+            <div className="flex items-center gap-4">
+              <a
+                href="/register"
+                className="inline-flex items-center rounded-full bg-lp-primary text-lp-primary-foreground px-6 py-3 text-base font-medium hover:bg-lp-primary/90 transition-colors"
+              >
+                See It in Action
+              </a>
+              <a
+                href="/docs"
+                className="liquid-glass inline-flex items-center rounded-full px-6 py-3 text-base font-normal text-lp-foreground hover:bg-white/5 transition-colors"
+              >
+                Read the Docs
+              </a>
+            </div>
+          </div>
         </div>
       </section>
 
-      {/* Use Cases */}
-      <section className="bg-bg-subtle/80 border-y border-border py-28">
-        <div className="max-w-4xl mx-auto px-6">
-          <p className="text-xs font-semibold text-text-muted uppercase tracking-[0.2em] text-center mb-5">Use Cases</p>
-          <h2 className="text-3xl sm:text-4xl font-bold text-center mb-5 tracking-tight">How teams use SalesAgent</h2>
-          <p className="text-base text-text-secondary text-center mb-16 max-w-xl mx-auto leading-relaxed">
-            Real SDR workflows that replace manual outreach with AI-powered conversations.
-          </p>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            {useCases.map((item) => (
-              <div key={item.title} className="glass-card p-7 hover:border-accent/30 transition-all duration-300">
-                <h3 className="font-semibold text-text mb-2.5 text-base">{item.title}</h3>
-                <p className="text-sm text-text-secondary leading-relaxed">{item.desc}</p>
+      {/* ════════════════════════════════════════════════════════════════════════
+          SECTION 4: REVERSE CHESS (Content Left, Video Right)
+          ════════════════════════════════════════════════════════════════════ */}
+
+      <section className="py-32 px-4">
+        <div className="max-w-6xl mx-auto grid lg:grid-cols-2 gap-20 items-center">
+          <div className="order-2 lg:order-1">
+            <div className="liquid-glass inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-sm mb-6">
+              <span className="text-lp-foreground/70">Campaign Builder</span>
+              <span className="text-lp-primary text-xs font-semibold bg-lp-primary/10 px-2 py-0.5 rounded-full">
+                Beta
+              </span>
+            </div>
+            <h2 className="text-lp-hero-heading text-3xl sm:text-4xl font-semibold leading-[1.1] mb-6">
+              Design Campaigns That Actually Close
+            </h2>
+            <p className="text-lp-hero-sub text-base leading-relaxed mb-8">
+              Visual campaign builder with live conversion metrics at every
+              stage. Drag-and-drop sequences, A/B test messaging, and see
+              exactly where deals advance or stall.
+            </p>
+
+            <div className="grid grid-cols-2 gap-4 mb-8">
+              {[
+                { value: "38%", label: "reply rate (vs 12% industry avg)" },
+                { value: "2 min", label: "avg. AI response time" },
+                { value: "3.2x", label: "meeting book rate increase" },
+                { value: "24/7", label: "always-on lead engagement" },
+              ].map((s) => (
+                <div key={s.label} className="liquid-glass rounded-2xl p-4 text-center">
+                  <p className="text-lp-hero-heading text-2xl font-semibold tracking-tight">
+                    {s.value}
+                  </p>
+                  <p className="text-lp-muted-foreground text-xs mt-1">{s.label}</p>
+                </div>
+              ))}
+            </div>
+
+            <a
+              href="/register"
+              className="inline-flex items-center rounded-full bg-lp-primary text-lp-primary-foreground px-6 py-3 text-base font-medium hover:bg-lp-primary/90 transition-colors"
+            >
+              Try Campaign Builder
+            </a>
+          </div>
+
+          <div className="liquid-glass rounded-3xl aspect-[4/3] overflow-hidden order-1 lg:order-2">
+            <HlsBackground src={REVERSE_CHESS_HLS}>
+              <div className="aspect-[4/3]" />
+            </HlsBackground>
+          </div>
+        </div>
+      </section>
+
+      {/* ════════════════════════════════════════════════════════════════════════
+          SECTION 5: NUMBERS (Full-Width HLS Background)
+          ════════════════════════════════════════════════════════════════════ */}
+
+      <section className="relative py-32">
+        <HlsBackground
+          src={NUMBERS_HLS}
+          overlayClass="bg-gradient-to-t from-lp-background via-lp-background/[0.85] to-lp-background/[0.15]"
+        >
+          <div className="relative z-10 max-w-5xl mx-auto px-6 text-center">
+            <div className="mb-24">
+              <p className="text-7xl sm:text-[8rem] lg:text-[10rem] font-semibold tracking-tighter text-lp-hero-heading leading-none">
+                50K+
+              </p>
+              <p className="text-lp-hero-sub text-xl mt-4">
+                AI-qualified conversations handled across 2,400+ teams
+              </p>
+              <p className="text-lp-muted-foreground text-sm mt-2 max-w-md mx-auto">
+                Aggregate platform metrics — Q1–Q4 2025. SalesAgent processes
+                thousands of AI-driven interactions daily.
+              </p>
+            </div>
+
+            <div className="liquid-glass rounded-3xl p-12 grid md:grid-cols-2 max-w-3xl mx-auto">
+              <div className="text-center md:border-r border-lp-border/50 md:pr-12">
+                <p className="text-5xl sm:text-6xl font-semibold text-lp-hero-heading tracking-tight">
+                  12,847
+                </p>
+                <p className="text-lp-hero-sub text-sm mt-2">
+                  AI-qualified leads this month
+                </p>
+              </div>
+              <div className="text-center md:pl-12 mt-8 md:mt-0">
+                <p className="text-5xl sm:text-6xl font-semibold text-lp-hero-heading tracking-tight">
+                  99.97%
+                </p>
+                <p className="text-lp-hero-sub text-sm mt-2">Platform uptime</p>
+              </div>
+            </div>
+          </div>
+        </HlsBackground>
+      </section>
+
+      {/* ════════════════════════════════════════════════════════════════════════
+          SECTION 6: TESTIMONIALS
+          ════════════════════════════════════════════════════════════════════ */}
+
+      <section className="py-32 px-4">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-20">
+            <h2 className="text-lp-hero-heading text-3xl sm:text-5xl font-semibold leading-[1.1]">
+              Trusted by Revenue
+              <br />
+              Leaders Everywhere
+            </h2>
+            <p className="text-lp-hero-sub text-base mt-4">
+              Hear from the teams that made the switch to AI SDRs.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-6 items-start">
+            {TESTIMONIALS.map((t, i) => (
+              <div
+                key={t.name}
+                className={`liquid-glass rounded-3xl p-8 ${i === 1 ? "md:-translate-y-6" : ""}`}
+              >
+                <blockquote className="text-lp-hero-sub text-sm leading-relaxed">
+                  &ldquo;{t.quote}&rdquo;
+                </blockquote>
+                <div className="mt-6 pt-5 border-t border-lp-border/50 flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-lp-secondary flex items-center justify-center text-sm font-semibold text-lp-hero-sub">
+                    {t.initials}
+                  </div>
+                  <div>
+                    <p className="text-lp-foreground text-sm font-medium">{t.name}</p>
+                    <p className="text-lp-muted-foreground text-xs">{t.role}</p>
+                  </div>
+                </div>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Architecture */}
-      <section className="max-w-5xl mx-auto px-6 py-28">
-        <p className="text-xs font-semibold text-text-muted uppercase tracking-[0.2em] text-center mb-5">Architecture</p>
-        <h2 className="text-3xl sm:text-4xl font-bold text-center mb-5 tracking-tight">Built like a production SaaS</h2>
-        <p className="text-base text-text-secondary text-center mb-3 max-w-xl mx-auto leading-relaxed">
-          AI SDR agents powered by async queues, real-time inbox, and production-grade infrastructure. Not a demo — designed for real outbound operations.
-        </p>
-        <p className="text-sm text-text-muted text-center mb-14 italic">Designed to reflect real production operational systems</p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-          {[
-            { label: "Async Queue Orchestration", desc: "BullMQ + Redis for email sequences, delays, retries, and failure recovery." },
-            { label: "Real-time Inbox", desc: "SSE streaming for live conversation updates and AI draft suggestions." },
-            { label: "Multi-tenant RBAC", desc: "4 roles, 10 permissions. Isolated orgs with scoped data and team collaboration." },
-            { label: "Distributed Workers", desc: "Railway workers for AI response composition, campaign delivery, and lead scoring." },
-            { label: "AI Pipeline", desc: "DeepSeek-powered response composition, lead scoring, summarization, and script generation." },
-            { label: "PostgreSQL + Prisma", desc: "Type-safe queries, schema migrations, and connection pooling via Supabase." },
-          ].map((item) => (
-            <div key={item.label} className="glass-card p-6 text-left hover:border-accent/20 transition-all duration-200">
-              <p className="text-base font-semibold text-text mb-2">{item.label}</p>
-              <p className="text-sm text-text-secondary leading-relaxed">{item.desc}</p>
+      {/* ════════════════════════════════════════════════════════════════════════
+          SECTION 7: CTA + FOOTER (Shared HLS Background)
+          ════════════════════════════════════════════════════════════════════ */}
+
+      <section className="relative">
+        <HlsBackground
+          src={CTA_HLS}
+          overlayClass="bg-gradient-to-b from-lp-background via-lp-background/[0.85] to-lp-background/[0.15]"
+        >
+          {/* CTA */}
+          <div className="relative z-10 flex justify-center px-4 pt-32 pb-20">
+            <div className="liquid-glass rounded-[2rem] p-12 sm:p-20 text-center max-w-2xl w-full">
+              <h2 className="text-lp-hero-heading text-3xl sm:text-5xl font-semibold leading-[1.1]">
+                Ready to Deploy Your AI SDR?
+              </h2>
+              <p className="text-lp-hero-sub text-base mt-4 max-w-md mx-auto">
+                Set up your first AI sales agent in minutes. Qualify leads, run
+                campaigns, and book meetings — automatically. No credit card
+                required.
+              </p>
+              <div className="flex items-center justify-center gap-4 mt-8">
+                <a
+                  href="/register"
+                  className="inline-flex items-center rounded-full bg-lp-primary text-lp-primary-foreground px-6 py-3 text-base font-medium hover:bg-lp-primary/90 transition-colors"
+                >
+                  Start Free Today
+                </a>
+                <a
+                  href="/api/demo-login"
+                  className="liquid-glass inline-flex items-center rounded-full px-6 py-3 text-base font-normal text-lp-foreground hover:bg-white/5 transition-colors"
+                >
+                  Try Live Demo →
+                </a>
+              </div>
             </div>
-          ))}
-        </div>
-      </section>
-
-      {/* CTA */}
-      <section className="max-w-2xl mx-auto px-6 pb-32 text-center">
-        <h2 className="text-3xl sm:text-4xl font-bold tracking-tight mb-5">Ready to deploy your AI SDR?</h2>
-        <p className="text-base text-text-secondary mb-10 max-w-md mx-auto leading-relaxed">
-          Set up your first AI sales agent in minutes. Qualify leads, run campaigns, and book meetings — automatically.
-        </p>
-        <Link href="/register" className="inline-flex rounded-xl bg-accent text-white font-semibold px-8 py-4 hover:bg-accent-hover transition-all duration-200 shadow-md shadow-accent/20 active:scale-[0.98] text-base">
-          Start your AI SDR
-        </Link>
-        <p className="mt-6 text-sm text-text-muted">Free to start. Upgrade when you need more agents.</p>
-      </section>
-
-      {/* Footer */}
-      <footer className="border-t border-border py-8">
-        <div className="max-w-6xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-text-muted">
-          <span>&copy; 2026 SalesAgent AI. All rights reserved.</span>
-          <div className="flex items-center gap-6">
-            <Link href="/docs" className="hover:text-text-secondary transition-colors">API Docs</Link>
-            <Link href="/login" className="hover:text-text-secondary transition-colors">Sign in</Link>
           </div>
-        </div>
-      </footer>
+
+          {/* Footer */}
+          <footer className="relative z-10 border-t border-lp-border/30 pt-16 pb-8 px-4">
+            <div className="max-w-6xl mx-auto">
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-8 mb-16">
+                <div className="col-span-2">
+                  <div className="flex items-center gap-2.5 mb-3">
+                    <div className="w-7 h-7 rounded-lg bg-gradient-to-b from-lp-secondary to-lp-muted flex items-center justify-center">
+                      <CrosshairIcon className="size-4 text-lp-primary" />
+                    </div>
+                    <span className="text-xl font-semibold text-lp-foreground">
+                      SalesAgent
+                    </span>
+                  </div>
+                  <p className="text-lp-muted-foreground text-sm max-w-xs">
+                    AI SDR platform — qualify leads, automate follow-ups, and
+                    book meetings. Built for modern GTM teams.
+                  </p>
+                </div>
+
+                {Object.entries(FOOTER_LINKS).map(([category, links]) => (
+                  <div key={category}>
+                    <p className="text-lp-foreground text-sm font-medium mb-3">
+                      {category}
+                    </p>
+                    <ul className="space-y-2">
+                      {links.map((link) => (
+                        <li key={link}>
+                          <a
+                            href="#"
+                            className="text-lp-muted-foreground text-sm hover:text-lp-foreground transition-colors"
+                          >
+                            {link}
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+
+              <div className="border-t border-lp-border/30 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-lp-muted-foreground">
+                <span>&copy; 2026 SalesAgent AI. All rights reserved.</span>
+                <div className="flex items-center gap-6">
+                  <a href="#" className="hover:text-lp-foreground transition-colors">
+                    Privacy
+                  </a>
+                  <a href="#" className="hover:text-lp-foreground transition-colors">
+                    Terms
+                  </a>
+                  <a href="#" className="hover:text-lp-foreground transition-colors">
+                    Cookies
+                  </a>
+                </div>
+              </div>
+            </div>
+          </footer>
+        </HlsBackground>
+      </section>
     </div>
   );
 }

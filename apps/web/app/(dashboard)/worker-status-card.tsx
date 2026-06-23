@@ -32,44 +32,44 @@ export function WorkerStatusCard({ orgSlug }: { orgSlug: string }) {
       <CardContent className="p-5">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <Activity className="size-4 text-zinc-400" />
-            <span className="text-sm font-medium text-zinc-700">Worker</span>
+            <Activity className="size-4 text-text-muted" />
+            <span className="text-sm font-medium text-text-secondary">Worker</span>
           </div>
-          <span className={cn("size-2 rounded-full", workerOk ? "bg-emerald-500" : "bg-zinc-300")} />
+          <span className={cn("size-2 rounded-full", workerOk ? "bg-accent" : "bg-bg-muted")} />
         </div>
         {data ? (
           <div className="space-y-1.5 text-xs">
             <div className="flex items-center justify-between">
-              <span className="text-zinc-500">Status</span>
-              <span className={cn("font-medium", workerOk ? "text-emerald-600" : "text-zinc-400")}>
+              <span className="text-text-muted">Status</span>
+              <span className={cn("font-medium", workerOk ? "text-accent" : "text-text-muted")}>
                 {data.worker.status}
               </span>
             </div>
             {data.worker.lastPoll && (
               <div className="flex items-center justify-between">
-                <span className="text-zinc-500">Last poll</span>
-                <span className="text-zinc-700 font-mono text-[11px]">
+                <span className="text-text-muted">Last poll</span>
+                <span className="text-text-secondary font-mono text-[11px]">
                   {new Date(data.worker.lastPoll).toLocaleTimeString()}
                 </span>
               </div>
             )}
             <div className="flex items-center justify-between">
-              <span className="text-zinc-500">Queue</span>
-              <span className="text-zinc-700">
+              <span className="text-text-muted">Queue</span>
+              <span className="text-text-secondary">
                 {data.queue.queued} queued, {data.queue.running} running
               </span>
             </div>
             {data.queue.dead_letter > 0 && (
               <div className="flex items-center justify-between">
-                <span className="text-red-500">Dead letter</span>
-                <span className="text-red-600 font-medium">{data.queue.dead_letter}</span>
+                <span className="text-danger">Dead letter</span>
+                <span className="text-danger font-medium">{data.queue.dead_letter}</span>
               </div>
             )}
           </div>
         ) : (
           <div className="space-y-2">
-            <div className="h-3 bg-zinc-100 rounded animate-pulse-soft w-3/4" />
-            <div className="h-3 bg-zinc-100 rounded animate-pulse-soft w-1/2" />
+            <div className="h-3 bg-bg-subtle rounded animate-pulse-soft w-3/4" />
+            <div className="h-3 bg-bg-subtle rounded animate-pulse-soft w-1/2" />
           </div>
         )}
       </CardContent>

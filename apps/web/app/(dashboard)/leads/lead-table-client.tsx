@@ -28,19 +28,19 @@ const STAGES = ["new", "contacted", "qualified", "proposal", "negotiation", "clo
 const PAGE_SIZE = 20;
 
 const STAGE_CONFIG: Record<string, { color: string; bg: string; dot: string }> = {
-  new:          { color: "text-slate-400", bg: "bg-slate-100 dark:bg-slate-800", dot: "bg-slate-400" },
-  contacted:    { color: "text-indigo-500", bg: "bg-indigo-50 dark:bg-indigo-900/30", dot: "bg-indigo-500" },
-  qualified:    { color: "text-blue-500", bg: "bg-blue-50 dark:bg-blue-900/30", dot: "bg-blue-500" },
-  proposal:     { color: "text-amber-500", bg: "bg-amber-50 dark:bg-amber-900/30", dot: "bg-amber-500" },
-  negotiation:  { color: "text-orange-500", bg: "bg-orange-50 dark:bg-orange-900/30", dot: "bg-orange-500" },
-  closed_won:   { color: "text-emerald-500", bg: "bg-emerald-50 dark:bg-emerald-900/30", dot: "bg-emerald-500" },
-  closed_lost:  { color: "text-red-400", bg: "bg-red-50 dark:bg-red-900/30", dot: "bg-red-400" },
+  new:          { color: "text-text-muted", bg: "bg-bg-subtle", dot: "bg-text-muted" },
+  contacted:    { color: "text-lp-hero-sub", bg: "bg-white/[0.04]", dot: "bg-lp-hero-sub" },
+  qualified:    { color: "text-lp-hero-sub", bg: "bg-white/[0.04]", dot: "bg-lp-hero-sub" },
+  proposal:     { color: "text-warning", bg: "bg-warning-soft", dot: "bg-warning" },
+  negotiation:  { color: "text-warning", bg: "bg-warning-soft", dot: "bg-warning" },
+  closed_won:   { color: "text-accent", bg: "bg-accent-soft", dot: "bg-accent" },
+  closed_lost:  { color: "text-danger", bg: "bg-danger-soft", dot: "bg-danger" },
 };
 
 const SCORE_CONFIG = {
-  hot:  { bg: "bg-emerald-100 dark:bg-emerald-900/30", text: "text-emerald-600 dark:text-emerald-400", bar: "bg-emerald-500", label: "Hot" },
-  warm: { bg: "bg-blue-100 dark:bg-blue-900/30", text: "text-blue-600 dark:text-blue-400", bar: "bg-blue-400", label: "Warm" },
-  cold: { bg: "bg-slate-100 dark:bg-slate-800", text: "text-slate-500 dark:text-slate-400", bar: "bg-slate-400", label: "Cold" },
+  hot:  { bg: "bg-accent-soft", text: "text-accent", bar: "bg-accent", label: "Hot" },
+  warm: { bg: "bg-warning-soft", text: "text-warning", bar: "bg-warning", label: "Warm" },
+  cold: { bg: "bg-bg-subtle", text: "text-text-muted", bar: "bg-bg-muted", label: "Cold" },
 };
 
 function scoreLabel(score: number): "hot" | "warm" | "cold" {
@@ -519,8 +519,8 @@ export function LeadTableClient({ initialLeads, initialTotal, orgSlug, canManage
 
       {/* ── Error ── */}
       {error && (
-        <div className="rounded-xl border border-red-200 bg-red-50 dark:bg-red-950/20 p-4 text-center mb-5">
-          <p className="text-sm text-red-600 dark:text-red-400 mb-2">{error instanceof Error ? error.message : "Failed to load leads"}</p>
+        <div className="rounded-xl border border-danger/30 bg-danger-soft p-4 text-center mb-5">
+          <p className="text-sm text-danger mb-2">{error instanceof Error ? error.message : "Failed to load leads"}</p>
           <Button variant="outline" size="sm" onClick={() => queryClient.invalidateQueries({ queryKey: ["leads", orgSlug] })}>Retry</Button>
         </div>
       )}

@@ -59,13 +59,13 @@ export function ApiKeysClient({ orgSlug, isOwner }: Props) {
     }
   }, [orgSlug, fetchKeys]);
 
-  if (loading) return <p className="text-zinc-500 dark:text-zinc-400">Loading...</p>;
+  if (loading) return <p className="text-text-muted">Loading...</p>;
 
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-lg font-semibold text-zinc-900 dark:text-white">API Keys</h2>
-        <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
+        <h2 className="text-lg font-semibold text-text">API Keys</h2>
+        <p className="text-sm text-text-muted mt-1">
           Use API keys to authenticate programmatic requests. Pass the key as a Bearer token in the Authorization header.
         </p>
       </div>
@@ -86,23 +86,23 @@ export function ApiKeysClient({ orgSlug, isOwner }: Props) {
       )}
 
       {keys.length === 0 ? (
-        <p className="text-sm text-zinc-400 dark:text-zinc-500">No API keys yet.</p>
+        <p className="text-sm text-text-muted">No API keys yet.</p>
       ) : (
         <div className="space-y-3">
           {keys.map((key) => (
-            <div key={key.id} className="rounded-lg border border-zinc-200 dark:border-zinc-800 p-4">
+            <div key={key.id} className="rounded-lg border border-lp-border/30 p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="font-medium text-zinc-900 dark:text-white text-sm">{key.name}</p>
+                  <p className="font-medium text-text text-sm">{key.name}</p>
                   <p className="text-xs text-zinc-400 font-mono mt-0.5">
                     {revealed[key.id] ? (
-                      <span className="text-green-600 dark:text-green-400">{revealed[key.id]}</span>
+                      <span className="text-accent">{revealed[key.id]}</span>
                     ) : (
                       <>{key.prefix}... (created {new Date(key.createdAt).toLocaleDateString()})</>
                     )}
                   </p>
                   {revealed[key.id] && (
-                    <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
+                    <p className="text-xs text-warning mt-1">
                       Copy this key now. It will not be shown again.
                     </p>
                   )}
@@ -116,8 +116,8 @@ export function ApiKeysClient({ orgSlug, isOwner }: Props) {
         </div>
       )}
 
-      <div className="rounded-lg bg-zinc-50 dark:bg-zinc-800/50 p-4 text-xs text-zinc-500 dark:text-zinc-400 space-y-1 font-mono">
-        <p className="font-semibold text-zinc-700 dark:text-zinc-300 mb-2">Usage example:</p>
+      <div className="rounded-lg bg-bg-subtle p-4 text-xs text-text-muted space-y-1 font-mono">
+        <p className="font-semibold text-text-secondary mb-2">Usage example:</p>
         <p>curl -H &quot;Authorization: Bearer of_xxxx&quot; \</p>
         <p>  https://yourapp.com/api/orgs/{orgSlug}/leads</p>
       </div>

@@ -47,13 +47,13 @@ export default async function AnalyticsPage() {
   }
 
   const stages = [
-    { key: "new", label: "New", color: "#849b70" },
-    { key: "contacted", label: "Contacted", color: "#475540" },
-    { key: "qualified", label: "Qualified", color: "#15803d" },
-    { key: "proposal", label: "Proposal", color: "#e8f0ea" },
-    { key: "negotiation", label: "Negotiation", color: "#166534" },
-    { key: "closed_won", label: "Won", color: "#166534" },
-    { key: "closed_lost", label: "Lost", color: "#B92D28" },
+    { key: "new", label: "New", color: "hsl(240, 5%, 35%)" },
+    { key: "contacted", label: "Contacted", color: "hsl(121, 20%, 25%)" },
+    { key: "qualified", label: "Qualified", color: "hsl(121, 50%, 38%)" },
+    { key: "proposal", label: "Proposal", color: "hsl(121, 75%, 48%)" },
+    { key: "negotiation", label: "Negotiation", color: "hsl(121, 85%, 52%)" },
+    { key: "closed_won", label: "Won", color: "hsl(121, 95%, 56%)" },
+    { key: "closed_lost", label: "Lost", color: "hsl(0, 70%, 50%)" },
   ];
   const maxStageCount = Math.max(1, ...stages.map((s) => stageMap[s.key] ?? 0));
 

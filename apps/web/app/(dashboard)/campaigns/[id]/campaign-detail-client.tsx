@@ -34,8 +34,8 @@ export function CampaignDetailClient({ campaign, orgSlug }: { campaign: Campaign
   const bookRate = replied > 0 ? Math.round((booked / replied) * 100) : 0;
 
   const statusBadge = (s: string) => ({
-    draft: "bg-bg-card text-text-muted", active: "bg-green-500/10 text-green-400 border-green-500/20",
-    paused: "bg-amber-500/10 text-amber-400 border-amber-500/20", completed: "bg-blue-500/10 text-blue-400 border-blue-500/20",
+    draft: "bg-bg-subtle text-text-muted", active: "bg-accent-soft text-accent border-accent/20",
+    paused: "bg-warning-soft text-warning border-warning/20", completed: "bg-bg-subtle text-text-secondary border-lp-border/20",
   }[s] || "");
 
   return (
@@ -77,9 +77,9 @@ export function CampaignDetailClient({ campaign, orgSlug }: { campaign: Campaign
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
           { icon: Send, label: "Emails Sent", val: total.toLocaleString(), sub: "total delivered", color: "text-accent", bg: "bg-accent-soft" },
-          { icon: MousePointerClick, label: "Open Rate", val: `${openRate}%`, sub: `${opened} of ${total}`, color: "text-blue-400", bg: "bg-blue-500/10" },
-          { icon: Reply, label: "Reply Rate", val: `${replyRate}%`, sub: `${replied} replies`, color: "text-green-400", bg: "bg-green-500/10" },
-          { icon: Calendar, label: "Meetings Booked", val: String(booked), sub: `${bookRate}% of replies`, color: "text-amber-400", bg: "bg-amber-500/10" },
+          { icon: MousePointerClick, label: "Open Rate", val: `${openRate}%`, sub: `${opened} of ${total}`, color: "text-lp-hero-sub", bg: "bg-white/[0.04]" },
+          { icon: Reply, label: "Reply Rate", val: `${replyRate}%`, sub: `${replied} replies`, color: "text-accent", bg: "bg-accent-soft" },
+          { icon: Calendar, label: "Meetings Booked", val: String(booked), sub: `${bookRate}% of replies`, color: "text-warning", bg: "bg-warning-soft" },
         ].map((m) => (
           <Card key={m.label} className="p-4 glass-card">
             <div className="flex items-center gap-3">
@@ -102,10 +102,10 @@ export function CampaignDetailClient({ campaign, orgSlug }: { campaign: Campaign
         <div className="space-y-3">
           {[
             { label: "Sent", count: total, color: "bg-accent", width: 100 },
-            { label: "Opened", count: opened, color: "bg-blue-400", width: openRate },
-            { label: "Clicked", count: clicked, color: "bg-indigo-400", width: clickRate },
-            { label: "Replied", count: replied, color: "bg-green-400", width: replyRate },
-            { label: "Booked", count: booked, color: "bg-amber-400", width: bookRate },
+            { label: "Opened", count: opened, color: "bg-lp-hero-sub/60", width: openRate },
+            { label: "Clicked", count: clicked, color: "bg-warning/60", width: clickRate },
+            { label: "Replied", count: replied, color: "bg-accent/60", width: replyRate },
+            { label: "Booked", count: booked, color: "bg-warning", width: bookRate },
           ].map((f) => (
             <div key={f.label} className="flex items-center gap-3">
               <span className="text-xs text-text-muted w-16 text-right">{f.label}</span>
@@ -154,7 +154,7 @@ export function CampaignDetailClient({ campaign, orgSlug }: { campaign: Campaign
                     <div>
                       <Badge className={cn("text-[10px]", {
                         queued: "bg-bg-subtle text-text-muted", running: "bg-accent-soft text-accent",
-                        completed: "bg-green-500/10 text-green-400", failed: "bg-red-500/10 text-red-400",
+                        completed: "bg-accent-soft text-accent", failed: "bg-danger-soft text-danger",
                       }[run.status])} variant="default">{run.status}</Badge>
                       <span className="text-xs text-text-muted ml-2">{run.recipientCount} recipients</span>
                     </div>

@@ -11,8 +11,8 @@ export function Card({ children, className, onClick, hoverable }: CardProps) {
   return (
     <div
       className={cn(
-        "rounded-xl border border-border bg-bg-card",
-        hoverable && "transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card-hover hover:border-accent/30",
+        "rounded-xl border border-lp-border/30 glass-card",
+        hoverable && "transition-all duration-200 hover:-translate-y-0.5 hover:shadow-glass-hover hover:border-accent/30",
         onClick && "cursor-pointer",
         className,
       )}
@@ -27,7 +27,7 @@ export function Card({ children, className, onClick, hoverable }: CardProps) {
 }
 
 export function CardHeader({ children, className }: CardProps) {
-  return <div className={cn("px-5 py-4 border-b border-border", className)}>{children}</div>;
+  return <div className={cn("px-5 py-4 border-b border-lp-border/30", className)}>{children}</div>;
 }
 
 export function CardContent({ children, className }: CardProps) {

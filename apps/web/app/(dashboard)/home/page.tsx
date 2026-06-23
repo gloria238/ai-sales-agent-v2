@@ -41,17 +41,17 @@ export default async function DashboardHomePage() {
   }
   const coldLeads = leadCount - hotLeads - warmLeads;
   const scoreDonut = [
-    { label: "Hot", value: hotLeads, color: "#166534" },
-    { label: "Warm", value: warmLeads, color: "#15803d" },
-    { label: "Cold", value: coldLeads, color: "#849b70" },
+    { label: "Hot", value: hotLeads, color: "hsl(121, 95%, 56%)" },
+    { label: "Warm", value: warmLeads, color: "hsl(121, 60%, 38%)" },
+    { label: "Cold", value: coldLeads, color: "hsl(240, 5%, 28%)" },
   ].filter(s => s.value > 0);
 
   const pipelineDonut = [
-    { label: "New", value: stageMap.new || 0, color: "#849b70" },
-    { label: "Contacted", value: stageMap.contacted || 0, color: "#475540" },
-    { label: "Qualified", value: stageMap.qualified || 0, color: "#15803d" },
-    { label: "Proposal", value: stageMap.proposal || 0, color: "#e8f0ea" },
-    { label: "Won", value: stageMap.closed_won || 0, color: "#166534" },
+    { label: "New", value: stageMap.new || 0, color: "hsl(240, 5%, 35%)" },
+    { label: "Contacted", value: stageMap.contacted || 0, color: "hsl(121, 20%, 25%)" },
+    { label: "Qualified", value: stageMap.qualified || 0, color: "hsl(121, 50%, 38%)" },
+    { label: "Proposal", value: stageMap.proposal || 0, color: "hsl(121, 75%, 48%)" },
+    { label: "Won", value: stageMap.closed_won || 0, color: "hsl(121, 95%, 56%)" },
   ].filter(s => s.value > 0);
 
   let totalSent = 0, totalOpened = 0, totalReplied = 0;
@@ -66,7 +66,7 @@ export default async function DashboardHomePage() {
         <div className="max-w-md w-full animate-fade-in">
           <OnboardingCard show={true} orgSlug={session.orgSlug} />
           <div className="mt-6 rounded-xl border border-border bg-bg-card p-8 text-center">
-            <div className="size-14 rounded-xl bg-gradient-to-br from-accent to-emerald-400 flex items-center justify-center mx-auto mb-5 shadow-lg shadow-accent/20">
+            <div className="size-14 rounded-xl bg-gradient-to-br from-accent to-accent/40 flex items-center justify-center mx-auto mb-5 shadow-lg shadow-accent/20">
               <Bot className="size-7 text-white" />
             </div>
             <h3 className="text-lg font-bold text-text mb-2">Deploy your AI sales team</h3>

@@ -49,7 +49,7 @@ export function EditDialog({ lead, orgSlug }: Props) {
         <div className="space-y-4">
           <Input label="Name" value={name} onChange={(e) => setName(e.target.value)} disabled={loading} />
           <Input label="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} disabled={loading} />
-          {error && <p className="text-sm text-red-500">{error}</p>}
+          {error && <p className="text-sm text-danger">{error}</p>}
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => setOpen(false)} disabled={loading}>Cancel</Button>
             <Button onClick={handleSave} disabled={loading || !name.trim()}>

@@ -46,7 +46,7 @@ export function NoteForm({ leadId, orgSlug }: Props) {
         onChange={(e) => setContent(e.target.value)}
         disabled={loading}
       />
-      {error && <p className="text-xs text-red-500">{error}</p>}
+      {error && <p className="text-xs text-danger">{error}</p>}
       <Button type="submit" disabled={loading || !content.trim()} size="sm">
         {loading ? "Saving..." : "Add Note"}
       </Button>
