@@ -18,8 +18,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "APEX — Revenue Acceleration Platform",
-  description: "Drive your funnel forward with clever workflows, analytics, and seamless lead management. AI-powered revenue acceleration for modern GTM teams.",
+  title: "SalesAgent — AI Sales Agents That Book Meetings",
+  description: "AI SDR agents that qualify leads, run outbound campaigns, and book meetings 24/7. Multi-channel inbox, campaign orchestration, and real-time monitoring.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
