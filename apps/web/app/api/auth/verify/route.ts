@@ -2,10 +2,19 @@ import { NextResponse } from "next/server";
 import { prisma } from "@salesagent/db";
 import { signToken } from "@/lib/auth";
 import { getRequestContext, logInfo, logWarn, logError } from "@/lib/logger";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 export async function GET(request: Request) {
   const ctx = getRequestContext(request);
   try {
+    // Defense-in-depth: rate limit verification attempts
+    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
+      || request.headers.get("x-real-ip")
+      || "127.0.0.1";
+    const { allowed } = await checkRateLimit(`auth-verify:${ip}`, 20);
+    if (!allowed) {
+      return NextResponse.json({ error: "Too many verification attempts. Try again later." }, { status: 429 });
+    }
     const { searchParams } = new URL(request.url);
     const token = searchParams.get("token");
 

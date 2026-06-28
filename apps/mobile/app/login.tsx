@@ -7,16 +7,47 @@ import {
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
+  ActivityIndicator,
 } from "react-native";
 import { router } from "expo-router";
 import { useSalesTheme } from "../hooks/use-theme";
+import { useDemoMode } from "../hooks/use-demo-mode";
 
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
   const theme = useSalesTheme();
+  const { apiBaseUrl, setMode } = useDemoMode();
+
+  const handleLogin = async () => {
+    setError("");
+    setLoading(true);
+    try {
+      const resp = await fetch(`${apiBaseUrl}/api/v1/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+        credentials: "include",
+      });
+      const data = await resp.json();
+      if (!resp.ok) {
+        setError(data.error || "Login failed");
+        return;
+      }
+      // Switch to live mode and navigate
+      setMode("live");
+      router.replace("/(tabs)");
+    } catch {
+      setError("Cannot connect to server. Enter demo mode instead.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleDemoLogin = () => {
+    setMode("demo");
     router.replace("/(tabs)");
   };
 
@@ -35,6 +66,9 @@ export default function LoginScreen() {
 
         {/* Login card */}
         <View style={[styles.card, { backgroundColor: theme.cardBg, borderColor: theme.borderColor }]}>
+          {error ? (
+            <Text style={[styles.errorText, { color: theme.dangerColor }]}>{error}</Text>
+          ) : null}
           <TextInput
             style={[styles.input, { color: theme.textColor, borderColor: theme.borderColor, backgroundColor: theme.bg }]}
             placeholder="Email"
@@ -53,9 +87,15 @@ export default function LoginScreen() {
             secureTextEntry
           />
           <TouchableOpacity
-            style={[styles.signInButton, { backgroundColor: "#166534" }]}
+            style={[styles.signInButton, { backgroundColor: loading ? "#849b70" : "#166534" }]}
+            onPress={handleLogin}
+            disabled={loading}
           >
-            <Text style={styles.signInButtonText}>Sign In</Text>
+            {loading ? (
+              <ActivityIndicator color="#FFF" size="small" />
+            ) : (
+              <Text style={styles.signInButtonText}>Sign In</Text>
+            )}
           </TouchableOpacity>
 
           {/* Divider */}
@@ -105,6 +145,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   signInButtonText: { color: "#FFFFFF", fontSize: 16, fontWeight: "600" },
+  errorText: { fontSize: 13, textAlign: "center", marginBottom: 12 },
 
   divider: {
     flexDirection: "row",

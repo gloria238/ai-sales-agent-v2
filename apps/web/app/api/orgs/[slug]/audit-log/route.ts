@@ -12,8 +12,7 @@ export async function GET(request: Request, { params }: { params: { slug: string
   });
   if (!membership) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  try { const _perm = checkPermission(membership.role, "view_audit_log"); if (_perm) return _perm; }
-  catch { return NextResponse.json({ error: "Forbidden" }, { status: 403 }); }
+  const _perm = checkPermission(membership.role, "view_audit_log"); if (_perm) return _perm;
 
   const url = new URL(request.url);
   const page = Math.max(1, parseInt(url.searchParams.get("page") || "1", 10));

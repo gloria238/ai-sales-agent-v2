@@ -19,9 +19,21 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
   const file = formData.get("file") as File | null;
   if (!file) return NextResponse.json({ error: "No file provided" }, { status: 400 });
 
+  // File size limit: 10MB
+  const MAX_FILE_SIZE = 10_000_000;
+  if (file.size > MAX_FILE_SIZE) {
+    return NextResponse.json({ error: "File too large. Maximum size is 10MB." }, { status: 413 });
+  }
+
   const buffer = Buffer.from(await file.arrayBuffer());
+
+  // Validate file type by magic bytes (primary) with extension fallback
+  const fileType = detectTypeByMagic(buffer, file.name);
+  if (!fileType) {
+    return NextResponse.json({ error: "Unsupported file type. Supported: PDF, TXT, JSON, Markdown." }, { status: 415 });
+  }
+
   const docId = `doc-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-  const fileType = detectType(file.name);
 
   // 1. Create document record (status: processing)
   const doc = await prisma.document.create({
@@ -120,13 +132,28 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
   }
 }
 
-function detectType(fileName: string): string {
-  const ext = fileName.split(".").pop()?.toLowerCase();
-  switch (ext) {
-    case "pdf": return "pdf";
-    case "md": return "md";
-    case "txt": return "txt";
-    case "json": return "faq";
-    default: return "txt";
-  }
+/** Detect file type by magic bytes first, falling back to extension. Returns null if unsupported. */
+function detectTypeByMagic(buffer: Buffer, fileName: string): string | null {
+  const ext = fileName.split(".").pop()?.toLowerCase() || "";
+  const head = buffer.slice(0, 16).toString("utf-8").trimStart();
+
+  // PDF: starts with %PDF-<version>
+  if (buffer.slice(0, 5).toString() === "%PDF-") return "pdf";
+
+  // JSON/FAQ: starts with [ or { after optional whitespace
+  if (head.startsWith("[") || head.startsWith("{")) return "faq";
+
+  // Markdown: starts with # (heading) or common markdown markers
+  if (/^(#|<|>|\*|-)/.test(head) && ext === "md") return "md";
+
+  // Plain text: printable ASCII/UTF-8 without binary null bytes
+  const isText = !buffer.slice(0, Math.min(buffer.length, 512)).includes(0x00);
+  if (isText && ["txt", "md", "csv"].includes(ext)) return ext === "md" ? "md" : "txt";
+
+  // Extension-only fallback for known types
+  if (ext === "json") return "faq";
+  if (ext === "txt") return "txt";
+  if (ext === "md") return "md";
+
+  return null;
 }

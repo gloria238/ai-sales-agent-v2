@@ -35,13 +35,26 @@ export async function revokeToken(jti: string): Promise<void> {
 /** Check if a token's jti has been revoked. */
 export async function isTokenRevoked(jti: string): Promise<boolean> {
   const r = getRedis();
-  if (!r) return false; // Fail open — can't check blacklist, allow the token
+  if (!r) {
+    // No Redis — can't check blacklist. Fail-open by default (allow token).
+    // Set TOKEN_REVOCATION_FAIL_CLOSED=true to deny tokens when Redis is unreachable.
+    if (process.env.TOKEN_REVOCATION_FAIL_CLOSED === "true") {
+      console.error("[token-blacklist] Redis unavailable — rejecting token (fail-closed)");
+      return true;
+    }
+    return false;
+  }
 
   try {
     const key = `revoked:jti:${jti}`;
     const result = await r.get(key);
     return result !== null;
   } catch {
-    return false; // Redis error — fail open for availability
+    // Redis error — same fail-closed logic
+    if (process.env.TOKEN_REVOCATION_FAIL_CLOSED === "true") {
+      console.error("[token-blacklist] Redis error — rejecting token (fail-closed)");
+      return true;
+    }
+    return false;
   }
 }

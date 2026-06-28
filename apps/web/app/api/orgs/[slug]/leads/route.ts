@@ -19,11 +19,7 @@ export async function GET(request: Request, { params }: { params: { slug: string
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  try {
-    const _perm = checkPermission(membership.role, "view_leads"); if (_perm) return _perm;
-  } catch {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
+  const _perm = checkPermission(membership.role, "view_leads"); if (_perm) return _perm;
 
   const url = new URL(request.url);
   const search = url.searchParams.get("search") || "";
@@ -81,11 +77,7 @@ export async function POST(request: Request, { params }: { params: { slug: strin
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  try {
-    const _perm = checkPermission(membership.role, "manage_leads"); if (_perm) return _perm;
-  } catch {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
+  const _perm2 = checkPermission(membership.role, "manage_leads"); if (_perm2) return _perm2;
 
   const body = await request.json();
   const parsed = createLeadSchema.safeParse(body);

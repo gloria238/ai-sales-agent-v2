@@ -180,10 +180,9 @@ describe("isEnabled", () => {
   it("ai_generate_script defaults to true", () => {
     expect(isEnabled("ai_generate_script")).toBe(true);
   });
-  it("advanced_tables defaults to true", () => {
-    expect(isEnabled("advanced_tables")).toBe(true);
-  });
-  it("realtime_updates defaults to true", () => {
-    expect(isEnabled("realtime_updates")).toBe(true);
+
+  // advanced_tables and realtime_updates flags removed — never used in any route
+  it("unknown flags return false", () => {
+    expect(isEnabled("unknown_flag" as any)).toBe(false);
   });
 });

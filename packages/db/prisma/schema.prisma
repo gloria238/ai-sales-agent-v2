@@ -37,8 +37,9 @@ model Organization {
   id            String         @id @default(uuid())
   name          String
   slug          String         @unique
-  apiKeys       Json?
   memberships   Membership[]
+  apiKeys       ApiKey[]
+  featureFlags  FeatureFlag[]
   leads         Lead[]
   leadActivities LeadActivity[]
   agents        Agent[]
@@ -49,6 +50,22 @@ model Organization {
   documents     Document[]
   documentChunks DocumentChunk[]
   createdAt     DateTime       @default(now())
+  @@schema("sales_agent")
+}
+
+model ApiKey {
+  id             String       @id @default(uuid())
+  organizationId String
+  name           String
+  prefix         String       // first 10 chars of key for display (e.g. "of_a1b2c3...")
+  hashedKey      String       // SHA-256 of the full key — never stored in plaintext
+  lastUsedAt     DateTime?
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdAt      DateTime     @default(now())
+
+  @@unique([organizationId, hashedKey])
+  @@index([organizationId])
+  @@index([organizationId, prefix])
   @@schema("sales_agent")
 }
 
@@ -263,5 +280,24 @@ model AuditLog {
   organization   Organization @relation(fields: [organizationId], references: [id])
 
   @@index([organizationId, createdAt(sort: Desc)])
+  @@schema("sales_agent")
+}
+
+// ── Feature Flags ──────────────────────────────────────────────────
+
+model FeatureFlag {
+  id               String       @id @default(uuid())
+  organizationId   String?
+  key              String       // e.g. "ai_compose_response"
+  enabled          Boolean      @default(true)
+  rolloutPercent   Int          @default(100) // 0-100 for gradual rollouts
+  rules            Json?        // { roles: ["admin"], userIds: [...] } — targeting rules
+  description      String?
+  organization     Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  @@unique([organizationId, key])
+  @@index([key])
   @@schema("sales_agent")
 }

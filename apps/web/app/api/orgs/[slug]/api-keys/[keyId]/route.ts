@@ -2,7 +2,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@salesagent/db";
 import { getSession } from "@/lib/session";
-import { requirePermission, checkPermission } from "@/lib/permissions";
+import { checkPermission } from "@/lib/permissions";
 
 export async function DELETE(_request: Request, { params }: { params: { slug: string; keyId: string } }) {
   const session = await getSession();
@@ -15,22 +15,12 @@ export async function DELETE(_request: Request, { params }: { params: { slug: st
 
   const _perm = checkPermission(membership.role, "manage_api_keys"); if (_perm) return _perm;
 
-  const org = await prisma.organization.findUnique({
-    where: { id: membership.organizationId },
-    select: { apiKeys: true },
+  const key = await prisma.apiKey.findFirst({
+    where: { id: params.keyId, organizationId: membership.organizationId },
   });
+  if (!key) return NextResponse.json({ error: "Key not found" }, { status: 404 });
 
-  const keys = (org?.apiKeys as Array<{ id: string; name: string; prefix: string; hash: string; createdAt: string }>) || [];
-  const filtered = keys.filter((k) => k.id !== params.keyId);
-
-  if (filtered.length === keys.length) {
-    return NextResponse.json({ error: "Key not found" }, { status: 404 });
-  }
-
-  await prisma.organization.update({
-    where: { id: membership.organizationId },
-    data: { apiKeys: filtered },
-  });
+  await prisma.apiKey.delete({ where: { id: key.id } });
 
   return NextResponse.json({ deleted: true });
 }

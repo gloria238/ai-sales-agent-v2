@@ -3,11 +3,20 @@ import { prisma } from "@salesagent/db";
 import { hashPassword } from "@/lib/password";
 import { getRequestContext, logInfo, logError, logWarn } from "@/lib/logger";
 import { registerSchema } from "@/lib/validation";
+import { checkRateLimit } from "@/lib/rate-limit";
 import crypto from "crypto";
 
 export async function POST(request: Request) {
   const ctx = getRequestContext(request);
   try {
+    // Defense-in-depth: auth-specific rate limiting
+    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
+      || request.headers.get("x-real-ip")
+      || "127.0.0.1";
+    const { allowed } = await checkRateLimit(`auth-register:${ip}`, 5);
+    if (!allowed) {
+      return NextResponse.json({ error: "Too many registration attempts. Try again later." }, { status: 429 });
+    }
     const body = await request.json();
     const parsed = registerSchema.safeParse(body);
     if (!parsed.success) {

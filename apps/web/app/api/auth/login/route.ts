@@ -1,14 +1,24 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@salesagent/db";
-import { verifyPassword } from "@/lib/password";
+import { verifyPassword, needsRehash, hashPassword } from "@/lib/password";
 import { signToken } from "@/lib/auth";
 import { getRequestContext, logInfo, logWarn, logError } from "@/lib/logger";
 import { loginSchema } from "@/lib/validation";
+import { checkRateLimit } from "@/lib/rate-limit";
 import crypto from "crypto";
 
 export async function POST(request: Request) {
   const ctx = getRequestContext(request);
   try {
+    // Defense-in-depth: auth-specific rate limiting (stricter than middleware)
+    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
+      || request.headers.get("x-real-ip")
+      || "127.0.0.1";
+    const { allowed } = await checkRateLimit(`auth-login:${ip}`, 10);
+    if (!allowed) {
+      return NextResponse.json({ error: "Too many login attempts. Try again later." }, { status: 429 });
+    }
+
     const body = await request.json();
     const parsed = loginSchema.safeParse(body);
     if (!parsed.success) {
@@ -26,6 +36,13 @@ export async function POST(request: Request) {
     if (!valid) {
       logWarn(ctx, "Login failed: wrong password", { emailHash: hashEmail(email) });
       return NextResponse.json({ error: "Invalid email or password" }, { status: 401 });
+    }
+
+    // Re-hash old passwords (10 rounds → 12) in background
+    if (needsRehash(user.passwordHash)) {
+      hashPassword(password).then((newHash: string) =>
+        prisma.user.update({ where: { id: user.id }, data: { passwordHash: newHash } })
+      ).catch(() => {});
     }
 
     // Reject unverified accounts — email verification link must be clicked first

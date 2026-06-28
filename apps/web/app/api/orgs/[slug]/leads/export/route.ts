@@ -13,8 +13,7 @@ export async function GET(_request: Request, { params }: { params: { slug: strin
   });
   if (!membership) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  try { const _perm = checkPermission(membership.role, "view_leads"); if (_perm) return _perm; }
-  catch { return NextResponse.json({ error: "Forbidden" }, { status: 403 }); }
+  const _perm = checkPermission(membership.role, "view_leads"); if (_perm) return _perm;
 
   const leads = await prisma.lead.findMany({
     where: { organizationId: membership.organizationId },

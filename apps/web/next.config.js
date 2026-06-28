@@ -4,6 +4,16 @@ const nextConfig = {
   experimental: {
     serverComponentsExternalPackages: ["@prisma/client"],
   },
+  // API versioning: /api/v1/* rewrites to existing /api/* handlers
+  async rewrites() {
+    return [
+      {
+        source: "/api/v1/:path*",
+        destination: "/api/:path*",
+      },
+    ];
+  },
+
   async headers() {
     return [
       {
@@ -22,7 +32,7 @@ const nextConfig = {
             key: "Content-Security-Policy",
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+              "script-src 'self' 'unsafe-inline'",
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: blob: https://i.pravatar.cc https://image.mux.com",
               "font-src 'self' https://fonts.gstatic.com https://fonts.googleapis.com",
