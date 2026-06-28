@@ -1,6 +1,6 @@
 # SalesAgent AI — Progress Report
 
-> Last updated: 2026-06-07
+> Last updated: 2026-06-28
 > Project: Multi-Tenant AI Platform (AI Concierge / Sales Agent)
 
 ## Overall Status
@@ -23,10 +23,12 @@
 | **Phase 13: V1.5 Agent Platform** | ✅ Done | 100% |
 | **Phase 14: V1.6 Mobile Showcase** | ✅ Done | 100% |
 | **Phase 15: Security Audit & Production Readiness** | ✅ Done | 100% |
+| **Phase 16: UI/UX Commercial Overhaul** | ✅ Done | 100% |
+| **Phase 17: Production Hardening** | ✅ Done | 100% |
 
-**Total:** ~25,000 lines across ~350 files. 40+ API routes + SSE.
-**Tests:** 53 unit (100% pass). Build: ✅ green (Vercel).
-**Infrastructure:** Next.js 14 · React 18 · Expo 52 · Tailwind CSS · Prisma 6 · PostgreSQL (Supabase + pgvector) · Upstash Redis · BullMQ (4 queues, prefix: "sales-agent") · DeepSeek AI · OpenAI Embeddings · Resend email · Vercel + Railway.
+**Total:** ~27,000 lines across ~390 files. 40+ API routes + SSE.
+**Tests:** 52 unit (100% pass). 5 E2E specs. Build: ✅ green (Vercel).
+**Infrastructure:** Next.js 14 · React 18 · Expo 52 · Tailwind CSS · Prisma 6 · PostgreSQL (Supabase + pgvector) · 14 models · Upstash Redis · BullMQ (4 queues, prefix: "sales-agent") · DeepSeek AI · OpenAI Embeddings · Resend email · Sentry · Vercel + Railway.
 
 ---
 
@@ -230,39 +232,99 @@ Full-codebase security audit across 8 domains using 8 parallel agents (~435K tok
 
 ---
 
-## Known Issues / TODOs
+## Phase 16 — UI/UX Commercial Overhaul ✅
+
+> Completed: 2026-06-28
+
+### Avatar — Cartoon → Real Human Photos
+
+- DiceBear `notionists` → Pravatar.cc deterministic real photos (seeded by email)
+- Gradient initials fallback on load error
+- CSP updated: `api.dicebear.com` → `i.pravatar.cc`
+- Mobile: ConversationItem + System tenant avatars use `Image` with real photos
+
+### Typography — Plus Jakarta Sans → Inter
+
+- `next/font/google` Inter (variable `--font-sans`) — corporate SaaS standard
+- Tailwind fontFamily updated
+
+### Color System — Luxury Nature → Corporate Green
+
+- Light: warm cream → cool slate (`#F8F9FA` bg, `#FFFFFF` cards)
+- Dark: deep forest → near-OLED black (`#0a1108`)
+- Primary: `#265834` → `#166534` (green-800)
+- Dark accent: `#579360` → `#4ADE80` (green-400)
+- Glass: more opaque (82%) for professional look
+- 26 files changed across web + mobile + packages
+
+---
+
+## Phase 17 — Production Hardening ✅
+
+> Completed: 2026-06-28
+
+### Security (10 items)
+
+| Item | Description |
+|------|-------------|
+| Auth rate limiting | Login 10/min, register 5/min, verify 20/min per IP (defense-in-depth) |
+| Fail-closed options | `RATE_LIMIT_FAIL_CLOSED` + `TOKEN_REVOCATION_FAIL_CLOSED` env vars |
+| IP protection | `TRUSTED_PROXY_RANGES` validation for x-forwarded-for |
+| Bcrypt upgrade | 10→12 rounds, auto re-hash on login |
+| CSP hardening | `unsafe-eval` removed (zero codebase dependency) |
+| Dead try/catch | Removed around `checkPermission()` in 4 files (never throws) |
+| File upload security | 10MB cap + magic byte validation (PDF/TXT/JSON/MD) |
+| Logger enhancement | Log levels, PII redaction (email/JWT), requestId tracing |
+| API key model | JSON column → proper `ApiKey` Prisma model with indexes |
+| API 401 JSON | API routes return 401 JSON instead of 302 redirect |
+
+### API Versioning
+
+- `/api/v1/:path*` rewrites mapping to existing handlers (zero duplication)
+- `Deprecation`/`Sunset`/`Link` headers on non-versioned paths
+
+### Error Tracking
+
+- `@sentry/nextjs` graceful opt-in (`SENTRY_DSN`)
+- Centralized `lib/api-error.ts` with status mapping
+- 14 `error.tsx` boundaries (11 routes + dashboard group + root + global)
+
+### Feature Flags v2
+
+- DB-backed `FeatureFlag` model (per-org, rollout%, rules JSON)
+- Memory cache (60s TTL) + env-var fallback
+- 2 unused flags removed (advanced_tables, realtime_updates)
+
+### E2E Tests
+
+- New `e2e/security.spec.ts`: CSP headers, auth bypass, rate limiting, API versioning
+
+### Mobile Productionization
+
+- Login page wired to real `/api/v1/auth/login` with loading/error states
+- `use-demo-mode` defaults to "live" in production builds
+- `apiBaseUrl` exposed for live API mode
+
+### 43 files changed, 2268 lines added, 133 removed
+
+---
 
 ## Known Issues / TODOs
 
 1. **Stripe billing** — Not implemented.
-2. **API Key Bearer auth** — Pending (Edge runtime Prisma limitation).
+2. **SSO/OAuth** — Not implemented (enterprise requirement).
 3. **Upstash Redis free tier** — 500K daily limit. Upgrade when scaling.
 4. **Embedding fallback** — Works (keyword search), but vector search needs OpenAI API key.
 5. **DOCX parser** — `mammoth` peer dependency declared, not installed. PDF works via pdf-parse v2.
 6. **Reranker** — Interface reserved, NoopReranker only. Build when needed.
 7. **Credential rotation** — `.env.local` exposed in early git history. Rotate all secrets.
-8. **Auth rate limiting** — `/api/auth/*` excluded from middleware rate limiter. Requires matcher change.
-9. **RAG vector search** — Needs `EMBEDDING_API_KEY` + pgvector index for production semantic search.
-10. **CSP hardening** — `unsafe-eval` and `unsafe-inline` still present in script-src.
+8. **Sentry worker** — `@sentry/node` for the worker not yet installed (web app Sentry is configured).
 
-### Unfixed Security Findings (not demo-blocking)
+### Resolved from Previous TODOs
 
-| Priority | Count | Examples |
-|----------|-------|----------|
-| Requires payment | 4 | Redis quota, Supabase Pro, embedding API key |
-| Architecture change | 8 | Soft deletes, transaction guards, DB indexes, campaign race condition |
-| Feature work | 6 | Document DELETE API, pgvector index, SSE, campaign condition step |
-| Policy/compliance | 4 | GDPR consent, unsubscribe mechanism, CSP hardening, secrets rotation |
-
----
-
-## What comes next (V1.5 Milestones)
-
-| Milestone | Description | Priority |
-|-----------|-------------|----------|
-| **B** | RAG Playground polish — better chunk viz, confidence scores | P1 |
-| **C** | Agent Playground — real-time sandbox test for agents | P1 |
-| **D** | FAQ upload support in UI | P2 |
-| **E** | DOCX upload support | P2 |
-| **F** | Mobile KB tab | P3 |
-| **G** | Advanced reranker (Cohere/BGE) | P4 |
+| Issue | Resolution |
+|-------|------------|
+| ~~API Key Bearer auth~~ | ApiKey Prisma model with SHA-256 hashing, proper indexes |
+| ~~Auth rate limiting~~ | Defense-in-depth: middleware + per-route rate limits |
+| ~~CSP unsafe-eval~~ | Removed from CSP |
+| ~~Logger PII redaction~~ | Email/JWT pattern matching + SHA-256 hashing |

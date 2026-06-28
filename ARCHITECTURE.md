@@ -1,10 +1,10 @@
-# SalesAgent AI — Architecture Document (V1.6)
+# SalesAgent AI — Architecture Document (V1.7)
 
 > Multi-tenant AI Agent Platform with Web, Mobile, Worker, and Knowledge Infrastructure.
 > Build and deploy AI Sales, Concierge, and Support Agents on a shared platform.
-> ~25,000 lines across ~350 files. 40+ API routes + SSE.
-> Web: 40+ pages + API routes. Mobile: 6-page Club Concierge showcase. Worker: 4 BullMQ queues.
-> Latest: Phase 15 — Security audit (165 findings, 32 fixed) + Vercel build hardening.
+> ~27,000 lines across ~390 files. 40+ API routes + SSE.
+> Web: 40+ pages + API routes + 14 error boundaries. Mobile: 7-page Club Concierge showcase. Worker: 4 BullMQ queues.
+> Latest: Phase 17 — Production Hardening (security, API versioning, Sentry, feature flags, mobile API).
 
 ---
 
@@ -116,7 +116,7 @@ packages/
   ai-core/                       — 统一 AI 层 (client + prompts + agents)
   rag-core/                      — RAG 管线 (parse → chunk → embed → retrieve → cite)
   api-client/                    — 类型安全 API 客户端 (web + mobile 共享)
-  db/                            — Prisma 6 schema + pgvector (12 models)
+  db/                            — Prisma 6 schema + pgvector (14 models)
 ```
 
 ---
@@ -165,7 +165,7 @@ packages/domain                 packages/shared-types
   └── agent.ts, org.ts, activity.ts└── feature-flags.ts
 
 packages/ui-tokens              packages/db
-  ├── colors.ts (奢华自然调色板)      ├── schema.prisma (12 models)
+  ├── colors.ts (企业绿调色板)        ├── schema.prisma (14 models)
   ├── typography.ts                ├── index.ts (PrismaClient 单例)
   ├── spacing.ts                   └── setup-vector.mjs (pgvector)
   ├── shadows.ts
@@ -179,7 +179,7 @@ packages/ui-tokens              packages/db
 ### 4.1 实体关系图
 
 ```
-User ──< Membership >── Organization
+User ──< Membership >── Organization ──< ApiKey
                               │
           ┌───────────────────┼───────────────────┐
           │                   │                   │
@@ -187,16 +187,17 @@ User ──< Membership >── Organization
           │                   │                   │
     Campaign ──< CampaignRun  Lead ──< LeadActivity   (pgvector)
           │
-    Script
+    Script              FeatureFlag (per-org, rollout%)
 ```
 
-### 4.2 模型清单 (12 模型)
+### 4.2 模型清单 (14 模型)
 
 | 模型 | 用途 | 主要字段 |
 |------|------|---------|
-| **User** | 登录标识 | email, passwordHash, emailVerified |
-| **Organization** | 多租户工作空间 | name, slug, apiKeys |
+| **User** | 登录标识 | email, passwordHash (bcrypt 12轮), emailVerified |
+| **Organization** | 多租户工作空间 | name, slug |
 | **Membership** | 用户-组织关系 | role (owner/admin/operator/viewer) |
+| **ApiKey** | API 密钥 (V1.7) | name, prefix, hashedKey (SHA-256), lastUsedAt |
 | **Agent** | AI 代理配置 | personality, goals, knowledgeBase, isActive |
 | **Lead** | CRM 线索 | name, email, company, stage, score, source |
 | **LeadActivity** | 线索活动日志 | type, content, metadata |
@@ -205,9 +206,10 @@ User ──< Membership >── Organization
 | **Script** | 话术模板 | name, category, steps (JSON) |
 | **Campaign** | 外呼活动 | scriptId, agentId, targetAudience, stats |
 | **CampaignRun** | 活动执行记录 | status, recipientCount, stats |
-| **Document** | KB 文档 (V1.5 新增) | name, type, status, chunkCount |
-| **DocumentChunk** | KB 分块 (V1.5 新增) | content, chunkIndex, embedding (pgvector) |
+| **Document** | KB 文档 | name, type, status, chunkCount |
+| **DocumentChunk** | KB 分块 | content, chunkIndex, embedding (pgvector) |
 | **AuditLog** | 不可变审计日志 | action, targetType, targetId, metadata |
+| **FeatureFlag** | 功能开关 (V1.7) | key, enabled, rolloutPercent, rules (JSON) |
 
 ### 4.3 Pipeline 阶段
 
@@ -233,9 +235,13 @@ new → contacted → qualified → proposal → negotiation → closed_won
 ```
 请求 → middleware.ts
   ├── 公开路径? → 放行
-  ├── 限流检查 (Redis 100 req/min)
-  ├── JWT 验证 + 黑名单检查
-  └── API 路由 → getSession() → 权限检查 → org-scoped 查询
+  ├── IP 提取 (TRUSTED_PROXY_RANGES 验证)
+  ├── Auth 限流 (Redis 10 req/min login, 5 reg, 20 verify)
+  ├── API 限流 (Redis 100 req/min)
+  ├── API 版本化头 (非 v1 路径加 Deprecation 头)
+  ├── JWT 验证 + 黑名单检查 (可 fail-closed)
+  ├── API 路由: 401 JSON (非 302 重定向)
+  └── Route Handler → getSession() → 权限检查 → org-scoped 查询
 ```
 
 ### 5.3 安全清单
@@ -245,10 +251,13 @@ new → contacted → qualified → proposal → negotiation → closed_won
 | 传输 | HTTPS, HSTS, Secure cookies | `next.config.js` |
 | 注入 | React XSS 转义, Prisma 参数化查询 | 全局 |
 | AI 注入 | `PROMPT_ARMOR` + `<user_data>` 标签 | `ai-core/prompts.ts` |
-| JWT | HS256 + 强制密钥 + Redis 黑名单 | `lib/auth.ts` |
-| 限流 | Upstash 滑动窗口 100 req/min | `lib/rate-limit.ts` |
-| 验证 | 16 Zod schemas, 全部变更端点 | `lib/validation.ts` |
-| PII | SHA256 哈希日志 | `lib/logger.ts` |
+| JWT | HS256 + 强制密钥 + Redis 黑名单 (fail-closed 选项) | `lib/auth.ts` |
+| 限流 | Upstash 滑动窗口 (API 100/min, auth 10/min) + 内存 TTL 回退 | `lib/rate-limit.ts` |
+| 验证 | 19 Zod schemas, 全部变更端点 | `lib/validation.ts` |
+| PII | SHA256 哈希日志 + 自动脱敏 (email/JWT 模式) | `lib/logger.ts` |
+| 上传 | 10MB 上限 + 魔数校验 (PDF/TXT/JSON/MD) | `kb/upload/route.ts` |
+| 密码 | Bcrypt 12 轮 + 登录时自动 re-hash 旧密码 | `lib/password.ts` |
+| CSP | `unsafe-eval` 已移除, `unsafe-inline` 用于 Next.js 内联脚本 | `next.config.js` |
 
 ---
 
@@ -404,7 +413,7 @@ Campaign "Start" → 受众解析 → BullMQ 分派 → Worker 执行步骤
 
 ```text
 IdentityCard
-├── Avatar (DiceBear notionists + 渐变回退)
+├── Avatar (Pravatar.cc 真实人像 + 渐变首字母回退)
 ├── PresenceDot (online/idle/ai-processing/handoff-required/...)
 ├── CustomerMeta (姓名, 公司, 邮箱)
 ├── AIState ("AI handling · 92% confidence")
@@ -419,57 +428,82 @@ IdentityCard
 Expo SDK 52 + Expo Router 4 — **Club Concierge Showcase**:
 
 ### 定位
-Mobile 不是 Web 功能的缩水版。它是一个独立的 Demo/Showcase 层，用 Club Concierge 叙事（不是 Sales Agent 叙事）让客户在 3 分钟内相信这个产品。
+Mobile 是独立的 Demo/Showcase 层，用 Club Concierge 叙事让客户在 3 分钟内相信产品。
 
 ```
 Web = 真实产品（不改业务逻辑）
-Mobile = Showcase 层（Club Concierge 叙事）
+Mobile = Showcase 层（Club Concierge 叙事）+ 可选 Live 模式（接真实 API）
 Landing Page = 通用 AI Platform 定位
 ```
 
-### 6 个页面
+### 7 个页面
 
 | 页面 | 路由 | 叙事 |
 |------|------|------|
-| **Login** | `/login` | "Enter Demo →" 一键进入 |
+| **Login** | `/login` | 真实 API 登录 + loading/error 状态 + "Enter Demo →" 绕过 |
 | **Dashboard** | `/(tabs)/` | Members, Bookings, AI Resolve, Demo/Live Toggle |
-| **Inbox** | `/(tabs)/inbox` | AI 自动回复会员消息，AI Confidence % |
-| **Inbox Detail** | `/(tabs)/inbox/[id]` | AI 回复 + Source Citation（RAG 能力展示） |
+| **Inbox** | `/(tabs)/inbox` | AI 自动回复，AI Confidence % |
+| **Inbox Detail** | `/(tabs)/inbox/[id]` | AI 回复 + Source Citation |
 | **Knowledge Base** | `/(tabs)/kb` | 文档列表 + Stats + Upload Pipeline + Playground 入口 |
-| **AI Playground** | `/playground` | ⭐ 王牌 — 6 步 RAG Pipeline 可视化 |
-| **System Overview** | `/system` | 区分度页面 — 多租户、架构层、技术栈 |
+| **AI Playground** | `/playground` | ⭐ 6 步 RAG Pipeline 可视化 |
+| **System Overview** | `/system` | 多租户、架构层、技术栈 |
 
 ### 架构
 
 ```
 apps/mobile/
-  hooks/           use-theme.ts, use-demo-mode.tsx
-  components/      10 个组件（kpi-card, activity-item, conversation-item,
-                   message-bubble, source-citation, document-card,
-                   pipeline-step, stats-card, skeleton, empty-state）
-  data/            5 个 mock 数据文件 + barrel export
+  hooks/           use-theme.ts, use-demo-mode.tsx (默认 "live" 在生产构建)
+  components/      10 个组件（含真实人像头像）
+  data/            5 个 mock 数据文件 + barrel export（demo 模式回退）
   app/             Expo Router 文件路由
 ```
 
-### 共享包: shared-types, domain, api-client, ui-tokens
-### 主题: 自动亮/暗模式, Luxury Nature 调色板
-### 设计: 大留白、软阴影（shadowOpacity 0.06）、无边框卡片、Linear/Notion 产品美学
+### Demo/Live 模式
+
+- **Demo**: 使用本地 mock 数据，零网络依赖，适合展示
+- **Live**: 调用 `/api/v1/` 真实 API（cookie 认证），登录页面线真实 auth
+- 切换立即生效，无页面刷新
+- 共享包: shared-types, domain, api-client, ui-tokens
+- 主题: 自动亮/暗模式, Corporate Green 调色板
+- 设计: 大留白、软阴影、无边框卡片、Linear/Notion 产品美学
+
+---
+## 17. API 版本化 (V1.7 新增)
+
+```
+/api/auth/login     → /api/v1/auth/login (通过 Next.js rewrites)
+/api/orgs/{s}/leads → /api/v1/orgs/{s}/leads
+
+非版本化路径（/api/...）= 可用但标记 Deprecation / Sunset 头
+版本化路径（/api/v1/...）= 推荐使用
+```
+
+**零路由重复** — rewrites 映射 `/api/v1/:path*` → `/api/:path*` 内部处理。
+
+---
+## 18. 错误追踪与容错 (V1.7 新增)
+
+- **Sentry**: `@sentry/nextjs`（仅当 `SENTRY_DSN` 设置时激活，可 graceful opt-in）
+- **集中式错误处理**: `lib/api-error.ts` — 类型化状态码映射 (Zod→400, Not Found→404, Unique→409)
+- **错误边界**: 全部 11 个仪表盘路由有 `error.tsx` + 根级 `app/error.tsx` + `app/global-error.tsx` + 可复用 `ErrorBoundary` 组件
+- **功能开关**: 14 个 DB 支持的 feature flag (FeatureFlag 模型)，支持 per-org 切换、rollout%、角色/用户定向规则。内存缓存 60s TTL。env-var 回退。
 
 ---
 
 ## 15. 设计系统
 
-### 15.1 奢华自然调色板
+### 15.1 企业绿调色板
 
 | Token | Hex | CSS Variable | 用途 |
 |---|---|---|---|
-| Primary | `#265834` | `--accent` | CTA, 激活状态 |
-| Primary Hover | `#579360` | `--accent-hover` | 悬停 / 暗色模式 |
-| Dark BG | `#1f2b1d` | `--bg` (暗色) | 暗色模式背景 |
-| Olive | `#656d4a` | `--bg-secondary` | 侧边栏, 次要表面 |
-| Card | `#E8E6DF` | `--bg-card` | 卡片, 凸起表面 |
-| Sage | `#d6d9c3` | `--bg-sage` | 徽章, 高亮 |
-| Tan | `#b6ad90` | `--accent-secondary` | 分隔线, 弱化强调色 |
+| Primary | `#166534` | `--accent` | CTA, 激活状态 |
+| Primary Hover | `#15803d` | `--accent-hover` | 悬停 |
+| Dark BG | `#0a1108` | `--bg` (暗色) | 近 OLED 黑 |
+| Light BG | `#F8F9FA` | `--bg` (亮色) | Slate-50 |
+| Card | `#FFFFFF` | `--bg-card` (亮色) | 纯白卡片 |
+| Dark Card | `#111A0E` | `--bg-card` (暗色) | 暗色表面 |
+| Accent Secondary | `#849b70` | `--accent-secondary` | 分隔线, 弱化强调色 |
+| Dark Accent | `#4ADE80` | `--accent` (暗色) | 暗色模式 vibrant green |
 
 ### 15.2 设计令牌
 
@@ -510,5 +544,6 @@ pnpm build                      # Turborepo 全量构建
 pnpm seed-demo                  # Acme Corp demo 数据
 pnpm seed-prod <slug>           # 幂等种子数据
 node packages/db/setup-vector.mjs  # 启用 pgvector
-pnpm --filter @salesagent/web test  # 53 测试
+pnpm --filter @salesagent/web test       # 52 单元测试
+pnpm --filter @salesagent/web test:e2e   # 5 E2E 测试
 ```

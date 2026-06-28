@@ -114,12 +114,13 @@ packages/
   ai-core/      — Unified DeepSeek client + prompt builders + agent execution
   rag-core/     — Full RAG pipeline (parse → chunk → embed → retrieve → cite)
   api-client/   — Type-safe fetch client (web + mobile share)
-  db/           — Prisma 6 schema + client (PostgreSQL + pgvector, 12 models)
+  db/           — Prisma 6 schema + client (PostgreSQL + pgvector, 14 models)
 ```
 
-### Data model (12 models in `sales_agent` PostgreSQL schema)
+### Data model (14 models in `sales_agent` PostgreSQL schema)
 
 - **User / Organization / Membership** — Multi-tenant with 4 roles + 10+ permissions.
+- **ApiKey** — Per-org API keys: SHA-256 hashed, prefix for display, lastUsedAt tracking.
 - **Agent** — AI agent configuration per org: personality, tone, knowledge base, goals, isActive.
 - **Lead** — CRM leads with stage tracking, AI score, source, assigned owner.
 - **LeadActivity** — Immutable activity log per lead.
@@ -128,22 +129,25 @@ packages/
 - **Script** — Sales playbook: name, description, steps (JSON).
 - **Campaign** — Outbound campaign: linked to script + agent, target audience, schedule, stats.
 - **CampaignRun** — Execution record per campaign.
-- **Document** — KB document (V1.5): name, type, status, chunkCount, metadata.
-- **DocumentChunk** — KB chunk (V1.5): content, embedding (pgvector), metadata.
+- **Document** — KB document: name, type, status, chunkCount, metadata.
+- **DocumentChunk** — KB chunk: content, embedding (pgvector), metadata.
 - **AuditLog** — Immutable audit trail for org-level actions.
+- **FeatureFlag** — Per-org feature toggles with rollout%, rules targeting, DB-backed.
 
 ### Key patterns
 
 - **Web**: Server Components for data fetching, client components for interactivity. TanStack Query for data hooks, zustand for inbox state, SSE for real-time conversation streaming.
 - **Auth**: Custom JWT (jose) + httpOnly cookies. Login issues JWT directly. Registration requires email verification link click (one-time). `lib/session.ts` extracts session server-side.
-- **Security**: JWT secret enforced (no fallback). Upstash Redis sliding-window rate limiting (100 req/min, falls back to in-memory). CSP/HSTS/X-Frame-Options security headers. Login PII hashed in logs (SHA256). Cookie `secure: true` always. Password min 8 chars. Org enumeration prevented via generic error messages.
+- **Security**: JWT secret enforced (no fallback). Upstash Redis sliding-window rate limiting (100 req/min API, 10/min auth, falls back to in-memory with TTL). Auth-specific rate limits on login/register/verify (defense-in-depth). Fail-closed options via env vars. IP validation via TRUSTED_PROXY_RANGES. Bcrypt 12 rounds with auto re-hash on login. CSP/HSTS/X-Frame-Options security headers. CSP `unsafe-eval` removed. Login PII hashed in logs (SHA256). Cookie `secure: true` always. Password min 8 chars. Org enumeration prevented via generic error messages. API routes return 401 JSON (not 302 redirect). File upload 10MB cap + magic byte validation.
 - **Registration flow**: `alice@example.com` → owner + new org. All others → viewer in alice's existing org. Verification link must be clicked to complete registration.
-- **API layer**: 30+ Route Handlers with session + RBAC permission checks. JSON logging on auth/AI routes with PII hashing.
+- **API layer**: 40+ Route Handlers with session + RBAC permission checks. API versioning via `/api/v1/` prefix (Next.js rewrites, zero route duplication). JSON logging on auth/AI routes with PII hashing. Centralized error handler (`lib/api-error.ts`) with typed status mapping.
 - **Worker**: BullMQ Worker consuming `conversation-jobs`, `email-jobs`, `campaign-jobs`, `scoring-jobs` queues. AI response composition + lead qualification + campaign delivery. Uses `prefix: "sales-agent"` on all queue connections to prevent cross-project conflicts.
-- **AI**: DeepSeek API client. 4 AI endpoints: compose-response, score-lead, summarize-conversation, generate-script. Feature flags via `lib/feature-flags.ts`.
+- **AI**: DeepSeek API client. 4 AI endpoints: compose-response, score-lead, summarize-conversation, generate-script. Feature flags via DB-backed system (`lib/feature-flags-v2.ts`) with per-org control, rollout%, rules targeting, memory cache (60s TTL), and env-var fallback for backward compat.
 - **Email**: Resend SDK. `apps/worker/src/email.ts` — template variable resolution (`{{lead.email}}`) + send. Worker composes AI responses and sends via Resend.
 - **DB**: PrismaClient singleton cached on `globalThis`. `experimental.serverComponentsExternalPackages: ["@prisma/client"]` in next.config for Vercel.
-- **Design system**: CSS custom properties in `globals.css` (RGB triplets for Tailwind opacity support). All colors registered in `tailwind.config.js` as `rgb(var(--x) / <alpha-value>)`. 11 UI components in `components/ui/` use design tokens exclusively — never hardcoded colors. Glass morphism via `.glass-card` utility class. Typography: Inter (Google Font, loaded via next/font). Corporate Green palette (green-800/700/400 + slate) — evolved from Luxury Nature for professional SaaS feel.
+- **Design system**: CSS custom properties in `globals.css` (RGB triplets for Tailwind opacity support). All colors registered in `tailwind.config.js` as `rgb(var(--x) / <alpha-value>)`. 11 UI components in `components/ui/` use design tokens exclusively — never hardcoded colors. Glass morphism via `.glass-card` utility class. Typography: Inter (Google Font, loaded via next/font). Corporate Green palette (green-800/700/400 + slate) — evolved from Luxury Nature for professional SaaS feel. Error boundaries on all 11 dashboard routes + root level.
+- **Error tracking**: @sentry/nextjs integration (graceful opt-in via SENTRY_DSN env var). Centralized `handleApiError()` with status code mapping + PII-safe logging. 14 `error.tsx` files (11 route-level + dashboard group + root app + global-error).
+- **Feature flags**: DB-backed system (`FeatureFlag` model) with per-org toggles, rollout% (hash-based user bucketing), role/user targeting rules. Memory cache (60s TTL). Env-var fallback preserves backward compatibility with existing 4 flags.
 - **Identity Stack**: Operational Customer Identity Layer — every customer-facing entity shows: avatar (pravatar.cc real human photos + gradient fallback), presence state (derived from `updatedAt` recency), AI ownership (agent name + confidence %), lead intent (score bar), activity timestamp. `IdentityCard` component (compact/expanded variants) used consistently across inbox, leads, and dashboard. Presence states: online/idle/away/offline/ai-processing/handoff-required/syncing. No new DB columns — presence is pure logic on existing timestamps; avatars use pravatar.cc deterministic by email seed.
 
 ### RBAC permissions (10 permissions)
@@ -183,14 +187,17 @@ apps/web/app/api/demo-login/route.ts — Quick demo login (auto-seeds, signs JWT
 apps/web/app/(dashboard)/settings/api-keys/ — API key management
 apps/web/app/(dashboard)/onboarding-card.tsx — 3-step onboarding wizard
 apps/web/lib/auth.ts                — JWT sign/verify (jose), Edge-compatible, no fallback secret
-apps/web/lib/password.ts            — bcrypt hash/verify (10 rounds), Node.js only (not Edge)
+apps/web/lib/password.ts            — bcrypt hash/verify (12 rounds), auto re-hash on login, Node.js only (not Edge)
 apps/web/lib/session.ts             — Server-side session from JWT cookie
 apps/web/lib/audit.ts               — Audit log write helper (used in all mutation endpoints)
-apps/web/lib/permissions.ts         — 10 RBAC permissions + role matrix (PERMISSION_MAP exported for tests)
-apps/web/lib/rate-limit.ts          — Upstash Redis sliding-window rate limiter (in-memory fallback)
-apps/web/lib/feature-flags.ts       — Env-based feature toggles (runtime, types in @salesagent/shared-types)
-apps/web/lib/logger.ts              — Structured JSON logging (PII-safe)
-apps/web/middleware.ts              — JWT guard + Redis rate limiting (100 req/min per IP) + webhook bypass
+apps/web/lib/permissions.ts         — 12 RBAC permissions + role matrix (PERMISSION_MAP exported for tests)
+apps/web/lib/rate-limit.ts          — Upstash Redis sliding-window rate limiter (configurable window, fail-closed option, in-memory TTL fallback)
+apps/web/lib/token-blacklist.ts     — JWT revocation via Redis SET with TTL (fail-closed option)
+apps/web/lib/feature-flags.ts       — Backward-compat re-export from feature-flags-v2 (4 active flags)
+apps/web/lib/feature-flags-v2.ts    — DB-backed feature flags: per-org, rollout%, rules targeting, memory cache, env fallback
+apps/web/lib/api-error.ts           — Centralized error handler: status mapping, safe JSON, PII-free responses
+apps/web/lib/logger.ts              — Structured JSON logging with log levels, PII redaction, requestId tracing
+apps/web/middleware.ts              — JWT guard + auth rate limiting (10/min) + API rate limiting (100/min) + API versioning headers + IP validation
 apps/web/components/providers/theme-provider.tsx — Dark mode provider with flash prevention
 apps/web/components/providers/theme-toggle.tsx   — Dark/light toggle button
 apps/web/components/nav/sidebar.tsx              — Collapsible sidebar (ChatGPT-style), user menu at bottom
@@ -204,8 +211,16 @@ apps/web/lib/time.ts                            — relativeTime(), presenceFrom
 apps/web/vitest.config.ts           — Unit test config (excludes integration/E2E files)
 apps/web/vitest.integration.config.ts — Integration test config (sequential file execution)
 apps/web/playwright.config.ts       — Playwright E2E config (Chromium, auto-starts dev server)
-apps/web/lib/__tests__/             — Unit + integration test files
-apps/web/e2e/                       — Playwright E2E specs
+apps/web/lib/__tests__/             — Unit + integration test files (52 specs)
+apps/web/e2e/                       — Playwright E2E specs (5 specs: auth, leads, rbac, agents, security)
+apps/web/instrumentation.ts         — Next.js instrumentation hook for Sentry server/edge init
+apps/web/sentry.client.config.ts    — Sentry client-side config (opt-in via SENTRY_DSN)
+apps/web/sentry.server.config.ts    — Sentry server-side config (API routes + RSC)
+apps/web/sentry.edge.config.ts     — Sentry edge runtime config (middleware)
+apps/web/components/ui/error-boundary.tsx — Reusable error boundary with retry + dashboard navigation
+apps/web/app/error.tsx              — Root-level error boundary
+apps/web/app/global-error.tsx       — Global error boundary (root layout errors)
+apps/web/app/(dashboard)/error.tsx  — Dashboard group error boundary (11 routes)
 SECURITY.md                          — Phase 15 audit report (165 findings, 32 fixed) [gitignored]
 apps/mobile/app/_layout.tsx           — Root layout + theme + DemoModeProvider + playground/system routes
 apps/mobile/app/(tabs)/_layout.tsx    — 3 tabs: Dashboard / Inbox / Knowledge Base
@@ -215,7 +230,7 @@ apps/mobile/app/(tabs)/inbox/[id].tsx — Inbox detail: message thread + AI repl
 apps/mobile/app/(tabs)/kb.tsx         — Knowledge Base: stats row + document list + upload pipeline + Playground entry
 apps/mobile/app/playground.tsx        — ⭐ AI Playground: 6-step RAG pipeline visualization (embed→search→rank→sources→generate→answer)
 apps/mobile/app/system.tsx            — System Overview: multi-tenant, pipeline, architecture layers, tech stack
-apps/mobile/app/login.tsx             — Login: email/password form + "Enter Demo →" CTA
+apps/mobile/app/login.tsx             — Login: email/password form + real API auth + loading/error states + "Enter Demo →" CTA
 apps/mobile/hooks/use-theme.ts        — Shared theme hook (all components use this)
 apps/mobile/hooks/use-demo-mode.tsx   — Demo/Live toggle Context
 apps/mobile/components/kpi-card.tsx   — KPI card (icon + value + label, soft shadow, no border)
@@ -238,7 +253,7 @@ apps/mobile/metro.config.js           — Metro bundler config for monorepo reso
 apps/worker/src/queue.ts            — Direct Redis connection + BullMQ Queues (prefix: "sales-agent")
 apps/worker/src/email.ts            — Resend email sender + {{variable}} template resolver + open/click tracking
 apps/worker/src/index.ts            — Worker: AI response composition, lead scoring, campaign delivery, retry, HTTP healthcheck
-packages/db/prisma/schema.prisma    — 12 models in sales_agent schema (incl. Document + DocumentChunk for RAG)
+packages/db/prisma/schema.prisma    — 14 models in sales_agent schema (incl. ApiKey + FeatureFlag for production)
 packages/db/index.ts                — PrismaClient singleton export
 packages/db/setup-vector.mjs        — Enable pgvector + embedding column on Supabase
 packages/ai-core/src/client.ts      — Unified DeepSeek client (callDeepSeek, callDeepSeekJSON, 15s timeout)
@@ -256,44 +271,23 @@ packages/db/seed-verify-alice.ts    — Mark alice@example.com emailVerified=tru
 packages/db/clean-demo-org.ts       — FK-safe org cleanup before re-seed
 ```
 
-### State of the project (2026-06-07)
+### State of the project (2026-06-28)
 
 - **Phase 1-12**: Foundation → CRM → Campaigns → AI → Polish → Testing → Security → UI/UX → Identity Layer → Route hardening → UX Rework → Bugfix Sprint.
-- **Phase 13 (V1.5)**: Monorepo refactor into 3 apps + 7 packages. RAG knowledge base (pgvector). Mobile Expo app. Luxury Nature color palette.
-- **Phase 14 (V1.6)**: Mobile Showcase — 6-page Club Concierge Demo (Dashboard, Inbox, Inbox Detail, Knowledge Base, AI Playground, System Overview). Demo/Live toggle, RAG Pipeline visualization, Luxury Nature theme throughout.
-- **Phase 15 (Production Readiness)**: 8-domain security audit (165 findings, 32 fixed). Prompt injection armor (all worker/web paths). API validation on 6 unvalidated routes. Worker timeout + retry config. Vercel build fixes (pdf-parse v2 API migration, TypeScript strict mode errors). SECURITY.md audit report (gitignored — sensitive findings).
-- **~25,000 lines** across ~350 files. 40+ API routes + SSE + webhook.
-- Web app: ✅ Vercel (JWT, Identity Stack, Knowledge Base, RAG Playground).
+- **Phase 13 (V1.5)**: Monorepo refactor into 3 apps + 7 packages. RAG knowledge base (pgvector). Mobile Expo app.
+- **Phase 14 (V1.6)**: Mobile Showcase — 6-page Club Concierge Demo. Demo/Live toggle, RAG Pipeline visualization.
+- **Phase 15 (Production Readiness)**: 8-domain security audit (165 findings, 32 fixed). Prompt injection armor. API validation. Worker retry config. Vercel build fixes.
+- **Phase 16 (UI/UX Commercial Overhaul — 2026-06-28)**: Real human avatars (pravatar.cc replacing DiceBear cartoons). Inter typography. Corporate Green palette (green-800/700/400 + slate — evolved from Luxury Nature). 26 files changed across web + mobile + packages.
+- **Phase 17 (Production Hardening — 2026-06-28)**: Auth rate limiting (10/min login, 5/min register). Rate limiter fail-closed option. IP spoofing protection. Bcrypt 12 rounds. CSP unsafe-eval removed. Dead try/catch cleanup. File upload 10MB cap + magic bytes. Logger: levels + PII redaction + requestId. ApiKey Prisma model (was JSON column). FeatureFlag Prisma model (DB-backed with rollout%). API versioning (/api/v1/ rewrites). Sentry integration (graceful opt-in). Centralized error handler. 14 error.tsx boundaries. Mobile login wired to real API. 5 E2E specs. 43 files changed.
+- **~27,000 lines** across ~390 files. 40+ API routes + SSE + webhook. 52 unit tests. 14 models.
+- Web app: ✅ Vercel (JWT, API versioning, Sentry, Identity Stack, Knowledge Base, RAG Playground).
 - Worker: ✅ Railway (4 BullMQ workers, `prefix: "sales-agent"`, AI compose, scoring, campaign delivery, healthcheck).
-- Mobile: ✅ Expo 52 (6 pages: Dashboard, Inbox, Inbox Detail, Knowledge Base, AI Playground, System Overview). Club Concierge demo narrative. RAG pipeline visualization. Demo/Live toggle. Shared types/tokens/client.
+- Mobile: ✅ Expo 52 (7 pages). Club Concierge demo. Real API auth wired. Demo/Live toggle functional.
 - Email: ✅ Resend verification + AI-composed sales emails with open/click tracking.
 - RAG: ✅ pgvector + embeddings (with keyword search fallback). Full pipeline: parse → chunk → embed → store → retrieve → cite.
-- Design: ✅ Corporate Green palette (#166534, #4ADE80, #0a1108, #475540, #FFFFFF, #849b70). Premium Enterprise SaaS (Notion/Linear/Stripe/Ramp). Inter typography. Real human avatars via pravatar.cc.
-- Security: Prompt injection armor, auto-send removed, prototype pollution blocked, CSP/HSTS, rate limiting, JWT revocation, Zod (16 schemas).
-- Known: Upstash Redis 500K free limit. API key Bearer auth pending. DOCX parser not installed.
-
-- **Phase 1: Foundation**. Auth + RBAC + DB Schema + package rename (`@opsflow` → `@salesagent`).
-- **Phase 2: CRM + Conversations**. Lead management, conversation inbox, AI-powered messaging.
-- **Phase 3: Agent Configuration**. Agent personality, knowledge base, goal configuration per org.
-- **Phase 4: AI Intelligence**. Response composition, lead scoring, conversation summarization, script generation.
-- **Phase 5: Campaign Engine**. Outbound campaign creation, scheduling, delivery tracking, analytics.
-- **Phase 6: Polish & Demo**. Landing page, dark mode, mobile nav, demo seed data, onboarding.
-- **Phase 7: Testing & Security**. 53 unit + 105 integration + 4 E2E specs. CSP/HSTS/rate-limit/JWT revocation/Zod.
-- **Phase 8: Security v2 & pgBouncer**. Injection audit (15 findings fixed). Prompt injection armor. `$transaction` → sequential ops.
-- **Phase 9: UI/UX — AI Staff Console**. Green accent (#22C55E). Linear sidebar. Activity-feed-first dashboard. AI animations.
-- **Phase 10: Operational Customer Identity Layer**. DiceBear avatars, presence system (online/idle/ai-processing/handoff-required), IdentityCard components, inbox redesign with Identity Cells, leads page card grid + list view, real activity feed from LeadActivity + AuditLog.
-- **Bugfix (2026-05-23)**: Seed scripts P1001 — all 5 seed scripts now inject `connection_limit=1` into PrismaClient (previously they created `new PrismaClient()` without it, exhausting Supabase pooler under parallel writes). `seed-demo.ts` serialized 15 parallel lead creates → sequential loop.
-- **Bugfix (2026-05-23)**: Inbox empty for new orgs — registration creates zero conversations/leads/agents. Use `pnpm seed-demo` (Acme Corp) or `pnpm seed-prod <slug>` to populate. Inbox page wrapper now uses correct height `calc(100vh-3.5rem)` with `-m-4 lg:-m-8` to offset main padding (was `calc(100vh-4rem)` causing page shift). `sendMessageSchema.conversationId` made optional (ID is in URL path, client doesn't send it — caused 400 on send).
-- **~12,000 lines** across ~230 files. 36 API routes + SSE + webhook.
-- Web app: ✅ Vercel (JWT + API key auth, Identity Stack UI, DiceBear avatars, presence dots, activity feed).
-- Worker: ✅ Railway (4 BullMQ workers, `prefix: "sales-agent"`, AI compose, scoring, campaign delivery, healthcheck).
-- Email: ✅ Resend verification + AI-composed sales emails with open/click tracking.
-- Demo: `pnpm seed-demo` → Acme Corp.
-- UX: Identity Stack (avatar + presence + AI ownership + activity), card grid/refined list toggle, Inbox Identity Cells, real activity feed.
-- Security: Prompt injection armor, auto-send removed, prototype pollution blocked, CSV injection sanitized, checkPermission 403, Zod (16 schemas), CSP/HSTS, rate limiting, JWT revocation.
-- Queue isolation: All BullMQ queues + Workers use `prefix: "sales-agent"`.
-- Serverless DB: PrismaClient auto-appends `connection_limit=1` for Vercel + Supabase pooler compat.
-- Known: Upstash Redis 500K free limit exhausts under heavy test load. API key Bearer auth pending (Edge runtime).
+- Design: ✅ Corporate Green palette (#166534, #4ADE80, #0a1108, #475540, #FFFFFF, #849b70). Premium Enterprise SaaS (Notion/Linear/Stripe/Ramp). Inter typography. Real human avatars via pravatar.cc. 14 error boundaries.
+- Security: Auth rate limiting (defense-in-depth), fail-closed options, IP protection, bcrypt 12, CSP unsafe-eval removed, file upload validation, PII redaction, API key model, API 401 JSON responses.
+- Known: Upstash Redis 500K free limit. DOCX parser not installed. Stripe billing not implemented. SSO/OAuth not implemented.
 
 ### Seed scripts reference
 
@@ -376,3 +370,8 @@ Without the prefix, BullMQ queue names will collide with other projects, workers
 | `EMBEDDING_MODEL` | Web | Optional: model name (default: text-embedding-3-small) |
 | `RESEND_API_KEY` | Worker | Resend email delivery |
 | `EMAIL_FROM` | Worker | Sender address for AI-composed emails |
+| `SENTRY_DSN` | Web | Sentry error tracking (optional — graceful opt-in) |
+| `RATE_LIMIT_FAIL_CLOSED` | Web | When `true`, deny requests on Redis outage (default: fail-open) |
+| `TOKEN_REVOCATION_FAIL_CLOSED` | Web | When `true`, deny tokens when Redis unavailable |
+| `TRUSTED_PROXY_RANGES` | Web | Comma-separated CIDR/IP ranges for trusted proxies |
+| `LOG_LEVEL` | Web | Minimum log level: debug, info, warn, error (default: info) |
