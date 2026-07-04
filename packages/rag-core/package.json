@@ -21,6 +21,7 @@
     "eval:retrieval": "npx tsx eval/cli.ts --retrieval-only"
   },
   "dependencies": {
-    "@salesagent/shared-types": "workspace:*"
+    "@salesagent/shared-types": "workspace:*",
+    "mammoth": "^1.12.0"
   }
 }
