@@ -1,7 +1,8 @@
-import { AIClientError, type DeepSeekMessage, type DeepSeekResponse } from "@salesagent/shared-types";
+import { AIClientError, type DeepSeekMessage, type DeepSeekResponse, type TokenUsage } from "@salesagent/shared-types";
 
 // Re-export for convenience
 export { AIClientError };
+export type { TokenUsage };
 
 const DEEPSEEK_BASE = "https://api.deepseek.com/v1";
 const MODEL = "deepseek-chat";
@@ -10,7 +11,7 @@ export async function callDeepSeek(
   prompt: string,
   system?: string,
   options?: { temperature?: number; maxTokens?: number; timeoutMs?: number },
-): Promise<string> {
+): Promise<{ content: string; usage?: TokenUsage }> {
   const apiKey = process.env.DEEPSEEK_API_KEY;
   if (!apiKey) throw new AIClientError("DEEPSEEK_API_KEY not configured — set it in .env.local", 500);
 
@@ -51,7 +52,7 @@ export async function callDeepSeek(
     const content = data.choices?.[0]?.message?.content;
     if (!content) throw new AIClientError("Empty AI response");
 
-    return content;
+    return { content, usage: data.usage };
   } catch (err) {
     if (err instanceof AIClientError) throw err;
     if ((err as Error)?.name === "AbortError") {
@@ -94,23 +95,23 @@ export async function callDeepSeekJSON<T>(
   prompt: string,
   system?: string,
   options?: { temperature?: number; maxTokens?: number; timeoutMs?: number },
-): Promise<T> {
-  const raw = await callDeepSeek(prompt, system, {
+): Promise<{ result: T; usage?: TokenUsage }> {
+  const { content, usage } = await callDeepSeek(prompt, system, {
     ...options,
     temperature: options?.temperature ?? 0.3,
   });
 
-  let cleaned = raw;
-  const codeBlock = raw.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+  let cleaned = content;
+  const codeBlock = content.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
   if (codeBlock) {
     cleaned = codeBlock[1].trim();
   }
   try {
-    return JSON.parse(cleaned) as T;
+    return { result: JSON.parse(cleaned) as T, usage };
   } catch {
     const extracted = extractBalancedJSON(cleaned);
     if (extracted) {
-      try { return JSON.parse(extracted) as T; } catch { /* fall through */ }
+      try { return { result: JSON.parse(extracted) as T, usage }; } catch { /* fall through */ }
     }
     throw new AIClientError(`AI returned invalid JSON: ${cleaned.slice(0, 300)}`);
   }

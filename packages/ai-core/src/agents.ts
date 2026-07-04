@@ -1,15 +1,7 @@
 import { callDeepSeekJSON } from "./client";
-import {
-  COMPOSE_RESPONSE_SYSTEM,
-  LEAD_SCORING_SYSTEM,
-  SUMMARIZE_CONVERSATION_SYSTEM,
-  GENERATE_SCRIPT_SYSTEM,
-  buildComposeResponsePrompt,
-  buildLeadScoringPrompt,
-  buildSummarizeConversationPrompt,
-  buildGenerateScriptPrompt,
-} from "./prompts";
 import type { ComposeResult, ScoreResult } from "@salesagent/shared-types";
+import { getPromptConfig } from "./prompt-registry";
+import type { PromptKey } from "./prompt-registry";
 
 // ── Types for DI (caller injects their own data-fetching) ────────
 
@@ -69,13 +61,15 @@ export interface ActivityData {
 export async function composeResponse(
   conversation: ConversationData,
   agentOverride?: AgentConfigData | null,
+  promptVersion?: string,
 ): Promise<ComposeResult> {
   const effectiveAgent = agentOverride ?? conversation.agent;
   const latestInbound = [...conversation.messages]
     .reverse()
     .find((m) => m.direction === "inbound");
 
-  const prompt = buildComposeResponsePrompt({
+  const config = getPromptConfig("compose_response", promptVersion);
+  const prompt = config.builder({
     leadName: conversation.lead.name,
     leadEmail: conversation.lead.email || "N/A",
     leadStage: conversation.lead.stage || "new",
@@ -97,15 +91,16 @@ export async function composeResponse(
     latestMessage: latestInbound?.content,
   });
 
-  return callDeepSeekJSON<ComposeResult>(prompt, COMPOSE_RESPONSE_SYSTEM, {
+  return callDeepSeekJSON<ComposeResult>(prompt, config.system, {
     temperature: 0.7,
-  });
+  }).then(({ result }) => result);
 }
 
 // ── Score Lead ────────────────────────────────────────────────────
 
-export async function scoreLead(lead: LeadData): Promise<ScoreResult> {
-  const prompt = buildLeadScoringPrompt({
+export async function scoreLead(lead: LeadData, promptVersion?: string): Promise<ScoreResult> {
+  const config = getPromptConfig("score_lead", promptVersion);
+  const prompt = config.builder({
     name: lead.name,
     email: lead.email,
     company: lead.company,
@@ -120,7 +115,7 @@ export async function scoreLead(lead: LeadData): Promise<ScoreResult> {
     })),
   });
 
-  const result = await callDeepSeekJSON<ScoreResult>(prompt, LEAD_SCORING_SYSTEM, {
+  const { result, usage: _scoreUsage } = await callDeepSeekJSON<ScoreResult>(prompt, config.system, {
     temperature: 0.3,
   });
 
@@ -139,7 +134,7 @@ export async function summarizeConversation(params: {
   leadName: string;
   leadCompany?: string;
   messages: Array<{ direction: string; content: string; createdAt: string }>;
-}): Promise<{
+}, promptVersion?: string): Promise<{
   summary: string;
   keyPoints: string[];
   objections: string[];
@@ -149,8 +144,13 @@ export async function summarizeConversation(params: {
   nextSteps: string[];
   shouldEscalate: boolean;
 }> {
-  const prompt = buildSummarizeConversationPrompt(params);
-  return callDeepSeekJSON(prompt, SUMMARIZE_CONVERSATION_SYSTEM, { temperature: 0.3 });
+  const config = getPromptConfig("summarize_conversation", promptVersion);
+  const prompt = config.builder(params);
+  const { result } = await callDeepSeekJSON<{
+    summary: string; keyPoints: string[]; objections: string[]; sentiment: string;
+    buyingSignals: string[]; missingInfo: string[]; nextSteps: string[]; shouldEscalate: boolean;
+  }>(prompt, config.system, { temperature: 0.3 });
+  return result;
 }
 
 // ── Generate Script ───────────────────────────────────────────────
@@ -161,7 +161,7 @@ export async function generateScript(params: {
   targetPersona?: string;
   goal?: string;
   channel?: string;
-}): Promise<{
+}, promptVersion?: string): Promise<{
   name: string;
   description: string;
   category: string;
@@ -176,6 +176,14 @@ export async function generateScript(params: {
     condition?: string;
   }>;
 }> {
-  const prompt = buildGenerateScriptPrompt(params);
-  return callDeepSeekJSON(prompt, GENERATE_SCRIPT_SYSTEM, { temperature: 0.7 });
+  const config = getPromptConfig("generate_script", promptVersion);
+  const prompt = config.builder(params);
+  const { result } = await callDeepSeekJSON<{
+    name: string; description: string; category: string; bestPractices: string[];
+    subjectLineTips: string[]; steps: Array<{
+      order: number; type: string; template?: string; subject?: string;
+      delay?: string; condition?: string;
+    }>;
+  }>(prompt, config.system, { temperature: 0.7 });
+  return result;
 }

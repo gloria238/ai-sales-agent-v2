@@ -47,13 +47,13 @@ export async function POST(request: Request, { params }: { params: { slug: strin
 
   try {
     const prompt = buildLeadScoringPrompt(lead);
-    const result = await callDeepSeekJSON<{
+    const { result: scoreData, usage: _scoreUsage } = await callDeepSeekJSON<{
       score: number; label: string; breakdown: Record<string, number>;
       signals: string[]; concerns: string[]; recommendedAction: string; recommendedAgentType: string;
     }>(prompt, LEAD_SCORING_SYSTEM, { temperature: 0.3 });
 
-    const score = Math.max(0, Math.min(100, Math.round(result.score ?? 0)));
-    const label = result.label || (score >= 70 ? "hot" : score >= 40 ? "warm" : "cold");
+    const score = Math.max(0, Math.min(100, Math.round(scoreData.score ?? 0)));
+    const label = scoreData.label || (score >= 70 ? "hot" : score >= 40 ? "warm" : "cold");
 
     // Persist score to lead
     await prisma.lead.update({ where: { id: dbLead.id }, data: { score } });
@@ -61,11 +61,11 @@ export async function POST(request: Request, { params }: { params: { slug: strin
     return NextResponse.json({
       score,
       label,
-      breakdown: result.breakdown || {},
-      signals: result.signals || [],
-      concerns: result.concerns || [],
-      recommendedAction: result.recommendedAction || "Review lead",
-      recommendedAgentType: result.recommendedAgentType || "inbound_qualifier",
+      breakdown: scoreData.breakdown || {},
+      signals: scoreData.signals || [],
+      concerns: scoreData.concerns || [],
+      recommendedAction: scoreData.recommendedAction || "Review lead",
+      recommendedAgentType: scoreData.recommendedAgentType || "inbound_qualifier",
     });
   } catch (err) {
     console.error("Lead scoring error:", err instanceof Error ? err.message : "Unknown");

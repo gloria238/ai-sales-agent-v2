@@ -28,6 +28,45 @@ const FLAGS: Record<string, FlagDefinition> = {
   ai_generate_script: { key: "ai_generate_script", env: "FEATURE_AI_SCRIPT_GEN", default: true, description: "AI script generation" },
 };
 
+// ═══ Prompt Version Flags (string-typed, stored in FeatureFlag.rules.promptVersion) ═══
+
+const PROMPT_VERSION_MAP: Record<string, { env: string; default: string }> = {
+  compose_prompt_version:   { env: "PROMPT_COMPOSE_VER",   default: "v1" },
+  score_prompt_version:     { env: "PROMPT_SCORE_VER",     default: "v1" },
+  summarize_prompt_version: { env: "PROMPT_SUMMARIZE_VER", default: "v1" },
+  script_prompt_version:    { env: "PROMPT_SCRIPT_VER",    default: "v1" },
+};
+
+/** Get the active prompt version for a given key, resolved from DB rules or env var.
+ *  Falls back to "v1" if no override is configured.
+ */
+export async function getPromptVersionFlag(
+  flagKey: string,
+  orgId?: string | null,
+): Promise<string> {
+  const mapping = PROMPT_VERSION_MAP[flagKey];
+  if (!mapping) return "v1";
+
+  // Check DB per-org override
+  if (orgId) {
+    try {
+      const record = await prisma.featureFlag.findUnique({
+        where: { organizationId_key: { organizationId: orgId, key: flagKey } },
+      });
+      if (record?.rules) {
+        const rules = record.rules as { promptVersion?: string };
+        if (rules.promptVersion) return rules.promptVersion;
+      }
+    } catch { /* DB unreachable — fall through */ }
+  }
+
+  // Env var fallback
+  const envValue = process.env[mapping.env];
+  if (envValue) return envValue;
+
+  return mapping.default;
+}
+
 // ═══ Memory Cache ════════════════════════════════════════════════════════
 
 const cache = new Map<string, { value: boolean; expiresAt: number }>();

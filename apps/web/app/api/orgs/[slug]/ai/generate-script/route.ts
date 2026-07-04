@@ -33,13 +33,13 @@ export async function POST(request: Request, { params }: { params: { slug: strin
       channel: parsed.data.channel,
     });
 
-    const result = await callDeepSeekJSON<{
+    const { result: script, usage: _genUsage } = await callDeepSeekJSON<{
       name: string; description: string; category: string;
       bestPractices: string[]; subjectLineTips: string[];
       steps: Array<{ order: number; type: string; template?: string; subject?: string; delay?: string; condition?: string }>;
     }>(prompt, GENERATE_SCRIPT_SYSTEM, { temperature: 0.8 });
 
-    return NextResponse.json({ script: result });
+    return NextResponse.json({ script });
   } catch (err) {
     console.error("Script generation error:", err instanceof Error ? err.message : "Unknown");
     return NextResponse.json({ error: "Script generation failed" }, { status: 502 });

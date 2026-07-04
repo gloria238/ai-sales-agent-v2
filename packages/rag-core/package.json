@@ -16,6 +16,10 @@
     "./sources": "./src/sources.ts",
     "./reranker": "./src/reranker.ts"
   },
+  "scripts": {
+    "eval": "npx tsx eval/cli.ts",
+    "eval:retrieval": "npx tsx eval/cli.ts --retrieval-only"
+  },
   "dependencies": {
     "@salesagent/shared-types": "workspace:*"
   }

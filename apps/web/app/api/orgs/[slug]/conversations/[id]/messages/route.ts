@@ -3,6 +3,7 @@ import { prisma } from "@salesagent/db";
 import { getSession } from "@/lib/session";
 import { requirePermission, checkPermission } from "@/lib/permissions";
 import { sendMessageSchema } from "@/lib/validation";
+import { getRequestContext } from "@/lib/logger";
 
 export async function GET(req: NextRequest, { params }: { params: { slug: string; id: string } }) {
   const session = await getSession();
@@ -54,9 +55,11 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
 
   // Enqueue AI reply composition + email delivery (non-blocking — worker handles if Redis available)
   try {
+    const ctx = getRequestContext(req);
+    const context = { requestId: ctx.requestId, spanId: `http-${ctx.requestId.slice(0, 8)}` };
     const { conversationQueue, emailQueue } = await import("@salesagent/worker/queue");
-    await conversationQueue.add("compose-reply", { conversationId: params.id });
-    await emailQueue.add("send-outbound", { conversationId: params.id, leadId: conversation.leadId });
+    await conversationQueue.add("compose-reply", { conversationId: params.id, context });
+    await emailQueue.add("send-outbound", { conversationId: params.id, leadId: conversation.leadId, context });
   } catch {
     // Redis unavailable — message is still saved, AI reply + email won't fire
   }

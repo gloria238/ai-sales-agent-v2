@@ -4,8 +4,15 @@ export interface DeepSeekMessage {
   content: string;
 }
 
+export interface TokenUsage {
+  prompt_tokens: number;
+  completion_tokens: number;
+  total_tokens: number;
+}
+
 export interface DeepSeekResponse {
   choices: Array<{ message: { content: string }; finish_reason: string }>;
+  usage?: TokenUsage;
 }
 
 // ── AI Client Error ─────────────────────────────────────────────────

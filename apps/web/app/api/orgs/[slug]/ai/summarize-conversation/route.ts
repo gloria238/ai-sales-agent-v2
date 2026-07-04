@@ -44,13 +44,13 @@ export async function POST(request: Request, { params }: { params: { slug: strin
       })),
     });
 
-    const result = await callDeepSeekJSON<{
+    const { result: summary, usage: _sumUsage } = await callDeepSeekJSON<{
       summary: string; keyPoints: string[]; objections: string[];
       sentiment: string; buyingSignals: string[]; missingInfo: string[];
       nextSteps: string[]; shouldEscalate: boolean;
     }>(prompt, SUMMARIZE_CONVERSATION_SYSTEM, { temperature: 0.3 });
 
-    return NextResponse.json(result);
+    return NextResponse.json(summary);
   } catch (err) {
     console.error("Summarization error:", err instanceof Error ? err.message : "Unknown");
     return NextResponse.json({ error: "Summarization failed" }, { status: 502 });

@@ -47,6 +47,7 @@ model Organization {
   campaigns     Campaign[]
   scripts       Script[]
   auditLogs     AuditLog[]
+  aiCallMetrics AICallMetric[]
   documents     Document[]
   documentChunks DocumentChunk[]
   createdAt     DateTime       @default(now())
@@ -149,7 +150,7 @@ model Conversation {
   agentId        String?
   channel        String       @default("email") // email | chat | sms
   subject        String?
-  status         String       @default("active") // active | closed | archived
+  status         String       @default("active") // active | awaiting_approval | approved | closed | archived
   lead           Lead         @relation(fields: [leadId], references: [id])
   agent          Agent?       @relation(fields: [agentId], references: [id])
   organization   Organization @relation(fields: [organizationId], references: [id])
@@ -255,6 +256,8 @@ model DocumentChunk {
   content        String
   chunkIndex     Int
   metadata       Json?        // { title, fileName, section }
+  searchVector   Unsupported("tsvector")?   @map("search_vector")  // Full-text search vector, managed by setup-vector.mjs
+  embedding      Unsupported("vector")?    // pgvector embedding, managed by setup-vector.mjs
   document       Document     @relation(fields: [documentId], references: [id], onDelete: Cascade)
   organization   Organization @relation(fields: [organizationId], references: [id])
   createdAt      DateTime     @default(now())
@@ -280,6 +283,34 @@ model AuditLog {
   organization   Organization @relation(fields: [organizationId], references: [id])
 
   @@index([organizationId, createdAt(sort: Desc)])
+  @@schema("sales_agent")
+}
+
+// ── AI Call Metrics ─────────────────────────────────────────────────
+
+model AICallMetric {
+  id               String   @id @default(uuid())
+  organizationId   String
+  jobType          String   // compose_response | score_lead | summarize_conversation | generate_script | campaign_ai | kb_ask
+  model            String   @default("deepseek-chat")
+  promptTokens     Int      @default(0)
+  completionTokens Int      @default(0)
+  totalTokens      Int      @default(0)
+  llmLatencyMs     Int
+  totalLatencyMs   Int
+  success          Boolean  @default(true)
+  fallbackUsed     Boolean  @default(false)
+  retryCount       Int      @default(0)
+  errorType        String?
+  requestId        String?
+  conversationId   String?
+  leadId           String?
+  promptVersion    String?
+  organization     Organization @relation(fields: [organizationId], references: [id])
+  createdAt        DateTime     @default(now())
+
+  @@index([organizationId, createdAt(sort: Desc)])
+  @@index([organizationId, jobType])
   @@schema("sales_agent")
 }
 

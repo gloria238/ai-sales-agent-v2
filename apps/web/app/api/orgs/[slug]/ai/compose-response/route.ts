@@ -54,14 +54,14 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
   });
 
   try {
-    const result = await callDeepSeekJSON<{ subject: string; body: string; tone: string; suggestedAction: string }>(
+    const { result: composed, usage: _compUsage } = await callDeepSeekJSON<{ subject: string; body: string; tone: string; suggestedAction: string }>(
       prompt,
       COMPOSE_RESPONSE_SYSTEM,
       { temperature: 0.7 },
     );
 
     return NextResponse.json({
-      draft: { subject: result.subject, body: result.body, tone: result.tone, suggestedAction: result.suggestedAction || "review" },
+      draft: { subject: composed.subject, body: composed.body, tone: composed.tone, suggestedAction: composed.suggestedAction || "review" },
     });
   } catch (err) {
     return NextResponse.json({ error: "AI composition failed", retryable: true }, { status: 500 });

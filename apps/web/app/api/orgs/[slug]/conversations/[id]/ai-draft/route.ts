@@ -49,7 +49,7 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
   });
 
   try {
-    const result = await callDeepSeekJSON<{ subject: string; body: string; tone: string; suggestedAction: string }>(
+    const { result: composed, usage: _draftUsage } = await callDeepSeekJSON<{ subject: string; body: string; tone: string; suggestedAction: string }>(
       prompt,
       COMPOSE_RESPONSE_SYSTEM,
       { temperature: 0.7 },
@@ -57,10 +57,10 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
 
     return NextResponse.json({
       draft: {
-        subject: result.subject,
-        body: result.body,
-        tone: result.tone,
-        suggestedAction: result.suggestedAction || "review",
+        subject: composed.subject,
+        body: composed.body,
+        tone: composed.tone,
+        suggestedAction: composed.suggestedAction || "review",
       },
     });
   } catch (err) {

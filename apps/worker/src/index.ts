@@ -4,8 +4,11 @@ import path from "node:path";
 import { Worker, Job } from "bullmq";
 import { prisma } from "@salesagent/db";
 import { connection, conversationQueue, emailQueue, campaignQueue, scoringQueue } from "./queue";
+import type { JobContext } from "./queue";
 import { sendEmail } from "./email";
-import { callDeepSeekJSON, PROMPT_ARMOR, safe } from "./ai";
+import { callDeepSeekJSON, PROMPT_ARMOR, safe, buildMetric, estimateCost } from "@salesagent/ai-core";
+import type { AICallMetricInput } from "@salesagent/ai-core";
+import { checkAndMarkDedup } from "./dedup";
 
 const Q_PREFIX = "sales-agent";
 
@@ -14,7 +17,7 @@ interface ComposeResult {
   subject: string; body: string; tone: string; suggestedAction: string;
 }
 
-async function composeAiResponse(conversationId: string, agentId?: string): Promise<ComposeResult> {
+async function composeAiResponse(conversationId: string, agentId?: string, requestId?: string): Promise<ComposeResult> {
   const conversation = await prisma.conversation.findUnique({
     where: { id: conversationId },
     include: { lead: true, agent: true, messages: { orderBy: { createdAt: "asc" }, take: 20 } },
@@ -54,7 +57,29 @@ ${latestInbound ? `LATEST INBOUND: <user_data>${safe(latestInbound.content)}</us
 
 Return JSON: { "subject": "...", "body": "...", "tone": "friendly|professional|direct|consultative", "suggestedAction": "send_now|review|escalate_to_human" }`;
 
-  return callDeepSeekJSON<ComposeResult>(prompt, system, { temperature: 0.7, timeoutMs: 15_000 });
+  const llmStart = Date.now();
+  const { result, usage } = await callDeepSeekJSON<ComposeResult>(prompt, system, { temperature: 0.7, timeoutMs: 15_000 });
+  const llmLatencyMs = Date.now() - llmStart;
+
+  // Log AI call metric (non-blocking)
+  try {
+    await prisma.aICallMetric.create({
+      data: {
+        organizationId: conversation.organizationId,
+        jobType: "compose_response",
+        promptTokens: usage?.prompt_tokens ?? 0,
+        completionTokens: usage?.completion_tokens ?? 0,
+        totalTokens: usage?.total_tokens ?? 0,
+        llmLatencyMs,
+        totalLatencyMs: llmLatencyMs,
+        success: true,
+        requestId,
+        conversationId,
+      },
+    });
+  } catch { /* metrics logging failure should not block AI */ }
+
+  return result;
 }
 
 // ── Lead Scoring ──────────────────────────────────────────────────
@@ -63,7 +88,7 @@ interface ScoreResult {
   signals: string[]; concerns: string[]; recommendedAction: string;
 }
 
-async function scoreLead(leadId: string): Promise<ScoreResult> {
+async function scoreLead(leadId: string, requestId?: string): Promise<ScoreResult> {
   const lead = await prisma.lead.findUnique({
     where: { id: leadId },
     include: { activities: { orderBy: { createdAt: "desc" }, take: 10 } },
@@ -94,13 +119,33 @@ ${activities || "(none)"}
 
 Score across BANT dimensions. Return JSON: { "score": 0-100, "label": "hot|warm|cold", "breakdown": { "intent": 0-100, "budget": 0-100, "authority": 0-100, "need": 0-100, "timeline": 0-100 }, "signals": ["..."], "concerns": ["..."], "recommendedAction": "..." }`;
 
-  const result = await callDeepSeekJSON<ScoreResult>(prompt, system, { temperature: 0.3, timeoutMs: 15_000 });
+  const llmStart = Date.now();
+  const { result: scoreData, usage } = await callDeepSeekJSON<ScoreResult>(prompt, system, { temperature: 0.3, timeoutMs: 15_000 });
+  const llmLatencyMs = Date.now() - llmStart;
 
-  const score = Math.max(0, Math.min(100, Math.round(result.score ?? 0)));
+  const score = Math.max(0, Math.min(100, Math.round(scoreData.score ?? 0)));
 
   await prisma.lead.update({ where: { id: leadId }, data: { score } });
 
-  return { ...result, score, label: result.label || (score >= 70 ? "hot" : score >= 40 ? "warm" : "cold") };
+  // Log AI call metric (non-blocking)
+  try {
+    await prisma.aICallMetric.create({
+      data: {
+        organizationId: lead.organizationId,
+        jobType: "score_lead",
+        promptTokens: usage?.prompt_tokens ?? 0,
+        completionTokens: usage?.completion_tokens ?? 0,
+        totalTokens: usage?.total_tokens ?? 0,
+        llmLatencyMs,
+        totalLatencyMs: llmLatencyMs,
+        success: true,
+        requestId,
+        leadId,
+      },
+    });
+  } catch { /* metrics logging failure should not block */ }
+
+  return { ...scoreData, score, label: scoreData.label || (score >= 70 ? "hot" : score >= 40 ? "warm" : "cold") };
 }
 
 // ── Campaign Step Execution ───────────────────────────────────────
@@ -130,7 +175,7 @@ function resolveTemplate(template: string, context: Record<string, unknown>): st
   });
 }
 
-async function executeCampaignStep(campaignId: string, leadId: string, stepIndex: number) {
+async function executeCampaignStep(campaignId: string, leadId: string, stepIndex: number, requestId?: string) {
   const campaign = await prisma.campaign.findUnique({
     where: { id: campaignId },
     include: { script: true, agent: true },
@@ -150,7 +195,7 @@ async function executeCampaignStep(campaignId: string, leadId: string, stepIndex
 
   if (step.type === "delay") {
     const delayMs = step.delay ? parseDelay(step.delay) : 86400_000;
-    await campaignQueue.add("send-email", { campaignId, leadId, stepIndex: stepIndex + 1 }, { delay: delayMs });
+    await campaignQueue.add("send-email", { campaignId, leadId, stepIndex: stepIndex + 1, context: requestId ? { requestId: `${requestId}-s${stepIndex + 1}`, spanId: `campaign-delay-${stepIndex + 1}`, parentSpanId: requestId } : undefined }, { delay: delayMs });
     return;
   }
 
@@ -169,13 +214,49 @@ Agent: ${safe(campaign.agent?.personality || "Professional SDR")}
 
 Return JSON: { "subject": "...", "body": "..." }`;
 
-      const composed = await callDeepSeekJSON<{ subject: string; body: string }>(
+      const llmStart = Date.now();
+      const { result: composed, usage } = await callDeepSeekJSON<{ subject: string; body: string }>(
         aiPrompt, system, { temperature: 0.7, timeoutMs: 15_000 },
       );
+      const llmLatencyMs = Date.now() - llmStart;
       subject = composed.subject || subject;
       body = composed.body || body;
+
+      // Log AI call metric (non-blocking)
+      try {
+        await prisma.aICallMetric.create({
+          data: {
+            organizationId: campaign.organizationId,
+            jobType: "campaign_ai",
+            promptTokens: usage?.prompt_tokens ?? 0,
+            completionTokens: usage?.completion_tokens ?? 0,
+            totalTokens: usage?.total_tokens ?? 0,
+            llmLatencyMs,
+            totalLatencyMs: llmLatencyMs,
+            success: true,
+            requestId,
+            leadId,
+          },
+        });
+      } catch { /* metrics logging failure should not block */ }
     } catch (err) {
       console.warn(`AI personalization failed for lead ${leadId}, using template`);
+      // Log failed AI call metric
+      try {
+        await prisma.aICallMetric.create({
+          data: {
+            organizationId: campaign.organizationId,
+            jobType: "campaign_ai",
+            success: false,
+            fallbackUsed: true,
+            errorType: err instanceof Error ? err.message.slice(0, 200) : "unknown",
+            requestId,
+            leadId,
+            llmLatencyMs: 0,
+            totalLatencyMs: 0,
+          },
+        });
+      } catch { /* metrics logging failure should not block */ }
     }
   }
 
@@ -199,7 +280,7 @@ Return JSON: { "subject": "...", "body": "..." }`;
 
   if (stepIndex + 1 < steps.length) {
     const nextDelay = step.delay ? parseDelay(step.delay) : 3 * 86400_000;
-    await campaignQueue.add("send-email", { campaignId, leadId, stepIndex: stepIndex + 1 }, { delay: nextDelay });
+    await campaignQueue.add("send-email", { campaignId, leadId, stepIndex: stepIndex + 1, context: requestId ? { requestId: `${requestId}-s${stepIndex + 1}`, spanId: `campaign-next-${stepIndex + 1}`, parentSpanId: requestId } : undefined }, { delay: nextDelay });
   }
 }
 
@@ -225,8 +306,15 @@ const workerOpts = {
   },
 };
 
-const conversationWorker = new Worker("conversation-jobs", async (job: Job<{ conversationId: string; agentId?: string }>) => {
-  const result = await composeAiResponse(job.data.conversationId, job.data.agentId);
+const conversationWorker = new Worker("conversation-jobs", async (job: Job<{ conversationId: string; agentId?: string; context?: JobContext }>) => {
+  // Idempotency check
+  if (job.data.context?.requestId) {
+    const isFirst = await checkAndMarkDedup(job.data.context.requestId);
+    if (!isFirst) { console.log(`[idempotent] Skipping duplicate conversation job ${job.data.context.requestId}`); return { skipped: true }; }
+  }
+  const traceId = job.data.context?.requestId;
+  if (traceId) console.log(JSON.stringify({ level: "info", requestId: traceId, spanId: "worker-conversation", message: "AI compose started", conversationId: job.data.conversationId }));
+  const result = await composeAiResponse(job.data.conversationId, job.data.agentId, traceId);
   await prisma.message.create({
     data: {
       conversationId: job.data.conversationId,
@@ -236,10 +324,16 @@ const conversationWorker = new Worker("conversation-jobs", async (job: Job<{ con
   });
   // AI draft is saved as a message but NEVER auto-sent.
   // Human approval is required before any outbound email goes out.
-  await prisma.conversation.update({ where: { id: job.data.conversationId }, data: { updatedAt: new Date() } });
+  // Set awaiting_approval status so the inbox can highlight it.
+  await prisma.conversation.update({ where: { id: job.data.conversationId }, data: { status: "awaiting_approval", updatedAt: new Date() } });
+  if (traceId) console.log(JSON.stringify({ level: "info", requestId: traceId, spanId: "worker-conversation", message: "AI compose completed", conversationId: job.data.conversationId }));
 }, { ...workerOpts, concurrency: 5 });
 
-const emailWorker = new Worker("email-jobs", async (job: Job<{ leadId: string; subject?: string; body?: string; to?: string }>) => {
+const emailWorker = new Worker("email-jobs", async (job: Job<{ leadId: string; subject?: string; body?: string; to?: string; context?: JobContext }>) => {
+  if (job.data.context?.requestId) {
+    const isFirst = await checkAndMarkDedup(job.data.context.requestId);
+    if (!isFirst) { console.log(`[idempotent] Skipping duplicate email job ${job.data.context.requestId}`); return { skipped: true }; }
+  }
   const lead = await prisma.lead.findUnique({ where: { id: job.data.leadId } });
   if (!lead?.email) throw new Error(`Lead has no email`);
   await sendEmail({
@@ -250,25 +344,26 @@ const emailWorker = new Worker("email-jobs", async (job: Job<{ leadId: string; s
   }, { lead });
 }, { ...workerOpts, concurrency: 5 });
 
-const campaignWorker = new Worker("campaign-jobs", async (job: Job<{ campaignId: string; leadId: string; stepIndex: number }>) => {
-  await executeCampaignStep(job.data.campaignId, job.data.leadId, job.data.stepIndex);
-}, { ...workerOpts, concurrency: 3 });
-
-const scoringWorker = new Worker("scoring-jobs", async (job: Job<{ leadId: string }>) => {
-  await scoreLead(job.data.leadId);
-}, { ...workerOpts, concurrency: 3 });
-
-// ── Queue default job options (retry + remove on complete) ───────
-for (const q of [conversationQueue, emailQueue, campaignQueue, scoringQueue]) {
-  if (q) {
-    q.defaultJobOptions = {
-      attempts: 3,
-      backoff: { type: "exponential", delay: 2000 },
-      removeOnComplete: { age: 3600 * 24 },
-      removeOnFail: { age: 3600 * 24 * 7 },
-    };
+const campaignWorker = new Worker("campaign-jobs", async (job: Job<{ campaignId: string; leadId: string; stepIndex: number; context?: JobContext }>) => {
+  if (job.data.context?.requestId) {
+    const isFirst = await checkAndMarkDedup(job.data.context.requestId);
+    if (!isFirst) { console.log(`[idempotent] Skipping duplicate campaign job ${job.data.context.requestId}`); return { skipped: true }; }
   }
-}
+  await executeCampaignStep(job.data.campaignId, job.data.leadId, job.data.stepIndex, job.data.context?.requestId);
+}, { ...workerOpts, concurrency: 3 });
+
+const scoringWorker = new Worker("scoring-jobs", async (job: Job<{ leadId: string; context?: JobContext }>) => {
+  if (job.data.context?.requestId) {
+    const isFirst = await checkAndMarkDedup(job.data.context.requestId);
+    if (!isFirst) { console.log(`[idempotent] Skipping duplicate scoring job ${job.data.context.requestId}`); return { skipped: true }; }
+  }
+  await scoreLead(job.data.leadId, job.data.context?.requestId);
+}, { ...workerOpts, concurrency: 3 });
+
+// ═── Queue default job options (set at queue creation) ───────
+// BullMQ 5.x: defaultJobOptions is read-only on Queue instances.
+// Options are configured in queue.ts constructors instead.
+// Worker-level backoffStrategy below handles retry timing.
 
 // ── Event handlers ───────────────────────────────────────────────
 for (const w of [conversationWorker, emailWorker, campaignWorker, scoringWorker]) {

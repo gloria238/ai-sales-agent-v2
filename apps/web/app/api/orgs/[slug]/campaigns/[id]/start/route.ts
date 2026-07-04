@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@salesagent/db";
 import { getSession } from "@/lib/session";
 import { requirePermission, checkPermission } from "@/lib/permissions";
+import { getRequestContext } from "@/lib/logger";
 
 export async function POST(req: NextRequest, { params }: { params: { slug: string; id: string } }) {
   const session = await getSession();
@@ -62,9 +63,11 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
   // Dispatch to queue (dynamic import — requires Redis)
   let dispatchFailed = false;
   try {
+    const ctx = getRequestContext(req);
     const { campaignQueue } = await import("@salesagent/worker/queue");
     for (const lead of leads) {
-      await campaignQueue.add("send-email", { campaignId: params.id, leadId: lead.id, stepIndex: 0 });
+      const context = { requestId: `${ctx.requestId}-${lead.id.slice(0, 8)}`, spanId: `campaign-${lead.id.slice(0, 8)}` };
+      await campaignQueue.add("send-email", { campaignId: params.id, leadId: lead.id, stepIndex: 0, context });
     }
   } catch {
     dispatchFailed = true;

@@ -74,3 +74,23 @@ export function logWarn(ctx: ReturnType<typeof getRequestContext>, message: stri
   const entry = { level: "warn", ...ctx, message, ...(data ? redactObject(data) : {}) };
   console.warn(JSON.stringify(entry));
 }
+
+// ── Trace Helpers ──────────────────────────────────────────────────
+
+/** Trace context for distributed tracing (HTTP → Queue → LLM → DB).
+ *  Injected into log entries so every hop carries the same requestId.
+ */
+export interface TraceContext {
+  requestId: string;
+  spanId?: string;
+  parentSpanId?: string;
+}
+
+/** Return a partial record to spread into any log entry for trace correlation. */
+export function withTrace(trace: TraceContext): Record<string, unknown> {
+  return {
+    requestId: trace.requestId,
+    spanId: trace.spanId,
+    parentSpanId: trace.parentSpanId,
+  };
+}

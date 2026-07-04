@@ -4,6 +4,7 @@ import { getSession } from "@/lib/session";
 import { checkPermission } from "@/lib/permissions";
 import { callDeepSeekJSON, PROMPT_ARMOR, safe } from "@salesagent/ai-core";
 import { createEmbeddingProvider } from "@salesagent/rag-core/embeddings";
+import { reciprocalRankFusion } from "@salesagent/rag-core";
 
 export async function POST(req: NextRequest, { params }: { params: { slug: string } }) {
   const session = await getSession();
@@ -21,44 +22,78 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
   }
 
   try {
-    // 1. Try vector search first, fall back to keyword search
-    let chunks: Array<{
+    type ChunkRow = {
       id: string; document_id: string; content: string; chunk_index: number;
       metadata: Record<string, unknown>; similarity: number;
-    }> = [];
+    };
 
-    try {
-      const embedder = createEmbeddingProvider();
-      const queryEmbedding = await embedder.embed(question);
-      const embStr = `[${queryEmbedding.join(",")}]`;
-      chunks = await prisma.$queryRawUnsafe<typeof chunks>(
-        `SELECT id, document_id, content, chunk_index, metadata,
-                1 - (embedding <=> $1::vector) AS similarity
-         FROM sales_agent."DocumentChunk"
-         WHERE organization_id = $2 AND embedding IS NOT NULL
-         ORDER BY embedding <=> $1::vector
-         LIMIT 5`,
-        embStr,
-        membership.organizationId,
-      );
-    } catch {
-      // Vector search failed — fall back to keyword search
-    }
+    // 1. Parallel: vector search + keyword search (hybrid)
+    const vectorPromise = (async (): Promise<ChunkRow[]> => {
+      try {
+        const embedder = createEmbeddingProvider();
+        const queryEmbedding = await embedder.embed(question);
+        const embStr = `[${queryEmbedding.join(",")}]`;
+        return await prisma.$queryRawUnsafe<ChunkRow[]>(
+          `SELECT id, document_id, content, chunk_index, metadata,
+                  1 - (embedding <=> $1::vector) AS similarity
+           FROM sales_agent."DocumentChunk"
+           WHERE organization_id = $2 AND embedding IS NOT NULL
+           ORDER BY embedding <=> $1::vector
+           LIMIT 10`,
+          embStr,
+          membership.organizationId,
+        );
+      } catch {
+        return [];
+      }
+    })();
 
-    // 2. Fallback: keyword search (ILIKE) if no vector results
-    if (chunks.length === 0) {
+    const keywordPromise = (async (): Promise<ChunkRow[]> => {
+      try {
+        // Try tsvector FTS first
+        const tsquery = question.split(/\s+/).filter((w) => w.length > 1).map((w) => `${w}:*`).join(" & ");
+        if (tsquery) {
+          try {
+            return await prisma.$queryRawUnsafe<ChunkRow[]>(
+              `SELECT id, document_id, content, chunk_index, metadata,
+                      ts_rank(search_vector, to_tsquery('english', $1)) AS similarity
+               FROM sales_agent."DocumentChunk"
+               WHERE organization_id = $2 AND search_vector @@ to_tsquery('english', $1)
+               ORDER BY similarity DESC LIMIT 10`,
+              tsquery,
+              membership.organizationId,
+            );
+          } catch { /* tsvector column may not exist — fall through */ }
+        }
+      } catch { /* ignore */ }
+
+      // Regex fallback
       const keywords = question.split(/\s+/).filter((w) => w.length > 2).join(" | ");
-      const raw = await prisma.$queryRawUnsafe<typeof chunks>(
+      return await prisma.$queryRawUnsafe<ChunkRow[]>(
         `SELECT id, document_id, content, chunk_index, metadata, 0.5 AS similarity
          FROM sales_agent."DocumentChunk"
-         WHERE organization_id = $1
-           AND content ~* $2
-         LIMIT 5`,
+         WHERE organization_id = $1 AND content ~* $2 LIMIT 10`,
         membership.organizationId,
         keywords || question,
       );
-      chunks = raw;
-    }
+    })();
+
+    const [vectorChunks, keywordChunks] = await Promise.all([vectorPromise, keywordPromise]);
+
+    // 2. RRF fusion
+    const fused = reciprocalRankFusion(
+      [
+        vectorChunks.map((c) => ({ id: c.id, score: c.similarity })),
+        keywordChunks.map((c) => ({ id: c.id, score: c.similarity })),
+      ],
+      60,
+      5,
+    );
+
+    // 3. Map fused IDs back to full chunk data (dedup by ID)
+    const allChunks = [...vectorChunks, ...keywordChunks];
+    const chunkMap = new Map(allChunks.map((c) => [c.id, c]));
+    const chunks = fused.map((f) => chunkMap.get(f.id)!).filter(Boolean);
 
     if (chunks.length === 0) {
       return NextResponse.json({
@@ -84,7 +119,24 @@ Question: <user_data>${safe(question)}</user_data>
 
 Answer the question based on the context above. Include source citations like [Source 1] in your answer. Return JSON: { "answer": "..." }`;
 
-    const aiAnswer = await callDeepSeekJSON<{ answer: string }>(prompt, system, { temperature: 0.3 });
+    const { result: aiAnswer, usage: _askUsage } = await callDeepSeekJSON<{ answer: string }>(prompt, system, { temperature: 0.3 });
+
+    // Log AI call metric (non-blocking)
+    try {
+      await prisma.aICallMetric.create({
+        data: {
+          organizationId: membership.organizationId,
+          jobType: "kb_ask",
+          promptTokens: _askUsage?.prompt_tokens ?? 0,
+          completionTokens: _askUsage?.completion_tokens ?? 0,
+          totalTokens: _askUsage?.total_tokens ?? 0,
+          llmLatencyMs: 0,
+          totalLatencyMs: 0,
+          success: chunks.length > 0,
+          fallbackUsed: chunks.length > 0 && (chunks[0] as any).similarity === 0.5,
+        },
+      });
+    } catch { /* metrics logging failure should not block */ }
 
     // 5. Build citations
     const citations = chunks.map((c) => ({

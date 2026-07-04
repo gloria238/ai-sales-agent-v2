@@ -146,7 +146,7 @@ function DetailHeader({ lead, agent, conversation }: { lead: any; agent: any; co
 // ── Main Component ───────────────────────────────────────
 
 export function InboxClient({ conversations, orgSlug, selectedId: initialSelectedId }: Props) {
-  const [filter, setFilter] = useState<"all" | "active" | "needs_reply" | "closed">("all");
+  const [filter, setFilter] = useState<"all" | "active" | "needs_review" | "needs_reply" | "closed">("all");
   const [selectedId, setSelectedId] = useState<string | null>(initialSelectedId || null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [msgsLoading, setMsgsLoading] = useState(false);
@@ -159,7 +159,8 @@ export function InboxClient({ conversations, orgSlug, selectedId: initialSelecte
 
   const filtered = conversations.filter((c: any) => {
     if (filter === "all") return true;
-    if (filter === "active") return c.status === "active";
+    if (filter === "active") return c.status === "active" || c.status === "awaiting_approval";
+    if (filter === "needs_review") return c.status === "awaiting_approval";
     if (filter === "needs_reply") {
       const lastMsg = c.messages[0];
       return c.status === "active" && lastMsg?.direction === "inbound";
@@ -169,7 +170,8 @@ export function InboxClient({ conversations, orgSlug, selectedId: initialSelecte
 
   const counts = {
     all: conversations.length,
-    active: conversations.filter((c: any) => c.status === "active").length,
+    active: conversations.filter((c: any) => c.status === "active" || c.status === "awaiting_approval").length,
+    needs_review: conversations.filter((c: any) => c.status === "awaiting_approval").length,
     needs_reply: conversations.filter((c: any) => {
       const lastMsg = c.messages[0];
       return c.status === "active" && lastMsg?.direction === "inbound";
@@ -251,7 +253,7 @@ export function InboxClient({ conversations, orgSlug, selectedId: initialSelecte
         <div className="p-4 border-b border-border space-y-3 shrink-0">
           <h1 className="text-lg font-semibold text-text">Inbox</h1>
           <div className="flex gap-1.5 flex-wrap">
-            {(["all", "active", "needs_reply", "closed"] as const).map((f) => (
+            {(["all", "active", "needs_review", "needs_reply", "closed"] as const).map((f) => (
               <button
                 key={f}
                 onClick={() => setFilter(f)}
@@ -260,7 +262,7 @@ export function InboxClient({ conversations, orgSlug, selectedId: initialSelecte
                   filter === f ? "bg-accent text-white shadow-sm" : "text-text-muted hover:text-text hover:bg-bg-subtle",
                 )}
               >
-                <span>{f === "needs_reply" ? "Needs Reply" : f.charAt(0).toUpperCase() + f.slice(1)}</span>
+                <span>{f === "needs_review" ? "⏳ Needs Review" : f === "needs_reply" ? "Needs Reply" : f.charAt(0).toUpperCase() + f.slice(1)}</span>
                 {counts[f] > 0 && (
                   <span className={cn(
                     "inline-flex items-center justify-center min-w-[18px] h-[18px] rounded-full text-[10px] font-medium px-1",
@@ -284,9 +286,15 @@ export function InboxClient({ conversations, orgSlug, selectedId: initialSelecte
               {filtered.map((c: any) => {
                 const lastMsg = c.messages[0];
                 const isUnread = lastMsg?.direction === "inbound" && c.status === "active";
+                const needsReview = c.status === "awaiting_approval";
                 return (
+                  <div key={c.id} className="relative">
+                    {needsReview && (
+                      <div className="absolute top-2 right-2 z-10 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-warning/15 text-warning ring-1 ring-warning/30">
+                        ⏳ Review
+                      </div>
+                    )}
                   <IdentityCard
-                    key={c.id}
                     customer={{
                       id: c.lead.id, name: c.lead.name, email: c.lead.email,
                       company: c.lead.company, avatarSeed: c.lead.email || c.lead.name,
@@ -300,6 +308,7 @@ export function InboxClient({ conversations, orgSlug, selectedId: initialSelecte
                     messagePreview={lastMsg?.content?.substring(0, 140)}
                     onClick={() => setSelectedId(c.id)}
                   />
+                  </div>
                 );
               })}
             </div>

@@ -2,15 +2,56 @@ import { prisma } from "@salesagent/db";
 import { getSession } from "@/lib/session";
 import { redirect } from "next/navigation";
 import { TrendingUp, Send, BarChart3, Bot, DollarSign, Target, CalendarCheck } from "lucide-react";
+import AIHealthTab from "./ai-health";
 
 const AVG_DEAL_SIZE = 5000;
 
-export default async function AnalyticsPage() {
+export default async function AnalyticsPage({ searchParams }: { searchParams: { tab?: string } }) {
   const session = await getSession();
   if (!session) redirect("/login");
 
   const org = await prisma.organization.findUnique({ where: { id: session.orgId } });
   if (!org) redirect("/login");
+
+  const activeTab = searchParams.tab === "ai" ? "ai" : "sales";
+
+  // ── Tab Navigation ──────────────────────────────────────────
+  const TabNav = (
+    <div className="flex gap-1 bg-bg-subtle rounded-lg p-0.5 w-fit">
+      <a
+        href="/analytics?tab=sales"
+        className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
+          activeTab === "sales" ? "bg-accent text-white" : "text-text-muted hover:text-text"
+        }`}
+      >
+        Sales
+      </a>
+      <a
+        href="/analytics?tab=ai"
+        className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
+          activeTab === "ai" ? "bg-accent text-white" : "text-text-muted hover:text-text"
+        }`}
+      >
+        AI Health
+      </a>
+    </div>
+  );
+
+  // ── AI Health Tab (client component) ────────────────────────
+  if (activeTab === "ai") {
+    return (
+      <div className="max-w-7xl mx-auto space-y-6 animate-slide-up p-4 lg:p-6">
+        <div>
+          <h1 className="text-xl font-bold tracking-tight text-text">Analytics</h1>
+          <p className="text-sm text-text-secondary mt-1">AI performance, cost, and latency metrics</p>
+        </div>
+        {TabNav}
+        <AIHealthTab />
+      </div>
+    );
+  }
+
+  // ── Sales Metrics Tab (existing content) ────────────────────
 
   const now = new Date();
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -63,6 +104,8 @@ export default async function AnalyticsPage() {
         <h1 className="text-xl font-bold tracking-tight text-text">Analytics</h1>
         <p className="text-sm text-text-secondary mt-1">Pipeline, campaign, and AI performance metrics</p>
       </div>
+
+      {TabNav}
 
       {/* KPI cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
