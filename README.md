@@ -3,13 +3,14 @@
   <img src="https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white" />
   <img src="https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql&logoColor=white" />
   <img src="https://img.shields.io/badge/Prisma-6-2D3748?logo=prisma&logoColor=white" />
-  <img src="https://img.shields.io/badge/pgvector-Embeddings-4169E1?logo=postgresql" />
+  <img src="https://img.shields.io/badge/pgvector-Hybrid%20Search-4169E1?logo=postgresql" />
   <img src="https://img.shields.io/badge/Expo-Mobile-000020?logo=expo" />
-  <img src="https://img.shields.io/badge/BullMQ-Async%20Queue-DC2626" />
-  <img src="https://img.shields.io/badge/Redis-Background%20Jobs-red?logo=redis&logoColor=white" />
-  <img src="https://img.shields.io/badge/RAG-Knowledge%20Base-4F46E5" />
+  <img src="https://img.shields.io/badge/BullMQ-4%20Queues-DC2626" />
+  <img src="https://img.shields.io/badge/Redis-Idempotent-red?logo=redis&logoColor=white" />
+  <img src="https://img.shields.io/badge/RAG-Hybrid%20Retrieval-4F46E5" />
   <img src="https://img.shields.io/badge/Resend-Email-7C3AED" />
   <img src="https://img.shields.io/badge/DeepSeek-AI-4F46E5" />
+  <img src="https://img.shields.io/badge/Sentry-Observability-362D59?logo=sentry" />
   <img src="https://img.shields.io/badge/Vercel-Web%20Deploy-black?logo=vercel" />
   <img src="https://img.shields.io/badge/Railway-Worker-0B0D0E?logo=railway" />
 </p>
@@ -44,6 +45,19 @@ Application   →  AI Core  +  RAG Core  +  API Client
 Foundation    →  Domain entities  +  Types  +  Database (PostgreSQL + pgvector)
 ```
 
+### AI Engineering Highlights
+
+| Capability | Implementation | Why it matters |
+|---|---|---|
+| **Agent Lifecycle** | 4 BullMQ queues with timeout, retry, exponential backoff | AI tasks never block HTTP requests |
+| **RAG Pipeline** | Hybrid search (pgvector + tsvector → RRF fusion), recursive chunking, source citation, multi-tenant isolation | Semantics + exact keywords, fallback to regex |
+| **Prompt Injection Defense** | PROMPT_ARMOR + `<user_data>` context boundary on all 4 agent functions | Prevents lead-originated prompt injection |
+| **Human-in-the-loop** | Explicit `awaiting_approval` state machine, AI drafts never auto-sent | Safety boundary — AI assists, humans decide |
+| **Prompt Versioning** | Registry with Feature Flag-driven canary rollout (rollout% + per-org rules) | A/B test prompts without redeploy |
+| **AI Observability** | AICallMetric model: token usage, P50/P95 latency, cost tracking, requestId tracing (HTTP→Queue→LLM→DB) | End-to-end visibility into every AI call |
+| **Job Idempotency** | Redis SET NX dedup on all 4 queues | Exactly-once processing on retry storms |
+| **Feature Flags** | DB-backed with 5-layer evaluation (cache→DB per-org→DB global→env→default) | Runtime toggles, canary rollout, cost boundary control |
+
 ---
 
 ## Platform Capabilities
@@ -52,23 +66,26 @@ Foundation    →  Domain entities  +  Types  +  Database (PostgreSQL + pgvector
 Configure agents with personality, knowledge, and goals. Each agent handles conversations autonomously — qualifying leads, answering questions, booking meetings.
 
 ### Knowledge Base (RAG)
-Upload PDFs, FAQs, and documents. The platform chunks, embeds, indexes, and retrieves — so agents answer with source citations, not hallucinations.
+Upload PDFs, DOCXs, FAQs, and documents. The platform chunks, embeds, indexes, and retrieves — so agents answer with source citations, not hallucinations.
 
 ```
-Upload PDF → Parse → Chunk → Embed → pgvector → Retrieve → Answer + Citations
+Upload → Parse → Chunk → Embed → pgvector + tsvector → Hybrid RRF → Answer + Citations
 ```
 
 ### Conversation Inbox
-Unified inbox across all channels. See conversations, AI drafts, lead context, and qualification scores. Split-pane design — no page navigation.
+Unified inbox across all channels. See conversations, AI drafts (⏳ awaiting approval), lead context, and qualification scores. Split-pane design — no page navigation. HITL: human approves every AI draft before send.
 
 ### Outbound Campaigns
-Multi-step sequences with AI-personalized emails, delays, and automatic reply detection. Campaigns run in the background via BullMQ worker.
+Multi-step sequences with AI-personalized emails, delays, and automatic reply detection. Campaigns run in the background via BullMQ worker. Idempotent job processing prevents duplicate sends.
 
 ### Lead Qualification
-AI scores leads across 5 dimensions (intent, budget, authority, need, timeline). Hot leads route to humans. Warm leads stay in AI nurture.
+AI scores leads across 5 BANT dimensions (intent, budget, authority, need, timeline). Hot leads route to humans. Warm leads stay in AI nurture.
+
+### AI Health Dashboard
+`/analytics?tab=ai` — Real-time metrics: token usage trends, P50/P95 latency, cost attribution per job type, fallback rate alerts, daily usage charts.
 
 ### Mobile App
-Expo app with Dashboard + Inbox tabs. Shares types, API client, and design tokens with the web app.
+Expo app with Dashboard + Inbox + Knowledge Base + AI Playground. Shares types, API client, and design tokens with the web app.
 
 ---
 
@@ -79,14 +96,15 @@ Expo app with Dashboard + Inbox tabs. Shares types, API client, and design token
 | **Web** | Next.js 14 App Router, React 18, Tailwind CSS |
 | **Mobile** | Expo SDK 52, React Native |
 | **Language** | TypeScript (strict) |
-| **Design** | Luxury Nature palette, glass morphism, design tokens |
-| **Database** | PostgreSQL (Supabase) + pgvector |
+| **Design** | Corporate Green palette, glass morphism, design tokens |
+| **Database** | PostgreSQL (Supabase) + pgvector + tsvector (hybrid search) |
 | **ORM** | Prisma 6 |
-| **Queue** | BullMQ + Upstash Redis (4 queues, prefix: `sales-agent`) |
+| **Queue** | BullMQ + Upstash Redis (4 queues, idempotent, prefix: `sales-agent`) |
 | **Email** | Resend (AI composition, template engine, open/click tracking) |
 | **AI** | DeepSeek API (compose, score, summarize, generate-script) |
-| **RAG** | OpenAI Embeddings → pgvector || PostgreSQL keyword fallback |
-| **Auth** | Custom JWT (jose) + bcryptjs + httpOnly cookies |
+| **RAG** | Hybrid: pgvector cosine + PostgreSQL FTS → RRF fusion; keyword fallback |
+| **Observability** | AICallMetric model + AI Health dashboard + Sentry + structured logging with PII redaction + distributed tracing (requestId) |
+| **Auth** | Custom JWT (jose) + bcryptjs 12 rounds + httpOnly cookies + Redis blacklist |
 | **Monorepo** | pnpm workspaces + Turborepo |
 | **Hosting** | Vercel (web) + Railway (worker) |
 
@@ -96,21 +114,21 @@ Expo app with Dashboard + Inbox tabs. Shares types, API client, and design token
 
 ```
 apps/
-  web/       — Next.js 14 (App Router, ~40 API routes, SSE)
+  web/       — Next.js 14 (App Router, ~40 API routes)
   worker/    — BullMQ Worker (AI + campaigns + email + scoring)
-  mobile/    — Expo (Dashboard + Inbox)
+  mobile/    — Expo (Dashboard + Inbox + KB + Playground)
 
 packages/
   shared-types/  — API contract types (wire format)
   domain/        — Business entities (LeadStage, CampaignStatus, etc.)
-  ui-tokens/     — Luxury Nature palette + Tailwind preset
-  ai-core/       — Unified AI client + prompts + agents
-  rag-core/      — Full RAG pipeline (parse → chunk → embed → retrieve → cite)
+  ui-tokens/     — Corporate Green palette + Tailwind preset
+  ai-core/       — Unified AI client + prompts (versioned) + agents + metrics
+  rag-core/      — Full RAG pipeline (parse → chunk → embed → hybrid retrieve → cite) + eval
   api-client/    — Type-safe fetch client (web + mobile share)
-  db/            — Prisma schema + pgvector (12 models)
+  db/            — Prisma schema + pgvector (15 models)
 ```
 
-### Database (12 models)
+### Database (15 models)
 
 ```
 Organization  ──< Memberships >── User
@@ -118,8 +136,11 @@ Organization  ──< Memberships >── User
       ├──< Agent ──< Conversation ──< Message
       ├──< Lead ──< LeadActivity
       ├──< Script ──< Campaign ──< CampaignRun
-      ├──< Document ──< DocumentChunk (pgvector)
-      └──< AuditLog
+      ├──< Document ──< DocumentChunk (pgvector + tsvector)
+      ├──< AICallMetric (token usage, latency, cost)
+      ├──< AuditLog
+      ├──< ApiKey
+      └──< FeatureFlag (DB-backed, per-org rollout%)
 ```
 
 ### Multi-Tenant RBAC
@@ -135,17 +156,17 @@ Organization  ──< Memberships >── User
 
 ## Color System
 
-**Luxury Nature palette** — Premium Enterprise SaaS aesthetic (Notion / Linear / Stripe / Ramp).
+**Corporate Green palette** — Premium Enterprise SaaS aesthetic (Notion / Linear / Stripe / Ramp).
 
-| Token | Hex | Role |
-|---|---|---|
-| Primary | `#265834` | CTAs, active states |
-| Hover | `#579360` | Hover / dark mode accent |
-| Dark BG | `#1f2b1d` | Dark mode background |
-| Olive | `#656d4a` | Sidebar, secondary surfaces |
-| Card | `#E8E6DF` | Cards, elevated surfaces |
-| Sage | `#d6d9c3` | Badges, highlights |
-| Tan | `#b6ad90` | Dividers, muted accents |
+| Token | Hex | CSS Variable | Role |
+|---|---|---|---|
+| Primary | `#166534` | `--accent` | CTAs, active states |
+| Dark Accent | `#4ADE80` | `--accent` (dark) | Dark mode vibrant green |
+| Dark BG | `#0a1108` | `--bg` (dark) | Near-OLED black |
+| Light BG | `#F8F9FA` | `--bg` (light) | Cool slate |
+| Card | `#FFFFFF` | `--bg-card` (light) | Pure white cards |
+| Dark Card | `#111A0E` | `--bg-card` (dark) | Dark surfaces |
+| Accent Secondary | `#849b70` | `--accent-secondary` | Dividers, muted accents |
 
 ---
 
@@ -162,7 +183,7 @@ Organization  ──< Memberships >── User
 pnpm install
 pnpm --filter @salesagent/db push     # Push schema
 pnpm --filter @salesagent/db generate  # Generate Prisma client
-node packages/db/setup-vector.mjs     # Enable pgvector + embedding column
+node packages/db/setup-vector.mjs     # Enable pgvector + embedding + tsvector
 ```
 
 ### Environment
@@ -180,6 +201,9 @@ REDIS_URL="redis://..."
 # Optional: for vector search (falls back to keyword search)
 EMBEDDING_API_KEY="sk-..."   # OpenAI API key
 EMBEDDING_MODEL="text-embedding-3-small"
+
+# Optional: Sentry error tracking
+SENTRY_DSN="https://..."
 ```
 
 ### Develop
@@ -188,7 +212,8 @@ EMBEDDING_MODEL="text-embedding-3-small"
 pnpm dev              # Web app
 pnpm dev-worker       # Worker
 pnpm seed-demo        # Demo data (Acme Corp)
-pnpm --filter @salesagent/web test  # 53 tests
+pnpm --filter @salesagent/web test  # Unit tests
+pnpm --filter @salesagent/rag-core eval  # RAG evaluation
 ```
 
 ### Deploy
@@ -225,15 +250,54 @@ Login: `demo@acmecorp.com` / `demo123456`
 
 ---
 
-## V1.5 Changelog (2026-06-03)
+## Phase 18 Changelog (2026-07-04)
 
-- **7 new packages**: shared-types, domain, ui-tokens, ai-core, rag-core, api-client, db (expanded)
-- **RAG pipeline**: Upload → Parse → Chunk → Embed → pgvector → Retrieve → Cite
-- **Knowledge Base**: `/kb` page + `/kb/playground` + 3 API routes
-- **Mobile app**: Expo with Dashboard + Inbox tabs, shared types/tokens/client
-- **Color redesign**: Green/slate → Luxury Nature palette
-- **Eliminated duplication**: AI client merged from web + worker, prompts unified with injection armor
-- **Build**: ✅ | **Tests**: 53/53
+### L1 — AI Runtime
+- **Token usage tracking**: `AICallMetric` model captures prompt/completion tokens, latency, cost per AI call. Previously discarded by `DeepSeekResponse` type.
+- **Worker deduplication**: Eliminated 300+ line duplicate DeepSeek client in `apps/worker/src/ai.ts` — worker now uses `@salesagent/ai-core`.
+
+### L2 — AI Retrieval
+- **Hybrid search**: pgvector cosine + PostgreSQL tsvector → RRF (Reciprocal Rank Fusion). BM25 keyword + vector semantic, parallel retrieval with `k=60` fusion.
+- **RAG evaluation framework**: 20-case golden dataset, precision/recall/MRR/NDCG metrics, LLM-as-Judge injected at CLI boundary. Run via `pnpm eval`.
+- **DOCX parsing**: `mammoth` dependency installed — KB now supports Word documents.
+
+### L3 — AI Observability
+- **AI Health dashboard**: `/analytics?tab=ai` — P50/P95 latency, token cost, fallback rate, daily usage charts, alert thresholds (latency >10s, fallback >10%).
+- **Distributed tracing**: `requestId` propagates HTTP → BullMQ Job → DeepSeek API → AICallMetric. Full-chain traceable.
+- **Sentry globalThis fix**: Replaced fragile `globalThis.__SENTRY__` pattern (no-op cleanup).
+
+### L4 — AI Reliability
+- **Job idempotency**: Redis SET NX dedup on all 4 BullMQ queues. Exactly-once processing on retry storms.
+- **HITL formalization**: `awaiting_approval` state machine, Inbox ⏳ Needs Review badge, `hitl.ts` documentation.
+- **BullMQ bug fix**: `defaultJobOptions` readonly error (pre-existing in BullMQ 5.x) moved to queue constructor.
+- **Prisma schema drift fix**: `Unsupported("tsvector")` + `Unsupported("vector")` annotations prevent `db push` from dropping pgvector columns.
+
+### Prompt Engineering
+- **Version registry**: 4 prompt types registered with version + deployedAt. Feature Flag `compose_prompt_version = "v2"` enables canary rollout.
+- **A/B testing ready**: `getPromptVersionFlag()` reads DB rules → hash-bucketed rollout → runtime prompt switch.
+
+### Stats
+- **35 files**, +1,715 / −276 lines. 11 new files, 14 modified, 1 deleted, 1 DB migration.
+- Build: ✅ green (web + worker, 0 errors). Prisma Client: v6.19.3.
+
+---
+
+## Previous Changelog
+
+### V1.7 (2026-06-28) — Production Hardening
+- Auth rate limiting (defense-in-depth), bcrypt 12 rounds, CSP unsafe-eval removed
+- API versioning (`/api/v1/` rewrites), Sentry graceful opt-in, 14 error boundaries
+- Feature flags v2 (DB-backed, per-org rollout%), file upload 10MB cap + magic bytes
+- PII redaction logger, API 401 JSON responses, E2E security spec
+
+### V1.6 (2026-06-28) — UI/UX Commercial Overhaul
+- Real human avatars (Pravatar.cc), Inter typography, Corporate Green palette
+- 26 files changed across web + mobile + packages
+
+### V1.5 (2026-06-03) — Agent Platform
+- Monorepo refactor: 3 apps + 7 packages
+- RAG pipeline (pgvector), Knowledge Base, Mobile Expo app
+- AI deduplication, Luxury Nature palette
 
 ---
 

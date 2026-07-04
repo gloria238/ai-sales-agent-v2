@@ -1,6 +1,6 @@
 # SalesAgent AI — Progress Report
 
-> Last updated: 2026-06-28
+> Last updated: 2026-07-04
 > Project: Multi-Tenant AI Platform (AI Concierge / Sales Agent)
 
 ## Overall Status
@@ -25,9 +25,9 @@
 | **Phase 15: Security Audit & Production Readiness** | ✅ Done | 100% |
 | **Phase 16: UI/UX Commercial Overhaul** | ✅ Done | 100% |
 | **Phase 17: Production Hardening** | ✅ Done | 100% |
+| **Phase 18: Production AI Builder** | ✅ Done | 100% |
 
-**Total:** ~27,000 lines across ~390 files. 40+ API routes + SSE.
-**Tests:** 52 unit (100% pass). 5 E2E specs. Build: ✅ green (Vercel).
+**Total:** ~27,000 lines across ~390 files. 40+ API routes.
 **Infrastructure:** Next.js 14 · React 18 · Expo 52 · Tailwind CSS · Prisma 6 · PostgreSQL (Supabase + pgvector) · 14 models · Upstash Redis · BullMQ (4 queues, prefix: "sales-agent") · DeepSeek AI · OpenAI Embeddings · Resend email · Sentry · Vercel + Railway.
 
 ---
@@ -309,16 +309,98 @@ Full-codebase security audit across 8 domains using 8 parallel agents (~435K tok
 
 ---
 
+## Phase 18 — Production AI Builder ✅
+
+> Completed: 2026-07-04
+
+### 8 任务，35 文件 (+1,715 / −276 lines)
+
+### L1 — AI Runtime
+
+- **Token usage tracking**: `AICallMetric` 模型捕获每次 AI 调用的 token 使用、延迟、成本。`DeepSeekResponse` 增加 `usage` 字段（之前被丢弃）。
+- **Worker 去重**: 删除 `apps/worker/src/ai.ts`（300+ 行重复 DeepSeek client），Worker 改为直接使用 `@salesagent/ai-core`。
+- **AI Metrics Collection**: `packages/ai-core/src/metrics.ts` — `buildMetric()`, `estimateCost()` (DeepSeek $0.14/$0.28 per 1M)。
+
+### L2 — AI Retrieval
+
+- **Hybrid Search**: pgvector cosine + PostgreSQL tsvector → RRF (k=60) 融合。并行检索，`kb/ask/route.ts` 集成。
+- **RAG Evaluation**: 20 条 Golden Dataset, Precision/Recall/MRR/NDCG 纯计算指标, LLM-as-Judge (Faithfulness + Relevancy) 在 CLI 边界注入。
+- **全文搜索迁移**: `setup-vector.mjs` 追加 `search_vector` tsvector 列 + GIN 索引 + 自动更新触发器。
+- **DOCX 支持**: `mammoth` 依赖安装，`docx-parser.ts` 可用。
+
+### L3 — AI Observability
+
+- **AI Health Dashboard**: `/analytics?tab=ai` — Sales/AI Health 双标签。P50/P95 延迟、成本、回调量分组、30天 token 趋势、告警。
+- **Aggregation API**: `GET /api/v1/metrics/ai-health?period=24h|7d|30d` — summary, byJobType, dailyTokens, alerts。
+- **分布式追踪**: `requestId` 传播 HTTP → BullMQ Job (`JobContext`) → Worker log → AICallMetric。全链路可追溯。
+- **Logger 增强**: `TraceContext` 类型, `withTrace()` 辅助函数。
+
+### L4 — AI Reliability
+
+- **Job Idempotency**: Redis SET NX 去重, `checkAndMarkDedup()` 在 4 个 Worker processor 中注入。24h TTL, fail-open 降级。
+- **HITL Formalization**: `awaiting_approval` 状态机, Inbox ⏳ Needs Review 过滤标签 + 橙色徽章, `hitl.ts` 文档。
+- **BullMQ 修复**: `defaultJobOptions` readonly 错误修复 — 选项移到 queue 构造函数。
+- **Prisma Schema Drift**: `searchVector Unsupported("tsvector")` + `embedding Unsupported("vector")` 注解防止 `db push` 删除 pgvector 列。
+
+### Prompt Engineering
+
+- **Version Registry**: `prompt-registry.ts` — 4 种 prompt 用 `VersionedPromptConfig` 注册，Feature Flag 控制灰度 (`getPromptVersionFlag()`)。
+- **A/B Test 就绪**: `FeatureFlag.rules.promptVersion` + rollout% → hash-bucketed 分组 → 运行时 prompt 切换。
+
+### 新增文件 (11)
+
+```
+packages/ai-core/src/metrics.ts              — AI 指标 + 成本估算
+packages/ai-core/src/prompt-registry.ts      — Prompt 版本注册表
+packages/rag-core/src/keyword-search.ts      — PostgreSQL FTS 封装
+packages/rag-core/src/rrf.ts                 — RRF 融合算法
+packages/rag-core/eval/types.ts              — Eval 类型
+packages/rag-core/eval/dataset.ts            — 20 Golden Q&A
+packages/rag-core/eval/metrics.ts            — 检索指标 + runEvaluation()
+packages/rag-core/eval/cli.ts                — CLI (LLM judge 注入)
+apps/web/app/(dashboard)/analytics/ai-health.tsx   — AI Health Tab
+apps/web/app/api/v1/metrics/ai-health/route.ts     — Aggregation API
+apps/web/lib/hitl.ts                         — HITL 状态机
+apps/worker/src/dedup.ts                     — Redis SET NX 幂等
+```
+
+### 修改文件 (14)
+
+```
+packages/shared-types/src/ai.ts              — DeepSeekResponse + usage
+packages/ai-core/src/client.ts               — { content, usage } / { result, usage }
+packages/ai-core/src/agents.ts               — 解构 + promptVersion
+packages/ai-core/src/prompts.ts              — registry 引用
+packages/db/prisma/schema.prisma             — AICallMetric + HITL status + Unsupported 注解
+packages/db/setup-vector.mjs                 — search_vector 列 + GIN + trigger
+apps/worker/src/queue.ts                     — JobContext + defaultJobOptions fix
+apps/worker/src/index.ts                     — metrics + idempotency + trace + HITL
+apps/web/lib/feature-flags-v2.ts             — 4 prompt version flags + getPromptVersionFlag()
+apps/web/lib/logger.ts                       — TraceContext + withTrace()
+apps/web/app/(dashboard)/analytics/page.tsx  — Tab 布局
+apps/web/app/(dashboard)/inbox/inbox-client.tsx — HITL ⏳ Needs Review
+apps/web/app/api/orgs/[slug]/kb/ask/route.ts — Hybrid search
+apps/web/app/api/orgs/[slug]/conversations/[id]/messages/route.ts — context 注入
+apps/web/app/api/orgs/[slug]/campaigns/[id]/start/route.ts — context 注入
+```
+
+### 删除文件 (1)
+
+```
+apps/worker/src/ai.ts — 300+ 行重复 DeepSeek client, 已由 @salesagent/ai-core 接管
+```
+
+---
+
 ## Known Issues / TODOs
 
 1. **Stripe billing** — Not implemented.
 2. **SSO/OAuth** — Not implemented (enterprise requirement).
 3. **Upstash Redis free tier** — 500K daily limit. Upgrade when scaling.
-4. **Embedding fallback** — Works (keyword search), but vector search needs OpenAI API key.
-5. **DOCX parser** — `mammoth` peer dependency declared, not installed. PDF works via pdf-parse v2.
-6. **Reranker** — Interface reserved, NoopReranker only. Build when needed.
-7. **Credential rotation** — `.env.local` exposed in early git history. Rotate all secrets.
-8. **Sentry worker** — `@sentry/node` for the worker not yet installed (web app Sentry is configured).
+4. **Reranker** — NoopReranker only. Cohere Rerank or Cross-Encoder can be plugged in when needed.
+5. **Credential rotation** — `.env.local` exposed in early git history. Rotate all secrets.
+6. **Sentry worker** — `@sentry/node` for the worker not yet installed.
+7. **CI/CD** — No GitHub Actions workflow. Tests run locally only.
 
 ### Resolved from Previous TODOs
 
@@ -328,3 +410,6 @@ Full-codebase security audit across 8 domains using 8 parallel agents (~435K tok
 | ~~Auth rate limiting~~ | Defense-in-depth: middleware + per-route rate limits |
 | ~~CSP unsafe-eval~~ | Removed from CSP |
 | ~~Logger PII redaction~~ | Email/JWT pattern matching + SHA-256 hashing |
+| ~~DOCX parser~~ | `mammoth` installed (Phase 18), `docx-parser.ts` functional |
+| ~~Embedding fallback~~ | Hybrid search: pgvector + tsvector → RRF, regex fallback |
+| ~~Worker client duplication~~ | `apps/worker/src/ai.ts` deleted, worker uses `@salesagent/ai-core` |

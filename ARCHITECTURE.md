@@ -1,10 +1,10 @@
-# SalesAgent AI — Architecture Document (V1.7)
+# SalesAgent AI — Architecture Document (V1.8)
 
 > Multi-tenant AI Agent Platform with Web, Mobile, Worker, and Knowledge Infrastructure.
 > Build and deploy AI Sales, Concierge, and Support Agents on a shared platform.
-> ~27,000 lines across ~390 files. 40+ API routes + SSE.
-> Web: 40+ pages + API routes + 14 error boundaries. Mobile: 7-page Club Concierge showcase. Worker: 4 BullMQ queues.
-> Latest: Phase 17 — Production Hardening (security, API versioning, Sentry, feature flags, mobile API).
+> ~27,000 lines across ~390 files. 40+ API routes.
+> Web: 40+ pages + API routes + 14 error boundaries. Mobile: 7-page Club Concierge showcase. Worker: 4 BullMQ queues (idempotent).
+> Latest: Phase 18 — Production AI Builder (hybrid search, AI observability, prompt versioning, HITL, idempotency, tracing).
 
 ---
 
@@ -184,13 +184,13 @@ User ──< Membership >── Organization ──< ApiKey
           ┌───────────────────┼───────────────────┐
           │                   │                   │
     Agent ──< Conversation ──< Message    Document ──< DocumentChunk
-          │                   │                   │
-    Campaign ──< CampaignRun  Lead ──< LeadActivity   (pgvector)
-          │
-    Script              FeatureFlag (per-org, rollout%)
+          │                   │                   │     (pgvector + tsvector)
+    Campaign ──< CampaignRun  Lead ──< LeadActivity   AICallMetric
+          │                                         (token, latency, cost)
+    Script              FeatureFlag (per-org, rollout%, promptVersion)
 ```
 
-### 4.2 模型清单 (14 模型)
+### 4.2 模型清单 (15 模型)
 
 | 模型 | 用途 | 主要字段 |
 |------|------|---------|
@@ -201,15 +201,16 @@ User ──< Membership >── Organization ──< ApiKey
 | **Agent** | AI 代理配置 | personality, goals, knowledgeBase, isActive |
 | **Lead** | CRM 线索 | name, email, company, stage, score, source |
 | **LeadActivity** | 线索活动日志 | type, content, metadata |
-| **Conversation** | AI 对话线程 | leadId, agentId, channel, status |
+| **Conversation** | AI 对话线程 | leadId, agentId, channel, status (active\|awaiting_approval\|approved\|closed\|archived) |
 | **Message** | 对话消息 | direction, content, aiMetadata |
 | **Script** | 话术模板 | name, category, steps (JSON) |
 | **Campaign** | 外呼活动 | scriptId, agentId, targetAudience, stats |
 | **CampaignRun** | 活动执行记录 | status, recipientCount, stats |
 | **Document** | KB 文档 | name, type, status, chunkCount |
-| **DocumentChunk** | KB 分块 | content, chunkIndex, embedding (pgvector) |
+| **DocumentChunk** | KB 分块 | content, chunkIndex, embedding (pgvector), searchVector (tsvector) |
+| **AICallMetric** | AI 调用指标 (V1.8) | jobType, promptTokens, completionTokens, llmLatencyMs, success, fallbackUsed, requestId |
 | **AuditLog** | 不可变审计日志 | action, targetType, targetId, metadata |
-| **FeatureFlag** | 功能开关 (V1.7) | key, enabled, rolloutPercent, rules (JSON) |
+| **FeatureFlag** | 功能开关 (V1.7) | key, enabled, rolloutPercent, rules (JSON, 含 promptVersion) |
 
 ### 4.3 Pipeline 阶段
 
@@ -306,7 +307,28 @@ summarizeConversation() — 对话总结
 generateScript()      — 脚本生成
 ```
 
-### 7.3 安全装甲
+### 7.3 Prompt 版本管理 (V1.8)
+
+每个 prompt 有版本注册表 (`prompt-registry.ts`)，支持 Feature Flag 驱动的灰度切换：
+
+```
+PROMPT_REGISTRY.compose_response
+  ├── v1 (2025-06-01) — 当前默认
+  ├── v2 (待注册)     — A/B Test 候选
+  └── current: "v1"   ← Feature Flag 可覆盖为 "v2"
+```
+
+通过 `getPromptVersionFlag("compose_prompt_version", orgId)` 读取 DB 或 env var 中的版本选择，配合 `rolloutPercent` 实现按用户 hash 分桶的渐进推出。
+
+### 7.4 AI 调用指标 (V1.8)
+
+每次 LLM 调用后写入 `AICallMetric` 表，记录：
+- **延迟**: P50/P95 across all calls
+- **Token**: prompt/completion tokens, estimated cost (DeepSeek $0.14/$0.28 per 1M)
+- **质量**: success/failure, fallback triggers, retry count
+- **追踪**: requestId 全链路关联 (HTTP → Queue → LLM → DB)
+
+### 7.5 安全装甲
 
 所有用户数据包裹在 `<user_data>...</user_data>` 标签中。PROMPT_ARMOR 前缀指示模型永不执行用户数据内的指令。
 
@@ -314,12 +336,12 @@ generateScript()      — 脚本生成
 
 ## 8. RAG 知识库系统
 
-### 8.1 管线
+### 8.1 管线 (V1.8 — Hybrid Search)
 
 ```
-PDF/TXT/MD/FAQ
+PDF/DOCX/TXT/MD/FAQ
        ↓
-  parser.ts    — 类型检测 → 特定解析器 (pdf-parse v2 PDFParse 类)
+  parser.ts    — 类型检测 → 特定解析器 (pdf-parse v2 PDFParse 类, mammoth DOCX)
        ↓
   chunker.ts   — 递归字符分割 (段落 → 句子 → 固定大小)
        ↓
@@ -327,14 +349,25 @@ PDF/TXT/MD/FAQ
        ↓
   embeddings.ts — 文本 → 向量 (OpenAI 兼容, 可插拔)
        ↓
-  pgvector     — 存储分块 + 嵌入向量 (org-scoped)
+  pgvector + tsvector — 存储分块 + 嵌入向量 + 全文搜索向量 (org-scoped)
        ↓
-  retriever.ts — 查询 → 嵌入 → 余弦相似度 → top-K
-       ↓          (回退: PostgreSQL ~* 关键词搜索)
+  Hybrid Retrieval (Parallel):
+    ├── Vector:  query → embedding → pgvector <=> 余弦相似度 → top-10
+    └── Keyword: query → ts_rank(to_tsquery) → top-10
+       ↓
+  RRF Fusion (k=60): 1/(60+rank) 分数融合 → top-5
+       ↓
   sources.ts   — 分块 → 源引用
 ```
 
-### 8.2 API 路由
+### 8.2 评估框架 (V1.8)
+
+`pnpm --filter @salesagent/rag-core eval` — 20 条 Golden Dataset:
+- **Retrieval 指标**: Precision@5, Recall@5, MRR, NDCG@5 (纯计算)
+- **Generation 指标**: Faithfulness, Answer Relevancy (LLM-as-Judge, CLI 边界注入)
+- `--retrieval-only` 跳过 LLM judge, 仅跑纯计算指标
+
+### 8.3 API 路由
 
 | 方法 | 路径 | 权限 | 描述 |
 |------|------|------|------|
@@ -342,22 +375,33 @@ PDF/TXT/MD/FAQ
 | POST | `/api/orgs/{slug}/kb/ask` | view_agents | 提问 → 检索 → LLM 回答 |
 | GET | `/api/orgs/{slug}/kb/documents` | view_agents | 列出已索引文档 |
 
-### 8.3 设计决策
+### 8.4 设计决策
 
-- **嵌入可选**: 无 EMBEDDING_API_KEY 时快速回退到 SQL 关键词搜索
+- **Hybrid Search**: pgvector 余弦 + tsvector FTS → RRF 融合。向量捕捉语义相似，BM25 捕捉精确关键词匹配，两者互补
+- **嵌入可选**: 无 EMBEDDING_API_KEY 时快速回退到 PostgreSQL ~* 关键词搜索
 - **多租户**: 分块标记 `organizationId`，检索限定 org 范围
-- **无重排序器**: 余弦相似度足以满足需求 — 接口预留用于未来升级
-- **pgvector**: 生产就绪，Supabase 原生扩展
+- **重排序器**: NoopReranker — 接口预留用于未来接入 Cohere Rerank 或 Cross-Encoder
+- **pgvector + tsvector**: 都在 PostgreSQL 内，一次查询同时做向量+全文搜索，零额外基础设施
+- **评估**: Golden Dataset + 4 retrieval metrics + 2 generation metrics (LLM judge)，可 CI 运行
 
 ---
 
-## 9. 对话收件箱
+## 9. 对话收件箱 (V1.8 — HITL)
 
 统一单页面分栏（Linear/Figma 风格）：
-- 左侧: `w-80 lg:w-96` 对话列表, 筛选标签页, 计数徽章
+- 左侧: `w-80 lg:w-96` 对话列表, 筛选标签页 (all\|active\|⏳ Needs Review\|needs_reply\|closed), 计数徽章
 - 右侧: DetailHeader (头像 + 线索信息) + 消息流 + 输入区
 - LeadPopover: 悬停图标 → 完整线索卡片
-- SSE 实时新消息推送
+- **HITL**: AI 生成草稿 → Conversation 状态变为 `awaiting_approval` → Inbox 列表显示橙色 ⏳ Review 徽章 → 人工审核后 approve/reject
+
+### HITL 状态机
+
+```
+active → inbound received → [AI drafts] → awaiting_approval
+                                              ├── [Approve] → approved (email sent)
+                                              ├── [Reject]  → active (draft discarded)
+                                              └── [24h timeout] → active (draft expired)
+```
 
 ---
 
@@ -373,15 +417,22 @@ Campaign "Start" → 受众解析 → BullMQ 分派 → Worker 执行步骤
 
 ---
 
-## 11. 异步任务队列
+## 11. 异步任务队列 (V1.8 — Idempotent)
 
 4 个 BullMQ 队列 (prefix: `sales-agent`):
-- `conversation-jobs` → AI 回复组合
-- `email-jobs` → 邮件投递
-- `campaign-jobs` → 活动序列执行
-- `scoring-jobs` → 线索评分
+- `conversation-jobs` → AI 回复组合 (concurrency: 5)
+- `email-jobs` → 邮件投递 (concurrency: 5)
+- `campaign-jobs` → 活动序列执行 (concurrency: 3)
+- `scoring-jobs` → 线索评分 (concurrency: 3)
 
-并发: 5 | 重试: 指数退避 | 健康检查: HTTP `/health`
+重试: 3 attempts, 指数退避 (2^n s, max 60s) | 健康检查: HTTP `/health` + `.worker-health.json`
+
+### 幂等性 (V1.8)
+
+所有 4 个队列通过 `JobContext.requestId` + Redis SET NX 实现 exactly-once 处理：
+- 相同的 `requestId` 重复入队 → 第二个 job 检测到已处理 key → skip
+- 幂等 key TTL: 24h, 降级: fail-open (Redis 不可用时跳过检查)
+- `dedup.ts` 封装 `checkAndMarkDedup()` 函数
 
 ---
 
@@ -486,7 +537,45 @@ apps/mobile/
 - **Sentry**: `@sentry/nextjs`（仅当 `SENTRY_DSN` 设置时激活，可 graceful opt-in）
 - **集中式错误处理**: `lib/api-error.ts` — 类型化状态码映射 (Zod→400, Not Found→404, Unique→409)
 - **错误边界**: 全部 11 个仪表盘路由有 `error.tsx` + 根级 `app/error.tsx` + `app/global-error.tsx` + 可复用 `ErrorBoundary` 组件
-- **功能开关**: 14 个 DB 支持的 feature flag (FeatureFlag 模型)，支持 per-org 切换、rollout%、角色/用户定向规则。内存缓存 60s TTL。env-var 回退。
+- **功能开关**: DB-backed FeatureFlag 模型，支持 per-org 切换、rollout%、角色/用户定向规则 (含 promptVersion)。内存缓存 60s TTL。env-var 回退。
+
+---
+
+## 19. AI Observability (V1.8 新增)
+
+### 19.1 AI 调用指标
+
+`AICallMetric` 模型记录每次 LLM 调用：
+
+| 字段 | 内容 |
+|------|------|
+| `jobType` | compose_response / score_lead / summarize_conversation / generate_script / campaign_ai / kb_ask |
+| `promptTokens` / `completionTokens` / `totalTokens` | DeepSeek API usage |
+| `llmLatencyMs` / `totalLatencyMs` | 纯 LLM 延迟 / 端到端延迟 |
+| `success` / `fallbackUsed` / `errorType` | 成功/降级/失败 |
+| `requestId` | HTTP→Queue→LLM→DB 全链路追踪 |
+| `estimatedCostUSD` | (promptTokens×$0.14 + completionTokens×$0.28) / 1M |
+
+### 19.2 AI Health Dashboard
+
+`/analytics?tab=ai` — 两个标签页:
+- **Sales**: 原有 Pipeline、Campaign 指标
+- **AI Health**: P50/P95 延迟, 总成本, 成功率, 回退率, 按 jobType 分组的调用量/延迟/成本, 30 天 token 趋势, 告警 (延迟 >10s, 回退 >10%)
+
+### 19.3 分布式追踪
+
+`requestId` 从 HTTP Request 注入 BullMQ Job (`JobContext.requestId`)，Worker 处理后写入 AICallMetric 和日志：
+
+```
+HTTP Request (x-request-id or UUID)
+  → BullMQ Job (context.requestId)
+  → Worker log (JSON: requestId + spanId)
+  → DeepSeek API (requestId in error)
+  → AICallMetric (requestId column)
+  → DB write (conversation/message)
+```
+
+同一个 requestId 可在 Vercel logs + Worker logs + AICallMetric 表中串联全链路。
 
 ---
 
