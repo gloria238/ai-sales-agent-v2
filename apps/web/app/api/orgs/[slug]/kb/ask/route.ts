@@ -23,21 +23,22 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
 
   try {
     type ChunkRow = {
-      id: string; document_id: string; content: string; chunk_index: number;
+      id: string; documentId: string; content: string; chunkIndex: number;
       metadata: Record<string, unknown>; similarity: number;
     };
 
     // 1. Parallel: vector search + keyword search (hybrid)
+    //    NOTE: Prisma columns are camelCase (no @map) — use quoted identifiers
     const vectorPromise = (async (): Promise<ChunkRow[]> => {
       try {
         const embedder = createEmbeddingProvider();
         const queryEmbedding = await embedder.embed(question);
         const embStr = `[${queryEmbedding.join(",")}]`;
         return await prisma.$queryRawUnsafe<ChunkRow[]>(
-          `SELECT id, document_id, content, chunk_index, metadata,
+          `SELECT id, "documentId", content, "chunkIndex", metadata,
                   1 - (embedding <=> $1::vector) AS similarity
            FROM sales_agent."DocumentChunk"
-           WHERE organization_id = $2 AND embedding IS NOT NULL
+           WHERE "organizationId" = $2 AND embedding IS NOT NULL
            ORDER BY embedding <=> $1::vector
            LIMIT 10`,
           embStr,
@@ -55,10 +56,10 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
         if (tsquery) {
           try {
             return await prisma.$queryRawUnsafe<ChunkRow[]>(
-              `SELECT id, document_id, content, chunk_index, metadata,
+              `SELECT id, "documentId", content, "chunkIndex", metadata,
                       ts_rank(search_vector, to_tsquery('english', $1)) AS similarity
                FROM sales_agent."DocumentChunk"
-               WHERE organization_id = $2 AND search_vector @@ to_tsquery('english', $1)
+               WHERE "organizationId" = $2 AND search_vector @@ to_tsquery('english', $1)
                ORDER BY similarity DESC LIMIT 10`,
               tsquery,
               membership.organizationId,
@@ -67,12 +68,12 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
         }
       } catch { /* ignore */ }
 
-      // Regex fallback
-      const keywords = question.split(/\s+/).filter((w) => w.length > 2).join(" | ");
+      // Regex fallback — works without embeddings or tsvector
+      const keywords = question.split(/\s+/).filter((w) => w.length > 1).join(" | ");
       return await prisma.$queryRawUnsafe<ChunkRow[]>(
-        `SELECT id, document_id, content, chunk_index, metadata, 0.5 AS similarity
+        `SELECT id, "documentId", content, "chunkIndex", metadata, 0.5 AS similarity
          FROM sales_agent."DocumentChunk"
-         WHERE organization_id = $1 AND content ~* $2 LIMIT 10`,
+         WHERE "organizationId" = $1 AND content ~* $2 LIMIT 10`,
         membership.organizationId,
         keywords || question,
       );
@@ -105,7 +106,7 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
 
     // 3. Build context from retrieved chunks
     const context = chunks.map((c, i) =>
-      `[Source ${i + 1}] (from ${(c.metadata as Record<string,string>)?.title || "Document"}, chunk ${c.chunk_index}):\n${safe(c.content)}`
+      `[Source ${i + 1}] (from ${(c.metadata as Record<string,string>)?.title || "Document"}, chunk ${c.chunkIndex}):\n${safe(c.content)}`
     ).join("\n\n");
 
     // 4. Answer with LLM — PROMPT_ARMOR + <user_data> wrapping on user question
@@ -141,11 +142,11 @@ Answer the question based on the context above. Include source citations like [S
     // 5. Build citations
     const citations = chunks.map((c) => ({
       id: c.id,
-      documentId: c.document_id,
+      documentId: c.documentId,
       title: (c.metadata as Record<string,string>)?.title || "Document",
       fileName: (c.metadata as Record<string,string>)?.fileName || "Unknown",
       excerpt: c.content.slice(0, 200) + (c.content.length > 200 ? "…" : ""),
-      chunkIndex: c.chunk_index,
+      chunkIndex: c.chunkIndex,
       score: Math.round(c.similarity * 100) / 100,
     }));
 
