@@ -85,7 +85,7 @@ function StageBadge({ stage }: { stage: string | null }) {
 
 function ScoreDisplay({ score, scoring }: { score: number | null; scoring?: boolean }) {
   if (scoring) {
-    return <span className="text-[11px] text-text-muted animate-pulse">Scoring…</span>;
+    return <span className="text-[11px] text-text-muted animate-pulse">评分中…</span>;
   }
   if (score == null) return null;
   const label = scoreLabel(score);
@@ -402,7 +402,7 @@ export function LeadTableClient({ initialLeads, initialTotal, orgSlug, canManage
     <div>
       {/* ── Top Toolbar ── */}
       <div className="flex items-center justify-between mb-5">
-        <h2 className="text-xl font-bold tracking-tight text-text">Leads</h2>
+        <h2 className="text-xl font-bold tracking-tight text-text">客户管理</h2>
         <div className="flex items-center gap-2">
           <a
             href={`/api/orgs/${orgSlug}/leads/export`}
@@ -416,14 +416,14 @@ export function LeadTableClient({ initialLeads, initialTotal, orgSlug, canManage
               <ImportButton orgSlug={orgSlug} onImported={() => queryClient.invalidateQueries({ queryKey })} />
               <Dialog open={createOpen} onOpenChange={setCreateOpen}>
                 <DialogTrigger>
-                  <Button size="sm">New Lead</Button>
+                  <Button size="sm">新建客户</Button>
                 </DialogTrigger>
-                <DialogContent title="New Lead">
+                <DialogContent title="新建客户">
                   <div className="space-y-4">
-                    <Input label="Name *" value={newName} onChange={(e) => setNewName(e.target.value)} disabled={createMutation.isPending} />
-                    <Input label="Email" type="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} disabled={createMutation.isPending} />
+                    <Input label="姓名 *" value={newName} onChange={(e) => setNewName(e.target.value)} disabled={createMutation.isPending} />
+                    <Input label="邮箱" type="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} disabled={createMutation.isPending} />
                     <div>
-                      <label className="block text-sm font-medium mb-1">Stage</label>
+                      <label className="block text-sm font-medium mb-1">阶段</label>
                       <Select value={newStage} onValueChange={setNewStage}>
                         <SelectTrigger />
                         <SelectContent>
@@ -476,28 +476,28 @@ export function LeadTableClient({ initialLeads, initialTotal, orgSlug, canManage
       <div className="flex items-center gap-3 mb-5">
         <div className="flex-1">
           <Input
-            placeholder="Search by name or email..."
+            placeholder="搜索姓名或邮箱…"
             defaultValue={search}
             onChange={(e) => debouncedSearch(e.target.value)}
           />
         </div>
         <div className="w-40">
           <Select value={stage} onValueChange={setStage}>
-            <SelectTrigger placeholder="All stages" />
+            <SelectTrigger placeholder="全部阶段" />
             <SelectContent>
-              <SelectItem value="">All stages</SelectItem>
+              <SelectItem value="">全部阶段</SelectItem>
               {STAGES.map((s) => <SelectItem key={s} value={s}>{s.replace(/_/g, " ")}</SelectItem>)}
             </SelectContent>
           </Select>
         </div>
         <div className="w-36">
           <Select value={sortBy} onValueChange={(v) => { setSortBy(v); setPage(1); }}>
-            <SelectTrigger placeholder="Sort by" />
+            <SelectTrigger placeholder="排序方式" />
             <SelectContent>
-              <SelectItem value="createdAt">Created</SelectItem>
-              <SelectItem value="name">Name</SelectItem>
-              <SelectItem value="email">Email</SelectItem>
-              <SelectItem value="stage">Stage</SelectItem>
+              <SelectItem value="createdAt">创建时间</SelectItem>
+              <SelectItem value="name">姓名</SelectItem>
+              <SelectItem value="email">邮箱</SelectItem>
+              <SelectItem value="stage">阶段</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -575,13 +575,13 @@ export function LeadTableClient({ initialLeads, initialTotal, orgSlug, canManage
             <div className="space-y-0.5">
               {/* List header */}
               <div className="flex items-center gap-4 px-4 py-2 text-[11px] font-semibold text-text-muted uppercase tracking-wider">
-                <span className="w-48">Lead</span>
-                <span className="w-28">Stage</span>
-                <span className="w-32">Score</span>
-                <span className="flex-1">Email</span>
-                <span className="w-24">Source</span>
-                <span className="w-28">Tags</span>
-                <span className="w-20 text-right">Date</span>
+                <span className="w-48">客户</span>
+                <span className="w-28">阶段</span>
+                <span className="w-32">评分</span>
+                <span className="flex-1">邮箱</span>
+                <span className="w-24">来源</span>
+                <span className="w-28">标签</span>
+                <span className="w-20 text-right">日期</span>
               </div>
               {leads.map((lead, i) => renderListRow(lead, i))}
             </div>
@@ -589,7 +589,7 @@ export function LeadTableClient({ initialLeads, initialTotal, orgSlug, canManage
 
           {/* Loading overlay for refetches */}
           {isLoading && leads.length > 0 && (
-            <div className="text-center py-2 text-xs text-text-muted animate-pulse">Updating...</div>
+            <div className="text-center py-2 text-xs text-text-muted animate-pulse">更新中…</div>
           )}
 
           {/* Pagination */}

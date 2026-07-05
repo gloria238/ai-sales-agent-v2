@@ -84,7 +84,7 @@ export function AgentDetailClient({ agent, orgSlug }: { agent: Agent; orgSlug: s
             <Button onClick={handleSave} loading={saving}><Save className="w-4 h-4 mr-2" />Save</Button>
           </div>
         ) : (
-          <Button variant="outline" onClick={() => setEditing(true)}><Settings className="w-4 h-4 mr-2" />Edit</Button>
+          <Button variant="outline" onClick={() => setEditing(true)}><Settings className="w-4 h-4 mr-2" />编辑</Button>
         )}
       </div>
 

@@ -244,7 +244,10 @@ export function InboxDetailClient({ conversation, conversations, orgSlug }: Prop
                   <span className={cn("text-[10px]", msg.direction === "inbound" ? "text-text-muted" : "text-white/60")}>
                     {new Date(msg.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                   </span>
-                  {msg.aiMetadata && !msg.aiMetadata.agentSteps && (
+                  {conversation.status === "awaiting_approval" && msg.direction === "outbound" && (
+                    <span className="text-[10px] text-warning">⏳ 待审核草稿</span>
+                  )}
+                  {msg.aiMetadata && conversation.status !== "awaiting_approval" && !msg.aiMetadata.agentSteps && (
                     <span className="text-[10px] text-accent/80">AI 生成</span>
                   )}
                   {msg.aiMetadata?.agentSteps && (

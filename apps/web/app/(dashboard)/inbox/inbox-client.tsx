@@ -279,7 +279,13 @@ export function InboxClient({ conversations, orgSlug, selectedId: initialSelecte
             <div className="p-12 text-center text-text-muted">
               <MessageSquare className="size-10 mx-auto mb-3 opacity-30" />
               <p className="text-sm font-medium">暂无对话</p>
-              <p className="text-xs mt-1">{filter === "needs_reply" ? "已全部处理" : "暂无数据"}</p>
+              <p className="text-xs mt-1">
+                {filter === "all" && "所有对话将显示在这里"}
+                {filter === "active" && "当前没有进行中的对话"}
+                {filter === "needs_review" && "没有需要审核的草稿"}
+                {filter === "needs_reply" && "所有客户消息已回复完毕"}
+                {filter === "closed" && "没有已关闭的对话"}
+              </p>
             </div>
           ) : (
             <div className="py-1">
@@ -370,7 +376,12 @@ export function InboxClient({ conversations, orgSlug, selectedId: initialSelecte
                         <span className={cn("text-[10px]", msg.direction === "inbound" ? "text-text-muted" : "text-white/60")}>
                           {new Date(msg.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                         </span>
-                        {msg.aiMetadata && <span className="text-[10px] text-accent/80">AI 生成</span>}
+                        {selectedConv.status === "awaiting_approval" && msg.direction === "outbound" && (
+                          <span className="text-[10px] text-warning">⏳ 待审核草稿</span>
+                        )}
+                        {msg.aiMetadata && selectedConv.status !== "awaiting_approval" && (
+                          <span className="text-[10px] text-accent/80">AI 生成</span>
+                        )}
                       </div>
                     </div>
                   </div>

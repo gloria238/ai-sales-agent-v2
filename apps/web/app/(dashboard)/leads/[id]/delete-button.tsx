@@ -35,7 +35,7 @@ export function DeleteButton({ leadId, leadName, orgSlug }: Props) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger>
-        <Button variant="destructive" size="sm">Delete</Button>
+        <Button variant="destructive" size="sm">删除</Button>
       </DialogTrigger>
       <DialogContent title="Delete Lead">
         <p className="text-sm text-text-secondary mb-4">

@@ -42,7 +42,7 @@ export function ScriptListClient({ scripts, orgSlug }: { scripts: any[]; orgSlug
     <div className="p-6 max-w-5xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-text">Sales Scripts</h1>
+          <h1 className="text-2xl font-bold text-text">话术脚本</h1>
           <p className="text-sm text-text-muted mt-1">Pre-built sales playbook scripts and AI-generated sequences.</p>
         </div>
         <Button onClick={() => router.push(`/scripts/new`)}><Sparkles className="w-4 h-4 mr-2" />AI Generate Script</Button>

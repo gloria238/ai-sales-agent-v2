@@ -41,7 +41,7 @@ export function NoteForm({ leadId, orgSlug }: Props) {
   return (
     <form onSubmit={handleSubmit} className="space-y-2">
       <Textarea
-        placeholder="Add a note..."
+        placeholder="添加备注…"
         value={content}
         onChange={(e) => setContent(e.target.value)}
         disabled={loading}

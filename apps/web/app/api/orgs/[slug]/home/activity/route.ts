@@ -50,17 +50,22 @@ export async function GET(_request: Request, { params }: { params: { slug: strin
   for (const a of recentActivities) {
     let description = "";
     switch (a.type) {
-      case "created": description = `Created lead`; break;
+      case "created": description = "创建了客户"; break;
       case "stage_change": {
         const meta = a.metadata as any;
-        description = `Moved from ${meta?.fromStage ?? "?"} to ${meta?.toStage ?? "?"}`;
+        const stageNames: Record<string, string> = {
+          new: "新客户", contacted: "已联系", qualified: "已确认",
+          proposal: "方案中", negotiation: "洽谈中", closed_won: "已成交", closed_lost: "已流失",
+        };
+        description = `从「${stageNames[meta?.fromStage] || meta?.fromStage || "?"}」→「${stageNames[meta?.toStage] || meta?.toStage || "?"}」`;
         break;
       }
-      case "email_sent": description = `Email sent`; break;
-      case "email_received": description = `Email received`; break;
-      case "meeting_booked": description = `Meeting booked`; break;
-      case "note": description = a.content || `Added note`; break;
-      default: description = a.type.replace(/_/g, " ");
+      case "email_sent": description = "发送了邮件"; break;
+      case "email_received": description = "收到客户回复"; break;
+      case "meeting_booked": description = "预约了会议"; break;
+      case "ai_followup": description = a.content || "AI 自动跟进"; break;
+      case "note": description = a.content || "添加了备注"; break;
+      default: description = a.type;
     }
     feed.push({
       id: a.id,

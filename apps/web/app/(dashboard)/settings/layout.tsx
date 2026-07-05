@@ -13,7 +13,7 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
 
   return (
     <div className="p-4 lg:p-6">
-      <h2 className="text-2xl font-bold mb-6 text-text">Settings</h2>
+      <h2 className="text-2xl font-bold mb-6 text-text">设置</h2>
       <div className="flex gap-4 mb-6 border-b border-lp-border/30">
         {tabs.map((tab) => {
           const active = pathname === tab.href;

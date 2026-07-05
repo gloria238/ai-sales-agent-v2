@@ -43,12 +43,12 @@ export function EditDialog({ lead, orgSlug }: Props) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger>
-        <Button variant="outline" size="sm">Edit</Button>
+        <Button variant="outline" size="sm">编辑</Button>
       </DialogTrigger>
       <DialogContent title="Edit Lead">
         <div className="space-y-4">
           <Input label="Name" value={name} onChange={(e) => setName(e.target.value)} disabled={loading} />
-          <Input label="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} disabled={loading} />
+          <Input label="邮箱" type="email" value={email} onChange={(e) => setEmail(e.target.value)} disabled={loading} />
           {error && <p className="text-sm text-danger">{error}</p>}
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => setOpen(false)} disabled={loading}>Cancel</Button>

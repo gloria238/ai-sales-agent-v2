@@ -58,7 +58,7 @@ export function AgentListClient({ agents, orgSlug }: { agents: Agent[]; orgSlug:
     <div className="max-w-5xl mx-auto p-4 lg:p-6">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-text">AI SDR Agents</h1>
+          <h1 className="text-2xl font-bold text-text">AI 助理</h1>
           <p className="text-sm text-text-muted mt-1">Configure AI sales agents with personality, knowledge, and goals.</p>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>

@@ -28,7 +28,7 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
   if (!lead) {
     return (
       <div className="text-center py-12">
-        <p className="text-text-muted mb-4">Lead not found</p>
+        <p className="text-text-muted mb-4">客户未找到</p>
         <Link href="/leads" className="text-accent hover:underline text-sm">← Back to Leads</Link>
       </div>
     );

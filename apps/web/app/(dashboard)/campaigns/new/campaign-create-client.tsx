@@ -33,11 +33,11 @@ export function CampaignCreateClient({ agents, scripts, orgSlug }: { agents: Arr
       });
       if (res.ok) {
         const data = await res.json();
-        toast.success("Campaign created");
+        toast.success("活动创建成功");
         router.push(`/campaigns/${data.campaign.id}`);
       } else {
         const data = await res.json();
-        toast.error(data.error || "Failed to create campaign");
+        toast.error(data.error || "创建失败");
       }
     } finally {
       setLoading(false);
@@ -47,38 +47,38 @@ export function CampaignCreateClient({ agents, scripts, orgSlug }: { agents: Arr
   return (
     <div className="p-6 max-w-2xl mx-auto">
       <button onClick={() => router.push("/campaigns")} className="flex items-center gap-2 text-sm text-text-muted hover:text-text mb-6 transition-colors">
-        <ArrowLeft className="w-4 h-4" /> Back to Campaigns
+        <ArrowLeft className="w-4 h-4" /> 返回活动列表
       </button>
-      <h1 className="text-2xl font-bold text-text mb-6">Create Campaign</h1>
+      <h1 className="text-2xl font-bold text-text mb-6">创建外呼活动</h1>
       <Card className="p-6 glass-card">
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label className="block text-sm font-medium text-text mb-1.5">Campaign Name</label>
-            <Input name="name" placeholder="e.g. Q2 Enterprise Outreach" required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+            <label className="block text-sm font-medium text-text mb-1.5">活动名称</label>
+            <Input name="name" placeholder="例如：Q3 企业客户拓展计划" required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
           </div>
           <div>
-            <label className="block text-sm font-medium text-text mb-1.5">Description</label>
-            <Textarea name="description" placeholder="Describe the campaign goal and target audience..." rows={3} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+            <label className="block text-sm font-medium text-text mb-1.5">活动描述</label>
+            <Textarea name="description" placeholder="描述活动目标和目标客户群体…" rows={3} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-text mb-1.5">AI Agent</label>
+              <label className="block text-sm font-medium text-text mb-1.5">AI 坐席</label>
               <select className="w-full h-10 rounded-lg border border-border bg-bg-card px-3 text-sm text-text focus:outline-none focus:ring-2 focus:ring-accent/50" value={form.agentId} onChange={(e) => setForm({ ...form, agentId: e.target.value })}>
-                <option value="">None (manual only)</option>
+                <option value="">无（纯手动）</option>
                 {agents.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-text mb-1.5">Script</label>
+              <label className="block text-sm font-medium text-text mb-1.5">话术脚本</label>
               <select className="w-full h-10 rounded-lg border border-border bg-bg-card px-3 text-sm text-text focus:outline-none focus:ring-2 focus:ring-accent/50" value={form.scriptId} onChange={(e) => setForm({ ...form, scriptId: e.target.value })}>
-                <option value="">None (AI-generated)</option>
+                <option value="">无（AI 自动生成）</option>
                 {scripts.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
               </select>
             </div>
           </div>
           <div className="flex gap-3 pt-2">
-            <Button type="button" variant="outline" onClick={() => router.push("/campaigns")}>Cancel</Button>
-            <Button type="submit" loading={loading}><Send className="w-4 h-4 mr-2" />Create Campaign</Button>
+            <Button type="button" variant="outline" onClick={() => router.push("/campaigns")}>取消</Button>
+            <Button type="submit" loading={loading}><Send className="w-4 h-4 mr-2" />创建活动</Button>
           </div>
         </form>
       </Card>

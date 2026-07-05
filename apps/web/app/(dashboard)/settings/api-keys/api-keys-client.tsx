@@ -64,7 +64,7 @@ export function ApiKeysClient({ orgSlug, isOwner }: Props) {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-lg font-semibold text-text">API Keys</h2>
+        <h2 className="text-lg font-semibold text-text">API 密钥</h2>
         <p className="text-sm text-text-muted mt-1">
           Use API keys to authenticate programmatic requests. Pass the key as a Bearer token in the Authorization header.
         </p>
@@ -108,7 +108,7 @@ export function ApiKeysClient({ orgSlug, isOwner }: Props) {
                   )}
                 </div>
                 {isOwner && (
-                  <Button variant="outline" size="sm" onClick={() => deleteKey(key.id)}>Delete</Button>
+                  <Button variant="outline" size="sm" onClick={() => deleteKey(key.id)}>删除</Button>
                 )}
               </div>
             </div>
