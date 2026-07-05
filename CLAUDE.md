@@ -103,7 +103,7 @@ npx vercel --prod --cwd apps/web   # Deploy to production
 
 **SalesAgent AI** is a pnpm + Turborepo monorepo for an AI SDR / outbound sales operating system. AI agents that qualify leads, compose follow-ups, and book meetings — with multi-channel conversation inbox, campaign orchestration, and real-time monitoring.
 
-### Monorepo layout (V1.8)
+### Monorepo layout (V1.9)
 
 ```
 apps/
@@ -114,29 +114,29 @@ packages/
   shared-types/ — API contract types extracted from apps/web/lib/
   domain/       — Business entities (LeadStage, CampaignStatus, etc.)
   ui-tokens/    — Corporate Green palette + Tailwind preset + JS tokens for RN
-  ai-core/      — Unified DeepSeek client + prompt builders (versioned) + agent execution + metrics
-  rag-core/     — Full RAG pipeline (parse → chunk → embed → hybrid retrieve → cite) + eval framework
+  ai-core/      — Unified DeepSeek client + prompt builders (versioned) + agent execution (ReAct) + metrics + translate
+  rag-core/     — Full RAG pipeline (parse → chunk → embed → hybrid retrieve → rerank → cite) + eval + KB docs
   api-client/   — Type-safe fetch client (web + mobile share)
-  db/           — Prisma 6 schema + client (PostgreSQL + pgvector + tsvector, 15 models)
+  db/           — Prisma 6 schema + client (PostgreSQL + pgvector + tsvector, 16 models)
 ```
 
-### Data model (15 models in `sales_agent` PostgreSQL schema)
+### Data model (16 models in `sales_agent` PostgreSQL schema)
 
-- **User / Organization / Membership** — Multi-tenant with 4 roles + 10+ permissions.
+- **User / Organization / Membership** — Multi-tenant with 5 roles (owner/admin/operator/viewer/customer) + 13 permissions.
 - **ApiKey** — Per-org API keys: SHA-256 hashed, prefix for display, lastUsedAt tracking.
 - **Agent** — AI agent configuration per org: personality, tone, knowledge base, goals, isActive.
-- **Lead** — CRM leads with stage tracking, AI score, source, assigned owner.
+- **Lead** — CRM leads with stage tracking, AI score, source, assigned owner, dealAmount (real pipeline value), userId (Customer Portal link).
 - **LeadActivity** — Immutable activity log per lead.
 - **Conversation** — Thread between agent and lead: channel, status (active|awaiting_approval|approved|closed|archived), subject.
-- **Message** — Individual message in a conversation: direction, content, AI metadata.
-- **Script** — Sales playbook: name, description, steps (JSON).
+- **Message** — Individual message in a conversation: direction, content, AI metadata (agentSteps for ReAct reasoning chain).
+- **Script** — Sales playbook: name, description, steps (JSON, supports type: "react" for ReAct Agent).
 - **Campaign** — Outbound campaign: linked to script + agent, target audience, schedule, stats.
 - **CampaignRun** — Execution record per campaign.
 - **Document** — KB document: name, type, status, chunkCount, metadata.
 - **DocumentChunk** — KB chunk: content, embedding (pgvector, Unsupported type), searchVector (tsvector, Unsupported type), metadata.
-- **AICallMetric** (V1.8) — AI call telemetry: jobType, promptTokens, completionTokens, llmLatencyMs, success, fallbackUsed, requestId, estimatedCostUSD.
+- **AICallMetric** (V1.8) — AI call telemetry: jobType, promptTokens, completionTokens, llmLatencyMs, success, fallbackUsed, requestId.
 - **AuditLog** — Immutable audit trail for org-level actions.
-- **FeatureFlag** — Per-org feature toggles with rollout%, rules targeting (including promptVersion), DB-backed.
+- **FeatureFlag** — Per-org feature toggles: email_channel, wechat_channel, 4 AI flags, rollout% + rules targeting, DB-backed.
 
 ### Key patterns
 
@@ -146,41 +146,49 @@ packages/
 - **Registration flow**: `alice@example.com` → owner + new org. All others → viewer in alice's existing org. Verification link must be clicked to complete registration.
 - **API layer**: 40+ Route Handlers with session + RBAC permission checks. API versioning via `/api/v1/` prefix (Next.js rewrites, zero route duplication). JSON logging on auth/AI routes with PII hashing. Centralized error handler (`lib/api-error.ts`) with typed status mapping.
 - **Worker**: BullMQ Worker consuming `conversation-jobs`, `email-jobs`, `campaign-jobs`, `scoring-jobs` queues. AI response composition + lead qualification + campaign delivery. Uses `prefix: "sales-agent"` on all queue connections to prevent cross-project conflicts.
-- **AI**: DeepSeek API client. 4 AI endpoints: compose-response, score-lead, summarize-conversation, generate-script. Feature flags via DB-backed system (`lib/feature-flags-v2.ts`) with per-org control, rollout%, rules targeting, memory cache (60s TTL), and env-var fallback for backward compat.
+- **AI**: DeepSeek API client. 6 AI capabilities: compose-response (with RAG KB grounding), score-lead, summarize-conversation, generate-script, translate, detect-language. ReAct Agent executor (`agent-executor.ts`) with tool-calling loop. AI draft API searches knowledge base before composing replies. Feature flags via DB-backed system.
 - **Email**: Resend SDK. `apps/worker/src/email.ts` — template variable resolution (`{{lead.email}}`) + send. Worker composes AI responses and sends via Resend.
 - **DB**: PrismaClient singleton cached on `globalThis`. `experimental.serverComponentsExternalPackages: ["@prisma/client"]` in next.config for Vercel.
 - **Design system**: CSS custom properties in `globals.css` (RGB triplets for Tailwind opacity support). All colors registered in `tailwind.config.js` as `rgb(var(--x) / <alpha-value>)`. 11 UI components in `components/ui/` use design tokens exclusively — never hardcoded colors. Glass morphism via `.glass-card` utility class. Typography: Inter (Google Font, loaded via next/font). Corporate Green palette (green-800/700/400 + slate) — evolved from Luxury Nature for professional SaaS feel. Error boundaries on all 11 dashboard routes + root level.
 - **Error tracking**: @sentry/nextjs integration (graceful opt-in via SENTRY_DSN env var). Centralized `handleApiError()` with status code mapping + PII-safe logging. 14 `error.tsx` files (11 route-level + dashboard group + root app + global-error).
-- **Feature flags**: DB-backed system (`FeatureFlag` model) with per-org toggles, rollout% (hash-based user bucketing), role/user targeting rules. Memory cache (60s TTL). Env-var fallback preserves backward compatibility with existing 4 flags.
+- **Feature flags**: DB-backed system (6 active flags). Channel flags: `email_channel` (default off for China) + `wechat_channel` (default on). 4 AI flags. Per-org toggles, rollout%, rules targeting. Memory cache (60s TTL), env-var fallback.
+- **Channel abstraction**: Feature Flag controls email/wechat enablement per org. Worker checks flag before sending. Single codebase supports both overseas (email) and domestic (wechat) markets.
+- **i18n**: Full Chinese UI — all dashboard pages, labels, error messages, stage/score badges translated. AI auto-detects customer language + matches response language. Translation API + inbox translation button for sales handoff.
+- **Customer Portal**: Standalone `/portal` route (no dashboard sidebar). Customers log in via Lead.userId → JWT(role=customer) → only see their own conversations. Auth API supports dual-path login (Membership → dashboard / Lead.userId → portal).
 - **Identity Stack**: Operational Customer Identity Layer — every customer-facing entity shows: avatar (pravatar.cc real human photos + gradient fallback), presence state (derived from `updatedAt` recency), AI ownership (agent name + confidence %), lead intent (score bar), activity timestamp. `IdentityCard` component (compact/expanded variants) used consistently across inbox, leads, and dashboard. Presence states: online/idle/away/offline/ai-processing/handoff-required/syncing. No new DB columns — presence is pure logic on existing timestamps; avatars use pravatar.cc deterministic by email seed.
 
-### RBAC permissions (10 permissions)
+### RBAC permissions (13 permissions, 5 roles)
 
-| Permission | owner | admin | operator | viewer |
-|---|---|---|---|---|
-| manage_org | yes | - | - | - |
-| manage_members | yes | yes | - | - |
-| manage_agents | yes | yes | yes | - |
-| manage_leads | yes | yes | yes | - |
-| delete_leads | yes | yes | - | - |
-| manage_campaigns | yes | yes | yes | - |
-| view_agents | yes | yes | yes | yes |
-| view_leads | yes | yes | yes | yes |
-| view_members | yes | yes | yes | yes |
-| view_audit_log | yes | yes | yes | yes |
-| run_campaigns | yes | yes | yes | - |
+| Permission | owner | admin | operator | viewer | customer |
+|---|---|---|---|---|---|
+| manage_org | yes | - | - | - | - |
+| manage_members | yes | yes | - | - | - |
+| manage_agents | yes | yes | yes | - | - |
+| manage_leads | yes | yes | yes | - | - |
+| delete_leads | yes | yes | - | - | - |
+| manage_campaigns | yes | yes | yes | - | - |
+| view_agents | yes | yes | yes | yes | - |
+| view_leads | yes | yes | yes | yes | - |
+| view_members | yes | yes | yes | yes | - |
+| view_audit_log | yes | yes | yes | yes | - |
+| run_campaigns | yes | yes | yes | - | - |
+| manage_api_keys | yes | yes | - | - | - |
+| view_api_keys | yes | yes | - | - | - |
+ | read:own_conversations | - | - | - | - | yes (Lead.userId) |
+ | write:own_messages | - | - | - | - | yes (Lead.userId) |
 
 ### Key files
 
 ```
 apps/web/app/page.tsx                — Public landing page with "Try Live Demo →" CTA
-apps/web/middleware.ts               — JWT guard + rate-limit + /→/home redirect + /login?clear=1 stale cookie clearing
-apps/web/app/(dashboard)/home/page.tsx — Dashboard (dense full-viewport, donut charts, KPI cards, activity feed)
-apps/web/app/(dashboard)/home/donut-chart.tsx — SVG donut chart (zero deps, stroke-dasharray)
-apps/web/app/(dashboard)/inbox/      — Conversation inbox (unified single-page split-pane, no navigation)
-apps/web/app/(dashboard)/analytics/   — Analytics dashboard (pipeline, campaign perf, conversion rates) + AI Health tab (Phase 18)
-apps/web/app/(dashboard)/analytics/ai-health.tsx — AI Health dashboard: P50/P95, cost, fallback rate, daily tokens (Phase 18)
-apps/web/app/api/v1/metrics/ai-health/route.ts — AI Health aggregation API (Phase 18)
+apps/web/middleware.ts               — JWT guard + rate-limit + /→/home redirect + /login?clear=1 + portal bypass
+apps/web/app/(dashboard)/home/page.tsx — Dashboard (dense full-viewport, donut charts, KPI cards, activity feed, ¥ pipeline)
+apps/web/app/(dashboard)/inbox/      — Conversation inbox (unified single-page split-pane) + HITL review + translate button
+apps/web/app/(dashboard)/analytics/   — Analytics dashboard (pipeline, campaign perf) + AI Health tab + Boss tab (Phase 19)
+apps/web/app/(dashboard)/analytics/ai-health.tsx — AI Health dashboard: P50/P95, cost, fallback, daily tokens (Phase 18, 中文 Phase 19)
+apps/web/app/(portal)/               — Customer Portal (Phase 19): login + conversation list + detail
+apps/web/app/api/v1/translate/route.ts — DeepSeek translation API (Phase 19)
+apps/web/app/api/orgs/[slug]/conversations/[id]/ai-draft/route.ts — AI draft with RAG knowledge base (Phase 19)
 apps/web/app/(dashboard)/agents/     — AI agent management (configure personality, knowledge base)
 apps/web/app/(dashboard)/scripts/    — Sales script marketplace (browse + install playbooks)
 apps/web/app/(dashboard)/campaigns/  — Outbound campaign list + create + analytics
@@ -196,7 +204,7 @@ apps/web/lib/auth.ts                — JWT sign/verify (jose), Edge-compatible,
 apps/web/lib/password.ts            — bcrypt hash/verify (12 rounds), auto re-hash on login, Node.js only (not Edge)
 apps/web/lib/session.ts             — Server-side session from JWT cookie
 apps/web/lib/audit.ts               — Audit log write helper (used in all mutation endpoints)
-apps/web/lib/permissions.ts         — 12 RBAC permissions + role matrix (PERMISSION_MAP exported for tests)
+apps/web/lib/permissions.ts         — 13 RBAC permissions + 5 roles (incl. customer), PERMISSION_MAP exported for tests
 apps/web/lib/rate-limit.ts          — Upstash Redis sliding-window rate limiter (configurable window, fail-closed option, in-memory TTL fallback)
 apps/web/lib/token-blacklist.ts     — JWT revocation via Redis SET with TTL (fail-closed option)
 apps/web/lib/feature-flags.ts       — Backward-compat re-export from feature-flags-v2 (4 active flags)
@@ -213,6 +221,7 @@ apps/web/components/nav/mobile-nav.tsx           — Mobile hamburger menu with 
 apps/web/components/leads/import-button.tsx      — CSV import dialog with file upload
 apps/web/components/identity/avatar.tsx          — Pravatar.cc real photo avatar + gradient fallback + presence dot
 apps/web/components/identity/identity-card.tsx   — Operational Identity Cell (compact list + expanded header)
+apps/web/components/inbox/AgentThinkingPanel.tsx — ReAct Agent reasoning chain UI (collapsible, Phase 19)
 apps/web/components/identity/presence.tsx        — Presence dot with pulse animation for AI states
 apps/web/lib/time.ts                            — relativeTime(), presenceFromDate(), presenceLabel()
 apps/web/vitest.config.ts           — Unit test config (excludes integration/E2E files)
@@ -266,10 +275,12 @@ packages/db/index.ts                — PrismaClient singleton export
 packages/db/setup-vector.mjs        — Enable pgvector + embedding column on Supabase
 packages/ai-core/src/client.ts      — Unified DeepSeek client (callDeepSeek, callDeepSeekJSON, 15s timeout, returns usage)
 packages/ai-core/src/prompts.ts     — AI system prompts + builders + PROMPT_ARMOR injection defense
-packages/ai-core/src/agents.ts      — composeResponse(), scoreLead(), generateScript(), summarizeConversation() with promptVersion support
+packages/ai-core/src/agents.ts      — composeResponse(), scoreLead(), generateScript(), summarizeConversation(), detectLanguage(), translateText()
+packages/ai-core/src/agent-executor.ts — ReAct Agent loop (runReActAgent) with tool-calling (Phase 19)
 packages/ai-core/src/prompt-registry.ts — Prompt version registry (Feature Flag canary rollout, Phase 18)
 packages/ai-core/src/metrics.ts     — AICallMetric builder + cost estimation (Phase 18)
 packages/rag-core/src/index.ts      — Full RAG pipeline barrel export
+packages/rag-core/src/reranker.ts   — CohereReranker + NoopReranker + createReranker() factory (Phase 19)
 packages/rag-core/src/pgvector-storage.ts — PostgreSQL pgvector StorageAdapter implementation
 packages/rag-core/src/keyword-search.ts — PostgreSQL tsvector FTS keyword search (Phase 18)
 packages/rag-core/src/rrf.ts           — Reciprocal Rank Fusion for hybrid search (Phase 18)
@@ -279,30 +290,31 @@ packages/ui-tokens/src/colors.ts    — Corporate Green palette (#166534, #4ADE8
 packages/api-client/src/client.ts   — createClient() type-safe fetch wrapper (cookie + bearer auth)
 packages/db/seed-production.ts      — 3 sellable scripts + 5 demo leads (idempotent)
 packages/db/seed-demo.ts            — Client demo: Acme Corp, 15 leads, 3 agents, 10 conversations
+packages/db/seed-chinese-demo.ts    — 启云科技中文 Demo: 5 members, 3 AI, 15 customers, 10 convos, 4 KB docs (Phase 19)
+packages/db/seed-qicloud-accounts.ts — Supplementary: 3 customer portal accounts + 3 team members (Phase 19)
 packages/db/seed-members.ts         — RBAC test accounts (admin/operator/viewer @salesagent.test)
 packages/db/seed-verify-alice.ts    — Mark alice@example.com emailVerified=true
 packages/db/clean-demo-org.ts       — FK-safe org cleanup before re-seed
+packages/rag-core/eval/knowledge-base/ — 6 启云科技 KB docs (product/pricing/FAQ/objections/cases/competitors) for RAG testing
 ```
 
-### State of the project (2026-07-04)
+### State of the project (2026-07-05)
 
 - **Phase 1-12**: Foundation → CRM → Campaigns → AI → Polish → Testing → Security → UI/UX → Identity Layer → Route hardening → UX Rework → Bugfix Sprint.
-- **Phase 13 (V1.5)**: Monorepo refactor into 3 apps + 7 packages. RAG knowledge base (pgvector). Mobile Expo app.
-- **Phase 14 (V1.6)**: Mobile Showcase — 6-page Club Concierge Demo. Demo/Live toggle, RAG Pipeline visualization.
-- **Phase 15 (Production Readiness)**: 8-domain security audit (165 findings, 32 fixed). Prompt injection armor. API validation. Worker retry config. Vercel build fixes.
-- **Phase 16 (UI/UX Commercial Overhaul — 2026-06-28)**: Real human avatars (pravatar.cc replacing DiceBear cartoons). Inter typography. Corporate Green palette. 26 files changed.
-- **Phase 17 (Production Hardening — 2026-06-28)**: Auth rate limiting, bcrypt 12 rounds, CSP unsafe-eval removed, API versioning, Sentry, FeatureFlag model, 14 error boundaries. 43 files changed.
-- **Phase 18 (Production AI Builder — 2026-07-04)**: AI token tracking (AICallMetric model), Hybrid search (pgvector+tsvector→RRF), AI Health dashboard, prompt version registry (Feature Flag canary rollout), job idempotency (Redis SET NX dedup), HITL formalization (awaiting_approval state machine), distributed tracing (requestId: HTTP→Queue→LLM→DB), RAG evaluation framework (20-case golden dataset). Worker DeepSeek client duplication eliminated. DOCX parser installed. BullMQ defaultJobOptions readonly bug fixed. Prisma schema drift fixed (Unsupported type annotations). 35 files, +1,715/−276 lines.
-- **~27,000 lines** across ~400 files. 40+ API routes. 52 unit tests. 15 models.
-- Web app: ✅ Vercel (JWT, API versioning, Sentry, Identity Stack, Knowledge Base, Hybrid Search, AI Health Dashboard).
-- Worker: ✅ Railway (4 BullMQ workers, idempotent, `prefix: "sales-agent"`, AI compose, scoring, campaign delivery, healthcheck).
-- Mobile: ✅ Expo 52 (7 pages). Club Concierge demo. Real API auth wired. Demo/Live toggle functional.
-- Email: ✅ Resend verification + AI-composed sales emails with open/click tracking. HITL: AI drafts never auto-sent.
-- RAG: ✅ Hybrid pgvector + tsvector → RRF fusion. Full pipeline: parse (PDF/DOCX/TXT/FAQ) → chunk → embed → hybrid retrieve → cite. Golden dataset + eval metrics.
-- Observability: ✅ AICallMetric model (token, latency, cost). AI Health dashboard (P50/P95, daily trends, alerts). Sentry (graceful opt-in). Structured logging with PII redaction + requestId trace (HTTP→Queue→LLM→DB).
-- Design: ✅ Corporate Green palette (#166534, #4ADE80, #0a1108, #475540, #FFFFFF, #849b70). Premium Enterprise SaaS. Inter typography. Real human avatars. 14 error boundaries.
-- Security: Auth rate limiting (defense-in-depth), fail-closed options, IP protection, bcrypt 12, CSP unsafe-eval removed, file upload validation, PII redaction, API key model, API 401 JSON responses, prompt injection armor.
-- Known: Upstash Redis 500K free limit. Stripe billing not implemented. SSO/OAuth not implemented. No GitHub Actions CI/CD. Reranker is Noop (interface reserved).
+- **Phase 13-14**: Monorepo refactor, RAG (pgvector), Mobile Expo app, Club Concierge showcase.
+- **Phase 15-17**: Security audit 165 findings→32 fixed, UI/UX overhaul (Corporate Green, Inter, Pravatar), Production hardening (auth rate limits, bcrypt 12, CSP, Sentry, Feature Flags, 14 error boundaries).
+- **Phase 18 (Production AI Builder — 2026-07-04)**: AICallMetric, Hybrid search (pgvector+tsvector→RRF), AI Health dashboard, prompt version registry, job idempotency, HITL formalization, distributed tracing, RAG eval. 35 files.
+- **Phase 19 (China Market Adaptation — 2026-07-05)**: Customer Portal (Lead.userId, /portal routes, customer JWT login). Full Chinese i18n (~17 files). Channel Feature Flags (email_channel/wechat_channel). Real pipeline value (Lead.dealAmount). ReAct Agent executor (agent-executor.ts). Cohere Reranker with noop fallback. AI draft RAG integration (Knowledge Base grounding). AgentThinkingPanel reasoning UI. Translation API + inbox translate button. Boss Dashboard tab. 启云科技 Chinese Demo seed (5 members, 3 AI, 15 customers, 4 KB docs). Vercel SQL column name fix (snake_case→camelCase). ~55 files, +2,800/−500 lines.
+- **~30,000 lines** across ~420 files. 45+ API routes. 52 unit tests. 16 models.
+- Web app: ✅ Vercel (JWT, API versioning, Customer Portal, Full Chinese UI, RAG-grounded AI drafts, ReAct reasoning UI, Hybrid Search, AI Health + Boss dashboards, Translation API).
+- Worker: ✅ Railway (4 BullMQ workers, idempotent, channel feature flags, ReAct agent campaign steps).
+- Mobile: ✅ Expo 52 (7 pages). Club Concierge demo.
+- Email: ✅ Resend with per-org Feature Flag control (default off for China market).
+- RAG: ✅ Hybrid pgvector+tsvector→RRF. Cohere reranker (optional). AI drafts grounded in KB. KB docs for 启云科技 (6 documents, ~40KB). Golden dataset + eval.
+- Observability: ✅ AICallMetric, AI Health dashboard (中文), Sentry, structured logging, distributed tracing.
+- Design: ✅ Corporate Green. Full Chinese UI. Inter typography. 14 error boundaries.
+- Security: Auth rate limiting, fail-closed, IP protection, bcrypt 12, CSP, file upload validation, prompt armor, customer role isolation.
+- Known: Upstash Redis 500K limit. Stripe/SSO not implemented. No GitHub Actions CI/CD.
 
 ### Seed scripts reference
 
@@ -337,6 +349,12 @@ packages/db/clean-demo-org.ts       — FK-safe org cleanup before re-seed
 17. **sendMessageSchema**: `conversationId` is optional — the ID comes from the URL path `/api/orgs/{slug}/conversations/{id}/messages`, not the request body. Client sends only `{ content, channel }`.
 18. **pdf-parse v2 API**: The installed version is 2.4.5 which uses a class-based API (`new PDFParse({ data }).getText()`), NOT the v1 default export function (`await pdfParse(buffer)`). Import `{ PDFParse }` (named), not default. See `packages/rag-core/src/pdf-parser.ts` for reference.
 19. **SECURITY.md is gitignored**: Contains detailed vulnerability findings including credential names. Kept locally for reference, never committed.
+20. **Route groups don't change URLs**: `(auth)/login` and `(portal)/login` both resolve to `/login` — Next.js will reject the build with "two parallel pages resolve to the same path." Route group parentheses `()` are purely organizational. To have separate URL paths, use real path prefixes without parentheses (e.g. `portal/login` → `/portal/login`).
+21. **Prisma $queryRawUnsafe column names**: Prisma columns without `@map` use **camelCase** in the database (not snake_case). Writing `SELECT document_id FROM "DocumentChunk"` will fail with `column "document_id" does not exist`. Always use quoted camelCase: `SELECT "documentId" FROM "DocumentChunk"`.
+22. **JSONB cast in raw SQL**: When inserting into JSONB columns via `$queryRawUnsafe`, PostgreSQL requires an explicit `::jsonb` cast on string parameters. Without it: `column "metadata" is of type jsonb but expression is of type text`.
+23. **Chinese curly quotes break esbuild/tsx**: Chinese punctuation `""` (U+201C/U+201D) in `.ts` strings are misinterpreted as JS string delimiters by esbuild on Windows. Use corner brackets `「」` (U+300C/U+300D) for quoted Chinese text in source files.
+24. **connection_limit=1 forbids parallel writes**: `Promise.all([create1, create2, ...])` with `connection_limit=1` causes timeout P2024. Seeds must write sequentially: `for (const d of data) { await prisma.create(...) }`.
+25. **Leads → Organizations cascade**: Prisma marks `onDelete: Cascade` on Lead→Organization, but not on all relations. FK-safe cleanup must delete in dependency order: AICallMetric→Message→Conversation→LeadActivity→CampaignRun→Campaign→DocumentChunk→Document→Lead→ApiKey→FeatureFlag→AuditLog→Script→Agent→Membership→Organization.
 
 ### Railway deployment (worker)
 

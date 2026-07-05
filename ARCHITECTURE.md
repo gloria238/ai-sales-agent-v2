@@ -1,10 +1,10 @@
-# SalesAgent AI — Architecture Document (V1.8)
+# SalesAgent AI — Architecture Document (V1.9)
 
 > Multi-tenant AI Agent Platform with Web, Mobile, Worker, and Knowledge Infrastructure.
 > Build and deploy AI Sales, Concierge, and Support Agents on a shared platform.
-> ~27,000 lines across ~390 files. 40+ API routes.
-> Web: 40+ pages + API routes + 14 error boundaries. Mobile: 7-page Club Concierge showcase. Worker: 4 BullMQ queues (idempotent).
-> Latest: Phase 18 — Production AI Builder (hybrid search, AI observability, prompt versioning, HITL, idempotency, tracing).
+> ~30,000 lines across ~420 files. 45+ API routes.
+> Web: 45+ pages + API routes + 14 error boundaries. Mobile: 7-page Club Concierge showcase. Worker: 4 BullMQ queues (idempotent).
+> Latest: Phase 19 — China Market Adaptation (Customer Portal, i18n, ReAct Agent, RAG-grounded AI drafts, channel feature flags).
 
 ---
 
@@ -334,9 +334,9 @@ PROMPT_REGISTRY.compose_response
 
 ---
 
-## 8. RAG 知识库系统
+## 8. RAG 知识库系统 (V1.9 — RAG-grounded AI drafts)
 
-### 8.1 管线 (V1.8 — Hybrid Search)
+### 8.1 管线 (V1.9 — Hybrid Search + Reranker + AI Draft Integration)
 
 ```
 PDF/DOCX/TXT/MD/FAQ
@@ -375,14 +375,24 @@ PDF/DOCX/TXT/MD/FAQ
 | POST | `/api/orgs/{slug}/kb/ask` | view_agents | 提问 → 检索 → LLM 回答 |
 | GET | `/api/orgs/{slug}/kb/documents` | view_agents | 列出已索引文档 |
 
-### 8.4 设计决策
+### 8.4 RAG 赋能 AI 草稿 (V1.9)
+
+收件箱的「AI 草稿」按钮不仅读对话历史，还会先检索知识库：
+```
+客户最新消息 -> searchKnowledgeBase() -> Hybrid Search -> RRF -> Top-5 chunks
+             + 完整对话历史 + Agent 配置 -> DeepSeek -> 基于 KB 事实的回复草稿
+```
+AI 被明确告知「产品/定价/竞品必须从知识库引用，KB 没有的诚实说不知道」，大幅减少幻觉。
+
+### 8.5 设计决策
 
 - **Hybrid Search**: pgvector 余弦 + tsvector FTS → RRF 融合。向量捕捉语义相似，BM25 捕捉精确关键词匹配，两者互补
 - **嵌入可选**: 无 EMBEDDING_API_KEY 时快速回退到 PostgreSQL ~* 关键词搜索
 - **多租户**: 分块标记 `organizationId`，检索限定 org 范围
-- **重排序器**: NoopReranker — 接口预留用于未来接入 Cohere Rerank 或 Cross-Encoder
+- **重排序器 (V1.9)**: CohereReranker (rerank-multilingual-v3.0) — 有 COHERE_API_KEY 时自动启用，失败降级到 NoopReranker。createReranker() 工厂函数零配置。
 - **pgvector + tsvector**: 都在 PostgreSQL 内，一次查询同时做向量+全文搜索，零额外基础设施
-- **评估**: Golden Dataset + 4 retrieval metrics + 2 generation metrics (LLM judge)，可 CI 运行
+- **评估**: Golden Dataset (20 Q&A) + 4 retrieval metrics + 2 generation metrics (LLM judge), 可 CI 运行
+- **知识库文档 (V1.9)**: 6 份启云科技 KB 文件 (产品介绍/定价/FAQ/异议处理/客户案例/竞品对比，~40KB) 用于 RAG 测试和演示
 
 ---
 

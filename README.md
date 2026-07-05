@@ -7,6 +7,7 @@
   <img src="https://img.shields.io/badge/Expo-Mobile-000020?logo=expo" />
   <img src="https://img.shields.io/badge/BullMQ-4%20Queues-DC2626" />
   <img src="https://img.shields.io/badge/Redis-Idempotent-red?logo=redis&logoColor=white" />
+  <img src="https://img.shields.io/badge/ReAct-Agent%20Executor-8B5CF6" />
   <img src="https://img.shields.io/badge/RAG-Hybrid%20Retrieval-4F46E5" />
   <img src="https://img.shields.io/badge/Resend-Email-7C3AED" />
   <img src="https://img.shields.io/badge/DeepSeek-AI-4F46E5" />
@@ -101,7 +102,7 @@ Expo app with Dashboard + Inbox + Knowledge Base + AI Playground. Shares types, 
 | **ORM** | Prisma 6 |
 | **Queue** | BullMQ + Upstash Redis (4 queues, idempotent, prefix: `sales-agent`) |
 | **Email** | Resend (AI composition, template engine, open/click tracking) |
-| **AI** | DeepSeek API (compose, score, summarize, generate-script) |
+| **AI** | DeepSeek API (compose w/RAG, score, summarize, generate-script, translate, ReAct agent) |
 | **RAG** | Hybrid: pgvector cosine + PostgreSQL FTS → RRF fusion; keyword fallback |
 | **Observability** | AICallMetric model + AI Health dashboard + Sentry + structured logging with PII redaction + distributed tracing (requestId) |
 | **Auth** | Custom JWT (jose) + bcryptjs 12 rounds + httpOnly cookies + Redis blacklist |
@@ -145,12 +146,13 @@ Organization  ──< Memberships >── User
 
 ### Multi-Tenant RBAC
 
-| Role | Manage Org | Manage Members | Manage Agents | View All |
-|------|:---:|:---:|:---:|:---:|
-| Owner | ✅ | ✅ | ✅ | ✅ |
-| Admin | — | ✅ | ✅ | ✅ |
-| Operator | — | — | ✅ | ✅ |
-| Viewer | — | — | — | ✅ |
+| Role | Manage Org | Manage Members | Manage Agents | View All | Customer Portal |
+|------|:---:|:---:|:---:|:---:|:---:|
+| Owner | ✅ | ✅ | ✅ | ✅ | — |
+| Admin | — | ✅ | ✅ | ✅ | — |
+| Operator | — | — | ✅ | ✅ | — |
+| Viewer | — | — | — | ✅ | — |
+| Customer | — | — | — | — | ✅ |
 
 ---
 
@@ -281,6 +283,21 @@ Login: `demo@acmecorp.com` / `demo123456`
 - Build: ✅ green (web + worker, 0 errors). Prisma Client: v6.19.3.
 
 ---
+
+### V1.9 (2026-07-05) — China Market Adaptation
+- Customer Portal (Lead.userId, /portal routes, customer JWT login)
+- Full Chinese i18n (17 dashboard files — navigation, inbox, analytics, campaigns, leads, agents, settings)
+- Channel Feature Flags (email_channel/wechat_channel) — same codebase, different markets
+- Real pipeline value (Lead.dealAmount) replacing hardcoded $5K
+- ReAct Agent executor (agent-executor.ts) + AgentThinkingPanel UI + Worker campaign step type="react"
+- AI draft RAG integration (Knowledge Base grounding before composing replies)
+- Cohere Reranker with NoopReranker fallback (createReranker factory)
+- Translation API (/api/v1/translate) + inbox translate button + detectLanguage()
+- Boss Dashboard tab (/analytics?tab=boss) — HITL rate, AI cost trends, agent performance
+- AI Health full Chinese translation + RMB cost display
+- AI auto-detects customer language and matches response language (prompt rule)
+- 启云科技 Chinese Demo seed (5 members, 3 AI, 15 customers, 4 KB docs with 31 chunks)
+- ~55 files, +2,800 / -500 lines. Build: green.
 
 ## Previous Changelog
 
