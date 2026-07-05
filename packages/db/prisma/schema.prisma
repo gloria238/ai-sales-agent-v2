@@ -29,6 +29,7 @@ model User {
   loginToken       String?
   loginTokenExpires DateTime?
   memberships      Membership[]
+  leads            Lead[]       // Customer Portal — leads linked to this user account (Phase 19)
   createdAt        DateTime     @default(now())
   @@schema("sales_agent")
 }
@@ -114,8 +115,11 @@ model Lead {
   score          Int?           // AI score 0-100
   source         String?        // website | referral | outbound | linkedin | other
   assignedTo     String?
+  dealAmount     Float?         // deal size in USD — enables real pipeline value (Phase 19)
+  userId         String?        // links to User for Customer Portal access (Phase 19)
   tags           Json?
   organization   Organization   @relation(fields: [organizationId], references: [id])
+  user           User?          @relation(fields: [userId], references: [id])
   activities     LeadActivity[]
   conversations  Conversation[]
   createdAt      DateTime       @default(now())

@@ -2,7 +2,7 @@ import type { EmbeddedChunk, SearchResult, SearchResponse } from "./types";
 import type { EmbeddingProvider } from "./embeddings";
 import type { StorageAdapter } from "./storage";
 import type { Reranker } from "./reranker";
-import { NoopReranker } from "./reranker";
+import { createReranker } from "./reranker";
 
 export interface RetrieveOptions {
   topK?: number;
@@ -21,7 +21,7 @@ export async function retrieve(
 ): Promise<SearchResponse> {
   const topK = options.topK ?? 5;
   const minScore = options.minScore ?? 0;
-  const reranker = options.reranker ?? new NoopReranker();
+  const reranker = options.reranker ?? createReranker();
 
   // 1. Embed the query
   const queryEmbedding = await embedder.embed(query);
@@ -44,12 +44,10 @@ export async function retrieve(
   // 5. Sort by score descending
   scored.sort((a, b) => b.score - a.score);
 
-  // 6. Apply reranker (NoopReranker by default — just passes through)
+  // 6. Apply reranker (Cohere if COHERE_API_KEY set, else Noop)
   if (scored.length > 0) {
-    scored = await reranker.rerank(
-      query,
-      scored.slice(0, Math.min(topK * 2, scored.length)), // rerank 2x topK
-    );
+    const toRerank = scored.slice(0, Math.min(topK * 4, scored.length)); // rerank 4x topK for better recall
+    scored = await reranker.rerank(query, toRerank, topK);
   }
 
   // 7. Take top K

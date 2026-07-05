@@ -26,6 +26,10 @@ const FLAGS: Record<string, FlagDefinition> = {
   ai_lead_scoring: { key: "ai_lead_scoring", env: "FEATURE_AI_SCORE", default: true, description: "AI lead scoring" },
   ai_summarize_conversation: { key: "ai_summarize_conversation", env: "FEATURE_AI_SUMMARIZE", default: true, description: "AI conversation summarization" },
   ai_generate_script: { key: "ai_generate_script", env: "FEATURE_AI_SCRIPT_GEN", default: true, description: "AI script generation" },
+
+  // Channel flags — per-org communication channel toggles (Phase 19)
+  email_channel: { key: "email_channel", env: "FEATURE_EMAIL_CHANNEL", default: false, description: "Email delivery via Resend (default off for China market)" },
+  wechat_channel: { key: "wechat_channel", env: "FEATURE_WECHAT_CHANNEL", default: true, description: "WeChat/WeCom messaging channel (default on for China market)" },
 };
 
 // ═══ Prompt Version Flags (string-typed, stored in FeatureFlag.rules.promptVersion) ═══

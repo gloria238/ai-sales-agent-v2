@@ -33,6 +33,7 @@ export async function POST(request: Request, { params }: { params: { slug: strin
     const name = (row.name || row.Name || "").trim();
     const email = (row.email || row.Email || "").trim() || null;
     const stage = (row.stage || row.Stage || "new").trim().toLowerCase();
+    const dealAmount = row.dealAmount ?? row.DealAmount ?? null;
     const tagsRaw = (row.tags || row.Tags || "").trim();
 
     if (!name) {
@@ -58,6 +59,7 @@ export async function POST(request: Request, { params }: { params: { slug: strin
           name,
           email,
           stage: finalStage,
+          dealAmount,
           tags,
         },
       });

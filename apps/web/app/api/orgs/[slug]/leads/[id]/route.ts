@@ -29,7 +29,7 @@ export async function PATCH(request: Request, { params }: { params: { slug: stri
   catch { return NextResponse.json({ error: "Forbidden" }, { status: 403 }); }
 
   const body = await request.json();
-  const allowedFields = ["name", "email", "stage", "ownerId", "tags"];
+  const allowedFields = ["name", "email", "stage", "ownerId", "dealAmount", "tags"];
   const changes: Record<string, unknown> = {};
 
   for (const key of allowedFields) {

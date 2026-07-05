@@ -7,8 +7,6 @@ import { ActivityFeed } from "./activity-feed";
 import { DonutChart } from "./donut-chart";
 import { MessageSquare, Bot, Zap, Plus, Send, Sparkles, Target } from "lucide-react";
 
-const AVG_DEAL_SIZE = 5000;
-
 export default async function DashboardHomePage() {
   const session = await getSession();
   if (!session) redirect("/login");
@@ -31,7 +29,13 @@ export default async function DashboardHomePage() {
 
   const stageMap = Object.fromEntries(leadsByStage.map((s) => [s.stage ?? "new", s._count]));
   const pipelineCount = (stageMap.qualified || 0) + (stageMap.proposal || 0) + (stageMap.negotiation || 0);
-  const estimatedRevenue = pipelineCount * AVG_DEAL_SIZE;
+
+  // Real pipeline value from dealAmount SUM — not hardcoded $5K
+  const pipelineAgg = await prisma.lead.aggregate({
+    where: { organizationId: org.id, stage: { in: ["qualified", "proposal", "negotiation"] } },
+    _sum: { dealAmount: true },
+  });
+  const estimatedRevenue = pipelineAgg._sum.dealAmount ?? 0;
   const wonThisMonth = stageMap.closed_won || 0;
 
   let hotLeads = 0, warmLeads = 0;
@@ -41,17 +45,17 @@ export default async function DashboardHomePage() {
   }
   const coldLeads = leadCount - hotLeads - warmLeads;
   const scoreDonut = [
-    { label: "Hot", value: hotLeads, color: "hsl(121, 95%, 56%)" },
-    { label: "Warm", value: warmLeads, color: "hsl(121, 60%, 38%)" },
-    { label: "Cold", value: coldLeads, color: "hsl(240, 5%, 28%)" },
+    { label: "高意向", value: hotLeads, color: "hsl(121, 95%, 56%)" },
+    { label: "中等", value: warmLeads, color: "hsl(121, 60%, 38%)" },
+    { label: "低意向", value: coldLeads, color: "hsl(240, 5%, 28%)" },
   ].filter(s => s.value > 0);
 
   const pipelineDonut = [
-    { label: "New", value: stageMap.new || 0, color: "hsl(240, 5%, 35%)" },
-    { label: "Contacted", value: stageMap.contacted || 0, color: "hsl(121, 20%, 25%)" },
-    { label: "Qualified", value: stageMap.qualified || 0, color: "hsl(121, 50%, 38%)" },
-    { label: "Proposal", value: stageMap.proposal || 0, color: "hsl(121, 75%, 48%)" },
-    { label: "Won", value: stageMap.closed_won || 0, color: "hsl(121, 95%, 56%)" },
+    { label: "新线索", value: stageMap.new || 0, color: "hsl(240, 5%, 35%)" },
+    { label: "已联系", value: stageMap.contacted || 0, color: "hsl(121, 20%, 25%)" },
+    { label: "已确认", value: stageMap.qualified || 0, color: "hsl(121, 50%, 38%)" },
+    { label: "方案中", value: stageMap.proposal || 0, color: "hsl(121, 75%, 48%)" },
+    { label: "已成交", value: stageMap.closed_won || 0, color: "hsl(121, 95%, 56%)" },
   ].filter(s => s.value > 0);
 
   let totalSent = 0, totalOpened = 0, totalReplied = 0;
@@ -69,11 +73,11 @@ export default async function DashboardHomePage() {
             <div className="size-14 rounded-xl bg-gradient-to-br from-accent to-accent/40 flex items-center justify-center mx-auto mb-5 shadow-lg shadow-accent/20">
               <Bot className="size-7 text-white" />
             </div>
-            <h3 className="text-lg font-bold text-text mb-2">Deploy your AI sales team</h3>
-            <p className="text-sm text-text-secondary mb-6 max-w-xs mx-auto leading-relaxed">Create an agent, import leads, launch a campaign. AI qualifies leads and books meetings 24/7.</p>
+            <h3 className="text-lg font-bold text-text mb-2">部署你的 AI 销售团队</h3>
+            <p className="text-sm text-text-secondary mb-6 max-w-xs mx-auto leading-relaxed">创建 AI 助理，导入线索，启动外呼活动。AI 全天候自动筛选线索并预约会议。</p>
             <div className="flex items-center justify-center gap-3">
-              <Link href="/agents" className="rounded-lg bg-accent text-white text-sm font-medium px-5 py-2.5 hover:bg-accent-hover transition-all shadow-sm shadow-accent/20 hover:shadow-md hover:shadow-accent/25">Create Agent</Link>
-              <Link href="/leads" className="rounded-lg border border-border text-text-secondary text-sm font-medium px-5 py-2.5 hover:bg-bg-subtle hover:border-accent/30 transition-all">Import Leads</Link>
+              <Link href="/agents" className="rounded-lg bg-accent text-white text-sm font-medium px-5 py-2.5 hover:bg-accent-hover transition-all shadow-sm shadow-accent/20 hover:shadow-md hover:shadow-accent/25">创建助理</Link>
+              <Link href="/leads" className="rounded-lg border border-border text-text-secondary text-sm font-medium px-5 py-2.5 hover:bg-bg-subtle hover:border-accent/30 transition-all">导入线索</Link>
             </div>
           </div>
         </div>
@@ -87,21 +91,21 @@ export default async function DashboardHomePage() {
       {/* ── Header ─────────────────────────── */}
       <div className="flex items-end justify-between shrink-0 mb-5">
         <div>
-          <p className="text-xs font-semibold text-text-muted uppercase tracking-[0.15em] mb-1">Overview</p>
+          <p className="text-xs font-semibold text-text-muted uppercase tracking-[0.15em] mb-1">概览</p>
           <h1 className="text-2xl font-bold tracking-tight text-text">
-            Good {new Date().getHours() < 12 ? "morning" : new Date().getHours() < 18 ? "afternoon" : "evening"},{" "}
-            <span className="text-accent">{session.name?.split(" ")[0] || "there"}</span>.
+            {new Date().getHours() < 12 ? "早上好" : new Date().getHours() < 18 ? "下午好" : "晚上好"}，{" "}
+            <span className="text-accent">{session.name?.split(" ")[0] || "欢迎"}</span>
           </h1>
         </div>
         <div className="flex items-center gap-2.5">
           <Link href="/agents" className="inline-flex items-center gap-2 rounded-xl bg-accent text-white text-sm font-semibold px-4 py-2.5 hover:bg-accent-hover transition-all shadow-sm shadow-accent/20 hover:shadow-md hover:shadow-accent/25">
-            <Plus className="size-4" /> New Agent
+            <Plus className="size-4" /> 新建助理
           </Link>
           <Link href="/campaigns/new" className="inline-flex items-center gap-2 rounded-xl border border-border bg-bg-card text-text-secondary text-sm font-medium px-4 py-2.5 hover:bg-bg-subtle hover:border-accent/30 transition-all">
-            <Zap className="size-4" /> Campaign
+            <Zap className="size-4" /> 外呼活动
           </Link>
           <Link href="/inbox" className="inline-flex items-center gap-2 rounded-xl border border-border bg-bg-card text-text-secondary text-sm font-medium px-4 py-2.5 hover:bg-bg-subtle hover:border-accent/30 transition-all">
-            <MessageSquare className="size-4" /> Inbox
+            <MessageSquare className="size-4" /> 收件箱
           </Link>
         </div>
       </div>
@@ -109,10 +113,10 @@ export default async function DashboardHomePage() {
       {/* ── KPI Row ────────────────────────── */}
       <div className="grid grid-cols-4 gap-4 shrink-0 mb-5">
         {[
-          { label: "Pipeline", value: `$${(estimatedRevenue / 1000).toFixed(1)}k`, sub: `${pipelineCount} deals`, icon: Target, color: "text-accent", bg: "bg-accent/10", glow: "shadow-accent/5" },
-          { label: "Meetings", value: meetingsThisMonth, sub: "This month", icon: Sparkles, color: "text-accent-hover", bg: "bg-accent-soft", glow: "shadow-accent-hover/5" },
-          { label: "Reply Rate", value: replyRate ? `${replyRate}%` : "—", sub: totalSent > 0 ? `${totalReplied}/${totalSent}` : "No campaigns", icon: Send, color: "text-accent-secondary", bg: "bg-accent-muted", glow: "shadow-accent-secondary/5" },
-          { label: "AI Replies", value: aiResponseRate ? `${aiResponseRate}%` : "—", sub: aiMessageCount > 0 ? `${aiMessageCount} auto` : "Activate agent", icon: Bot, color: "text-accent", bg: "bg-accent/10", glow: "shadow-accent/5" },
+          { label: "销售漏斗", value: `¥${(estimatedRevenue / 10000).toFixed(1)}万`, sub: `${pipelineCount} 个商机`, icon: Target, color: "text-accent", bg: "bg-accent/10", glow: "shadow-accent/5" },
+          { label: "本月会议", value: meetingsThisMonth, sub: "本月", icon: Sparkles, color: "text-accent-hover", bg: "bg-accent-soft", glow: "shadow-accent-hover/5" },
+          { label: "回复率", value: replyRate ? `${replyRate}%` : "—", sub: totalSent > 0 ? `${totalReplied}/${totalSent}` : "暂无活动", icon: Send, color: "text-accent-secondary", bg: "bg-accent-muted", glow: "shadow-accent-secondary/5" },
+          { label: "AI 回复", value: aiResponseRate ? `${aiResponseRate}%` : "—", sub: aiMessageCount > 0 ? `${aiMessageCount} 条自动` : "待激活助理", icon: Bot, color: "text-accent", bg: "bg-accent/10", glow: "shadow-accent/5" },
         ].map((card, i) => (
           <div
             key={card.label}
@@ -143,7 +147,7 @@ export default async function DashboardHomePage() {
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75" />
               <span className="relative inline-flex rounded-full size-2 bg-accent" />
             </span>
-            <h2 className="text-sm font-semibold text-text">Live Activity</h2>
+            <h2 className="text-sm font-semibold text-text">实时动态</h2>
             <span className="ml-auto text-[10px] text-text-muted tabular-nums">30s</span>
           </div>
           <div className="flex-1 overflow-hidden p-2.5">
@@ -155,12 +159,12 @@ export default async function DashboardHomePage() {
         <div className="lg:col-span-2 grid grid-cols-2 gap-4 min-h-0">
           {/* Lead Quality */}
           <div className="rounded-2xl border border-border bg-bg-card/80 backdrop-blur-sm shadow-sm p-5 flex flex-col justify-center">
-            <h3 className="text-sm font-semibold text-text mb-1">Lead Quality</h3>
-            <p className="text-xs text-text-muted mb-4">{leadCount} total leads</p>
+            <h3 className="text-sm font-semibold text-text mb-1">线索质量</h3>
+            <p className="text-xs text-text-muted mb-4">共 {leadCount} 条线索</p>
             {scoreDonut.length > 0 ? (
               <div className="flex items-center gap-5 flex-1">
                 <div className="w-[120px] h-[120px] shrink-0">
-                  <DonutChart segments={scoreDonut} size={120} thickness={28} label="Leads" />
+                  <DonutChart segments={scoreDonut} size={120} thickness={28} label="条" />
                 </div>
                 <div className="space-y-2 flex-1">
                   {scoreDonut.map((s) => (
@@ -175,19 +179,19 @@ export default async function DashboardHomePage() {
             ) : (
               <div className="flex-1 flex flex-col items-center justify-center text-text-muted gap-2">
                 <Target className="size-6 opacity-20" />
-                <p className="text-xs">Score leads to see breakdown</p>
+                <p className="text-xs">评分后显示分布</p>
               </div>
             )}
           </div>
 
           {/* Pipeline */}
           <div className="rounded-2xl border border-border bg-bg-card/80 backdrop-blur-sm shadow-sm p-5 flex flex-col justify-center">
-            <h3 className="text-sm font-semibold text-text mb-1">Pipeline</h3>
-            <p className="text-xs text-text-muted mb-4">{leadCount} leads · {wonThisMonth} won this month</p>
+            <h3 className="text-sm font-semibold text-text mb-1">销售漏斗</h3>
+            <p className="text-xs text-text-muted mb-4">共 {leadCount} 条线索 · 本月成交 {wonThisMonth}</p>
             {pipelineDonut.length > 0 ? (
               <div className="flex items-center gap-5 flex-1">
                 <div className="w-[120px] h-[120px] shrink-0">
-                  <DonutChart segments={pipelineDonut} size={120} thickness={28} label="Deals" />
+                  <DonutChart segments={pipelineDonut} size={120} thickness={28} label="条" />
                 </div>
                 <div className="space-y-2 flex-1">
                   {pipelineDonut.map((s) => (
@@ -202,7 +206,7 @@ export default async function DashboardHomePage() {
             ) : (
               <div className="flex-1 flex flex-col items-center justify-center text-text-muted gap-2">
                 <Target className="size-6 opacity-20" />
-                <p className="text-xs">Add leads to see pipeline</p>
+                <p className="text-xs">添加线索后显示漏斗</p>
               </div>
             )}
           </div>
@@ -210,24 +214,24 @@ export default async function DashboardHomePage() {
           {/* Campaign reach + Quick stats */}
           <div className="rounded-2xl border border-border bg-bg-card/80 backdrop-blur-sm shadow-sm p-5 col-span-2">
             <div className="flex items-center justify-between mb-1">
-              <h3 className="text-sm font-semibold text-text">Campaign Reach</h3>
+              <h3 className="text-sm font-semibold text-text">活动效果</h3>
               {totalSent > 0 && (
                 <span className="text-[10px] text-text-muted">
-                  {activeCampaigns} active campaign{activeCampaigns !== 1 ? "s" : ""}
+                  {activeCampaigns} 个进行中
                 </span>
               )}
             </div>
             <p className="text-xs text-text-muted mb-4">
               {totalSent > 0
-                ? `${totalSent} emails sent across all campaigns`
-                : "Launch a campaign to see reach data"}
+                ? `已发送 ${totalSent} 封邮件`
+                : "启动外呼活动查看效果数据"}
             </p>
             {totalSent > 0 ? (
               <div className="grid grid-cols-3 gap-5 mb-5">
                 {[
-                  { label: "Sent", val: totalSent, pct: null, color: "from-accent-secondary to-accent-secondary/70", bg: "bg-accent-secondary" },
-                  { label: "Opened", val: totalOpened, pct: openRate, color: "from-accent-hover to-accent-hover/70", bg: "bg-accent-hover" },
-                  { label: "Replied", val: totalReplied, pct: replyRate, color: "from-accent to-accent/70", bg: "bg-accent" },
+                  { label: "已发送", val: totalSent, pct: null, color: "from-accent-secondary to-accent-secondary/70", bg: "bg-accent-secondary" },
+                  { label: "已打开", val: totalOpened, pct: openRate, color: "from-accent-hover to-accent-hover/70", bg: "bg-accent-hover" },
+                  { label: "已回复", val: totalReplied, pct: replyRate, color: "from-accent to-accent/70", bg: "bg-accent" },
                 ].map((bar) => (
                   <div key={bar.label} className="space-y-2">
                     <div className="flex items-center justify-between text-xs">
@@ -246,17 +250,17 @@ export default async function DashboardHomePage() {
             ) : (
               <div className="flex items-center justify-center py-4 mb-4 rounded-xl bg-bg-subtle/50 border border-border/50">
                 <p className="text-xs text-text-muted">
-                  No campaign data yet —{" "}
-                  <Link href="/campaigns/new" className="text-accent hover:underline font-semibold">create your first campaign</Link>
+                  暂无活动数据 —{" "}
+                  <Link href="/campaigns/new" className="text-accent hover:underline font-semibold">创建首个活动</Link>
                 </p>
               </div>
             )}
             <div className="grid grid-cols-4 gap-3 text-center">
               {[
-                { val: agentCount, label: "AI Agents", icon: Bot },
-                { val: leadCount, label: "Leads", icon: Target },
-                { val: activeCampaigns, label: "Campaigns", icon: Zap },
-                { val: activeConversations, label: "Threads", icon: MessageSquare },
+                { val: agentCount, label: "AI 助理", icon: Bot },
+                { val: leadCount, label: "线索", icon: Target },
+                { val: activeCampaigns, label: "活动", icon: Zap },
+                { val: activeConversations, label: "对话", icon: MessageSquare },
               ].map((s) => (
                 <div key={s.label} className="rounded-xl bg-bg-subtle/70 py-3 px-2 hover:bg-bg-muted transition-colors group">
                   <s.icon className="size-3.5 mx-auto mb-1.5 text-text-muted group-hover:text-accent transition-colors" />

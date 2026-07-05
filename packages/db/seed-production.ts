@@ -78,6 +78,23 @@ async function main() {
   const org = await prisma.organization.findUnique({ where: { slug: orgSlug } });
   if (!org) { console.error(`Organization "${orgSlug}" not found`); process.exit(1); }
 
+  // Install default feature flags (idempotent by key)
+  // China market: email_channel off, wechat_channel on by default
+  const FEATURE_FLAGS = [
+    { key: "email_channel", enabled: false },
+    { key: "wechat_channel", enabled: true },
+  ];
+  for (const f of FEATURE_FLAGS) {
+    const existingFlag = await prisma.featureFlag.findUnique({
+      where: { organizationId_key: { organizationId: org.id, key: f.key } },
+    });
+    if (existingFlag) { console.log(`Feature flag "${f.key}" already set, skipping`); continue; }
+    await prisma.featureFlag.create({
+      data: { organizationId: org.id, key: f.key, enabled: f.enabled },
+    });
+    console.log(`Feature flag set: ${f.key} = ${f.enabled}`);
+  }
+
   // Install scripts (idempotent by name)
   for (const s of SCRIPTS) {
     const existing = await prisma.script.findFirst({ where: { organizationId: org.id, name: s.name } });

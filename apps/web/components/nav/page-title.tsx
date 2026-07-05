@@ -2,16 +2,16 @@
 import { usePathname } from "next/navigation";
 
 const SECTION_LABELS: Record<string, string> = {
-  home: "Dashboard",
-  inbox: "Inbox",
-  campaigns: "Campaigns",
-  leads: "Leads",
-  agents: "Agents",
-  analytics: "Analytics",
-  scripts: "Scripts",
-  settings: "Settings",
-  docs: "API Docs",
-  "audit-log": "Audit Log",
+  home: "工作台",
+  inbox: "收件箱",
+  campaigns: "外呼活动",
+  leads: "线索管理",
+  agents: "AI 助理",
+  analytics: "数据分析",
+  scripts: "话术脚本",
+  settings: "设置",
+  docs: "API 文档",
+  "audit-log": "审计日志",
 };
 
 export function PageTitle() {

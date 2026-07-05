@@ -38,12 +38,12 @@ export function UserMenu({ user, org }: UserMenuProps) {
           </div>
           <DropdownMenuItem onClick={() => router.push("/settings")}>
             <Settings className="size-3.5 mr-2 text-text-muted" />
-            Settings
+            设置
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={handleLogout}>
             <LogOut className="size-3.5 mr-2" />
-            Sign out
+            退出登录
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

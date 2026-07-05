@@ -20,17 +20,17 @@ export function OnboardingCard({ show, orgSlug }: Props) {
               </svg>
             </div>
             <div>
-              <h2 className="text-lg font-bold text-text">Welcome to SalesAgent AI!</h2>
-              <p className="text-sm text-text-secondary">Follow these 3 steps to deploy your AI SDR.</p>
+              <h2 className="text-lg font-bold text-text">欢迎使用 SalesAgent AI！</h2>
+              <p className="text-sm text-text-secondary">完成以下 3 步部署你的 AI 销售团队。</p>
             </div>
           </div>
-          <button onClick={() => setDismissed(true)} className="text-text-muted hover:text-text transition-colors text-sm">Dismiss</button>
+          <button onClick={() => setDismissed(true)} className="text-text-muted hover:text-text transition-colors text-sm">关闭</button>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
           {[
-            { step: "1", title: "Configure your AI agent", desc: "Set up your first SDR agent with personality, product knowledge, and qualification goals.", href: "/agents", cta: "Go to Agents" },
-            { step: "2", title: "Import your leads", desc: "Add leads manually or import a CSV. AI will score and prioritize them automatically.", href: "/leads", cta: "Import Leads" },
-            { step: "3", title: "Launch your first campaign", desc: "Create an outbound campaign with AI-personalized emails and watch replies come in.", href: "/campaigns", cta: "Create Campaign" },
+            { step: "1", title: "配置你的 AI 助理", desc: "设置首个销售助理，配置性格、产品知识和筛选目标。", href: "/agents", cta: "前往配置" },
+            { step: "2", title: "导入你的线索", desc: "手动添加或导入 CSV，AI 将自动评分和排序。", href: "/leads", cta: "导入线索" },
+            { step: "3", title: "启动首个外呼活动", desc: "创建 AI 个性化邮件外呼活动，坐等客户回复。", href: "/campaigns", cta: "创建活动" },
           ].map((item) => (
             <Link key={item.step} href={item.href} className="glass-card rounded-xl p-5 hover:shadow-glass-hover transition-all group">
               <div className="flex items-center gap-3 mb-3">

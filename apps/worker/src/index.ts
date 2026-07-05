@@ -6,8 +6,8 @@ import { prisma } from "@salesagent/db";
 import { connection, conversationQueue, emailQueue, campaignQueue, scoringQueue } from "./queue";
 import type { JobContext } from "./queue";
 import { sendEmail } from "./email";
-import { callDeepSeekJSON, PROMPT_ARMOR, safe, buildMetric, estimateCost } from "@salesagent/ai-core";
-import type { AICallMetricInput } from "@salesagent/ai-core";
+import { callDeepSeekJSON, PROMPT_ARMOR, safe, runReActAgent, buildMetric, estimateCost } from "@salesagent/ai-core";
+import type { AICallMetricInput, AgentStep } from "@salesagent/ai-core";
 import { checkAndMarkDedup } from "./dedup";
 
 const Q_PREFIX = "sales-agent";
@@ -148,6 +148,155 @@ Score across BANT dimensions. Return JSON: { "score": 0-100, "label": "hot|warm|
   return { ...scoreData, score, label: scoreData.label || (score >= 70 ? "hot" : score >= 40 ? "warm" : "cold") };
 }
 
+// ── ReAct Agent Follow-Up ─────────────────────────────────────────
+interface AgentFollowUpResult {
+  result: string;
+  steps: AgentStep[];
+  success: boolean;
+  messageId?: string;
+}
+
+/**
+ * Run a ReAct Agent to autonomously follow up with a lead.
+ * Used by campaign steps with type: "react".
+ *
+ * The agent has 4 tools:
+ *   1. get_lead_history — read past conversation messages + activities
+ *   2. search_knowledge_base — search org's DocumentChunks (keyword)
+ *   3. get_lead_info — read lead profile (name, company, stage, score)
+ *   4. send_followup_message — create an outbound message in the conversation
+ *
+ * All agent steps are saved to the message's aiMetadata for UI display.
+ */
+async function followUpLead(
+  lead: { id: string; name: string; email: string | null; company: string | null; stage: string | null; score: number | null; tags: any },
+  conversationId: string,
+  orgId: string,
+  agentPersonality?: string | null,
+): Promise<AgentFollowUpResult> {
+  const tools = [
+    {
+      name: "get_lead_history",
+      description: "获取该 lead 的历史对话记录和活动日志，输入任意字符串触发",
+      execute: async (_: string) => {
+        const [messages, activities] = await Promise.all([
+          prisma.message.findMany({
+            where: { conversation: { leadId: lead.id, organizationId: orgId } },
+            orderBy: { createdAt: "desc" },
+            take: 5,
+            select: { direction: true, content: true, createdAt: true },
+          }),
+          prisma.leadActivity.findMany({
+            where: { leadId: lead.id },
+            orderBy: { createdAt: "desc" },
+            take: 3,
+            select: { type: true, content: true },
+          }),
+        ]);
+        const msgText = messages
+          .reverse()
+          .map((m) => `[${m.direction === "inbound" ? "客户" : "AI"}] ${m.content.slice(0, 300)}`)
+          .join("\n");
+        const actText = activities.map((a) => `[${a.type}] ${a.content}`).join("\n");
+        return `历史消息:\n${msgText || "(无)"}\n\n活动记录:\n${actText || "(无)"}`;
+      },
+    },
+    {
+      name: "search_knowledge_base",
+      description: "从知识库搜索产品信息、话术或案例，输入搜索关键词",
+      execute: async (query: string) => {
+        const chunks = await prisma.$queryRawUnsafe<
+          Array<{ content: string; metadata: Record<string, unknown> }>
+        >(
+          `SELECT content, metadata
+           FROM sales_agent."DocumentChunk"
+           WHERE organization_id = $1 AND content ~* $2
+           LIMIT 5`,
+          orgId,
+          query.split(/\s+/).filter((w) => w.length > 1).join(" | ") || query,
+        );
+        if (chunks.length === 0) return "(未找到相关知识库内容)";
+        return chunks.map((c, i) => `[KB ${i + 1}] ${c.content.slice(0, 500)}`).join("\n---\n");
+      },
+    },
+    {
+      name: "get_lead_info",
+      description: "获取该 lead 的基本信息和当前阶段",
+      execute: async (_: string) => {
+        return `名称: ${lead.name}\n公司: ${lead.company || "未知"}\n邮箱: ${lead.email || "未知"}\n阶段: ${lead.stage || "new"}\n评分: ${lead.score ?? "未评分"}`;
+      },
+    },
+    {
+      name: "send_followup_message",
+      description: "发送跟进消息给该 lead，输入要发送的消息内容",
+      execute: async (content: string) => {
+        await prisma.message.create({
+          data: {
+            conversationId,
+            direction: "outbound",
+            content,
+            channel: "email",
+            aiMetadata: { source: "react_agent" },
+          },
+        });
+        await prisma.leadActivity.create({
+          data: {
+            leadId: lead.id,
+            organizationId: orgId,
+            type: "email_sent",
+            content: `Agent 跟进: ${content.slice(0, 100)}`,
+          },
+        });
+        // Update conversation status to awaiting_approval (HITL)
+        await prisma.conversation.update({
+          where: { id: conversationId },
+          data: { status: "awaiting_approval", updatedAt: new Date() },
+        });
+        return "消息已发送并记录到对话中，等待人工审核";
+      },
+    },
+  ];
+
+  const personality = agentPersonality || "专业、友好的 B2B 销售代表";
+  const task = `跟进销售线索 ${lead.name}${lead.company ? `（${lead.company}）` : ""}。
+当前阶段: ${lead.stage || "new"}，评分: ${lead.score ?? "未评分"}。
+你的性格风格: ${personality}
+请分析他的历史记录，从知识库检索相关产品信息或话术，
+然后生成并发送个性化跟进消息。如果知识库没有相关内容，根据你的销售经验撰写。`;
+
+  const { result, steps, success } = await runReActAgent(task, tools);
+
+  // Update the outbound message(s) created by send_followup_message with agentSteps
+  const agentMessages = await prisma.message.findMany({
+    where: {
+      conversationId,
+      direction: "outbound",
+      aiMetadata: { path: ["source"], equals: "react_agent" },
+    },
+    orderBy: { createdAt: "desc" },
+    take: 1,
+  });
+
+  let messageId: string | undefined;
+  if (agentMessages.length > 0) {
+    messageId = agentMessages[0].id;
+    const existingMeta = (agentMessages[0].aiMetadata || {}) as Record<string, unknown>;
+    await prisma.message.update({
+      where: { id: messageId },
+      data: {
+        aiMetadata: {
+          ...existingMeta,
+          agentSteps: steps,
+          agentSuccess: success,
+          agentResult: result,
+        } as any,
+      },
+    });
+  }
+
+  return { result, steps, success, messageId };
+}
+
 // ── Campaign Step Execution ───────────────────────────────────────
 function parseDelay(d: string): number {
   const match = d.match(/^(\d+)\s*(m|min|h|d)$/i);
@@ -192,6 +341,63 @@ async function executeCampaignStep(campaignId: string, leadId: string, stepIndex
   }
 
   const step = steps[stepIndex];
+
+  // ReAct Agent step — autonomous follow-up with tool-using AI
+  if (step.type === "react") {
+    // Find or create a conversation for this lead + agent
+    let conversation = await prisma.conversation.findFirst({
+      where: { leadId, organizationId: campaign.organizationId, agentId: campaign.agentId },
+    });
+    if (!conversation) {
+      conversation = await prisma.conversation.create({
+        data: {
+          organizationId: campaign.organizationId,
+          leadId,
+          agentId: campaign.agentId,
+          channel: "email",
+          subject: `Campaign: ${campaign.name}`,
+          status: "active",
+        },
+      });
+    }
+
+    const { steps: agentSteps, success, result, messageId } = await followUpLead(
+      { id: lead.id, name: lead.name, email: lead.email, company: lead.company, stage: lead.stage, score: lead.score, tags: lead.tags },
+      conversation.id,
+      campaign.organizationId,
+      campaign.agent?.personality,
+    );
+
+    console.log(
+      `[react-agent] Lead ${leadId}: ${success ? "completed" : "max steps"} after ${agentSteps.length} steps` +
+      (messageId ? `, message ${messageId}` : ""),
+    );
+
+    // Log AI call metric for the ReAct agent run
+    try {
+      await prisma.aICallMetric.create({
+        data: {
+          organizationId: campaign.organizationId,
+          jobType: "campaign_ai",
+          success,
+          requestId,
+          leadId,
+          llmLatencyMs: 0,
+          totalLatencyMs: 0,
+        },
+      });
+    } catch { /* non-blocking */ }
+
+    // Enqueue next step if available
+    if (stepIndex + 1 < steps.length) {
+      const nextDelay = step.delay ? parseDelay(step.delay) : 3 * 86400_000;
+      await campaignQueue.add("send-email", {
+        campaignId, leadId, stepIndex: stepIndex + 1,
+        context: requestId ? { requestId: `${requestId}-s${stepIndex + 1}`, spanId: `campaign-next-${stepIndex + 1}`, parentSpanId: requestId } : undefined,
+      }, { delay: nextDelay });
+    }
+    return;
+  }
 
   if (step.type === "delay") {
     const delayMs = step.delay ? parseDelay(step.delay) : 86400_000;
@@ -264,8 +470,12 @@ Return JSON: { "subject": "...", "body": "..." }`;
   body = resolveTemplate(body, ctx);
   subject = resolveTemplate(subject, ctx);
 
-  if (process.env.RESEND_API_KEY) {
+  // Channel feature-flag check — email is optional, can be disabled per org
+  const emailEnabled = await isChannelEnabled(campaign.organizationId, "email_channel", "FEATURE_EMAIL_CHANNEL");
+  if (emailEnabled && process.env.RESEND_API_KEY) {
     await sendEmail({ action: "send_email", to: lead.email || "", subject, body }, { lead });
+  } else if (!emailEnabled) {
+    console.log(`[channel] Email disabled for org ${campaign.organizationId}, message saved as draft only`);
   }
 
   const currentStats = (campaign.stats as any) || {};
@@ -282,6 +492,17 @@ Return JSON: { "subject": "...", "body": "..." }`;
     const nextDelay = step.delay ? parseDelay(step.delay) : 3 * 86400_000;
     await campaignQueue.add("send-email", { campaignId, leadId, stepIndex: stepIndex + 1, context: requestId ? { requestId: `${requestId}-s${stepIndex + 1}`, spanId: `campaign-next-${stepIndex + 1}`, parentSpanId: requestId } : undefined }, { delay: nextDelay });
   }
+}
+
+// ── Channel feature-flag helpers ──────────────────────────────────
+async function isChannelEnabled(orgId: string, channelKey: string, envFallback: string): Promise<boolean> {
+  try {
+    const flag = await prisma.featureFlag.findUnique({
+      where: { organizationId_key: { organizationId: orgId, key: channelKey } },
+    });
+    if (flag) return flag.enabled;
+  } catch { /* DB unreachable — fall through to env */ }
+  return process.env[envFallback] !== "false";
 }
 
 // ── Health tracking ──────────────────────────────────────────────

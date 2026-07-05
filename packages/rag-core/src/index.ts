@@ -6,6 +6,6 @@ export { indexDocument } from "./indexer";
 export { InMemoryStorage, type StorageAdapter } from "./storage";
 export { retrieve, type RetrieveOptions } from "./retriever";
 export { generateCitations } from "./sources";
-export { NoopReranker, type Reranker } from "./reranker";
+export { NoopReranker, CohereReranker, createReranker, type Reranker } from "./reranker";
 export { reciprocalRankFusion } from "./rrf";
 export { keywordSearch, type KeywordSearchResult, type SqlExecutor } from "./keyword-search";

@@ -23,15 +23,15 @@ export default function LoginPage() {
       });
       if (!res.ok) {
         const data = await res.json();
-        setError(data.error || "Invalid email or password");
+        setError(data.error || "邮箱或密码错误");
         setLoading(false);
         return;
       }
-      toast.success("Welcome back!");
+      toast.success("欢迎回来！");
       router.push("/home");
       router.refresh();
     } catch {
-      setError("Network error — please try again");
+      setError("网络错误，请重试");
       setLoading(false);
     }
   }
@@ -44,14 +44,14 @@ export default function LoginPage() {
           <Link href="/" className="inline-flex size-11 rounded-2xl bg-accent items-center justify-center text-white font-bold text-lg shadow-sm shadow-accent/25 mb-5 hover:shadow-md hover:shadow-accent/30 transition-shadow duration-300">
             S
           </Link>
-          <h1 className="text-xl font-bold tracking-tight text-text">Welcome back</h1>
-          <p className="text-sm text-text-secondary mt-1.5">Sign in to continue to SalesAgent</p>
+          <h1 className="text-xl font-bold tracking-tight text-text">欢迎回来</h1>
+          <p className="text-sm text-text-secondary mt-1.5">登录以继续使用 SalesAgent</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-text-secondary mb-1.5">
-              Email address
+              邮箱地址
             </label>
             <input
               id="email" type="email" value={email}
@@ -63,12 +63,12 @@ export default function LoginPage() {
           </div>
           <div>
             <label htmlFor="password" className="block text-sm font-medium text-text-secondary mb-1.5">
-              Password
+              密码
             </label>
             <input
               id="password" type="password" value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter your password"
+              placeholder="请输入密码"
               className="block w-full rounded-xl border border-border bg-bg px-3.5 py-2.5 text-sm text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all duration-200"
               required autoComplete="current-password"
             />
@@ -87,23 +87,23 @@ export default function LoginPage() {
             {loading ? (
               <span className="flex items-center justify-center gap-2">
                 <span className="size-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                Signing in...
+                登录中...
               </span>
-            ) : "Sign in"}
+            ) : "登录"}
           </button>
         </form>
       </div>
 
       <p className="text-center text-sm text-text-muted mt-6">
-        Don&apos;t have an account?{" "}
+        还没有账号？{" "}
         <Link href="/register" className="text-accent font-semibold hover:text-accent-hover transition-colors">
-          Create one
+          立即注册
         </Link>
       </p>
 
       <p className="text-center text-xs text-text-muted mt-8">
         <Link href="/" className="hover:text-text-secondary transition-colors">
-          ← Back to home
+          ← 返回首页
         </Link>
       </p>
     </div>

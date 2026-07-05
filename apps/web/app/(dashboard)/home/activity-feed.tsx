@@ -35,7 +35,7 @@ export function ActivityFeed({ orgSlug }: Props) {
   const feed = (data?.feed ?? []).slice(0, MAX_VISIBLE);
 
   if (error) {
-    return <div className="text-xs text-text-muted px-2 py-4 text-center">Activity unavailable</div>;
+    return <div className="text-xs text-text-muted px-2 py-4 text-center">动态暂时不可用</div>;
   }
 
   if (isLoading) {
@@ -59,8 +59,8 @@ export function ActivityFeed({ orgSlug }: Props) {
       <div className="flex-1 flex items-center justify-center text-text-muted">
         <div className="text-center">
           <Sparkles className="size-5 mx-auto mb-2 opacity-20" />
-          <p className="text-[11px]">Activity will appear here</p>
-          <p className="text-[10px] mt-1 opacity-60">Lead actions &amp; campaign events</p>
+          <p className="text-[11px]">动态将在此显示</p>
+          <p className="text-[10px] mt-1 opacity-60">线索操作与活动事件</p>
         </div>
       </div>
     );

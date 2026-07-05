@@ -7,13 +7,13 @@ import { LayoutDashboard, Users, MessageSquare, Bot, Send, TrendingUp, Settings,
 import { ThemeToggle } from "@/components/providers/theme-toggle";
 
 const navItems = [
-  { href: "/home", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/inbox", label: "Inbox", icon: MessageSquare },
-  { href: "/campaigns", label: "Campaigns", icon: Send },
-  { href: "/leads", label: "Leads", icon: Users },
-  { href: "/analytics", label: "Analytics", icon: TrendingUp },
-  { href: "/agents", label: "Agents", icon: Bot },
-  { href: "/settings", label: "Settings", icon: Settings },
+  { href: "/home", label: "工作台", icon: LayoutDashboard },
+  { href: "/inbox", label: "收件箱", icon: MessageSquare },
+  { href: "/campaigns", label: "外呼活动", icon: Send },
+  { href: "/leads", label: "线索管理", icon: Users },
+  { href: "/analytics", label: "数据分析", icon: TrendingUp },
+  { href: "/agents", label: "AI 助理", icon: Bot },
+  { href: "/settings", label: "设置", icon: Settings },
 ];
 
 export function MobileNav() {
@@ -25,7 +25,7 @@ export function MobileNav() {
       <button
         className="lg:hidden p-2 rounded-lg hover:bg-white/[0.04] transition-colors"
         onClick={() => setOpen(true)}
-        aria-label="Open menu"
+        aria-label="打开菜单"
       >
         <Menu className="size-5 text-text-secondary" />
       </button>

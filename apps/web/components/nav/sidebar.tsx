@@ -11,17 +11,17 @@ import { ThemeToggle } from "@/components/providers/theme-toggle";
 import { Avatar } from "@/components/identity/avatar";
 
 const primaryItems = [
-  { href: "/home", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/inbox", label: "Inbox", icon: MessageSquare, badge: true },
-  { href: "/campaigns", label: "Campaigns", icon: Send },
-  { href: "/leads", label: "Leads", icon: Users },
+  { href: "/home", label: "工作台", icon: LayoutDashboard },
+  { href: "/inbox", label: "收件箱", icon: MessageSquare, badge: true },
+  { href: "/campaigns", label: "外呼活动", icon: Send },
+  { href: "/leads", label: "线索管理", icon: Users },
 ];
 
 const secondaryItems = [
-  { href: "/analytics", label: "Analytics", icon: TrendingUp },
-  { href: "/kb", label: "Knowledge Base", icon: BookOpen },
-  { href: "/agents", label: "Agents", icon: Bot },
-  { href: "/settings", label: "Settings", icon: Settings },
+  { href: "/analytics", label: "数据分析", icon: TrendingUp },
+  { href: "/kb", label: "知识库", icon: BookOpen },
+  { href: "/agents", label: "AI 助理", icon: Bot },
+  { href: "/settings", label: "设置", icon: Settings },
 ];
 
 interface Props {
@@ -75,7 +75,7 @@ export function Sidebar({ currentOrg, orgs, user, SidebarHeader }: Props) {
             <button
               onClick={() => setCollapsed(false)}
               className="absolute inset-0 size-8 rounded-lg bg-bg-card border border-border flex items-center justify-center text-text-muted hover:text-accent hover:border-accent/30 opacity-0 group-hover/logo:opacity-100 transition-all shadow-sm"
-              title="Expand sidebar"
+              title="展开侧边栏"
             >
               <PanelLeft className="size-3.5" />
             </button>
@@ -85,7 +85,7 @@ export function Sidebar({ currentOrg, orgs, user, SidebarHeader }: Props) {
           <button
             onClick={() => setCollapsed(true)}
             className="p-1.5 rounded-lg hover:bg-white/[0.04] text-text-muted hover:text-text transition-colors"
-            title="Collapse sidebar"
+            title="收起侧边栏"
           >
             <PanelLeftClose className="size-3.5" />
           </button>
@@ -178,7 +178,7 @@ export function Sidebar({ currentOrg, orgs, user, SidebarHeader }: Props) {
             <button
               onClick={() => setCollapsed(false)}
               className="absolute -top-7 left-1/2 -translate-x-1/2 opacity-0 group-hover/user:opacity-100 transition-opacity p-1 rounded-md bg-bg-card border border-border shadow-sm text-text-muted hover:text-text z-10"
-              title="Expand sidebar"
+              title="展开侧边栏"
             >
               <PanelLeft className="size-3.5" />
             </button>
@@ -218,13 +218,13 @@ export function Sidebar({ currentOrg, orgs, user, SidebarHeader }: Props) {
                   onClick={() => { router.push("/settings"); setUserOpen(false); }}
                   className="w-full flex items-center gap-2 px-3 py-2 text-xs text-text-secondary hover:bg-white/[0.04] transition-colors"
                 >
-                  <Settings className="size-3.5 text-text-muted" /> Settings
+                  <Settings className="size-3.5 text-text-muted" /> 设置
                 </button>
                 <button
                   onClick={handleLogout}
                   className="w-full flex items-center gap-2 px-3 py-2 text-xs text-text-secondary hover:bg-white/[0.04] transition-colors"
                 >
-                  <LogOut className="size-3.5" /> Sign out
+                  <LogOut className="size-3.5" /> 退出登录
                 </button>
               </div>
             </>

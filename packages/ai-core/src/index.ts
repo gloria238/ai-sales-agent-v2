@@ -11,9 +11,11 @@ export {
   buildGenerateScriptPrompt,
   safe,
 } from "./prompts";
-export { composeResponse, scoreLead, generateScript, summarizeConversation } from "./agents";
+export { composeResponse, scoreLead, generateScript, summarizeConversation, detectLanguage, translateText } from "./agents";
 export { buildMetric, estimateCost } from "./metrics";
 export { getPromptConfig, PROMPT_REGISTRY } from "./prompt-registry";
+export { runReActAgent } from "./agent-executor";
+export type { Tool, AgentStep, AgentRunResult } from "./agent-executor";
 export type { AICallMetricInput, AIJobType, MetricContext } from "./metrics";
 export type { PromptKey, PromptVersion, VersionedPromptConfig } from "./prompt-registry";
 export type { ComposeResult, ScoreResult } from "@salesagent/shared-types";

@@ -14,6 +14,7 @@ export const createLeadSchema = z.object({
   phone: z.string().max(50).optional(),
   stage: stage.optional().default("new"),
   source: z.enum(["website", "referral", "outbound", "linkedin", "other"]).optional(),
+  dealAmount: z.number().min(0).optional(),
   tags: z.array(z.string().max(100)).max(20).optional(),
 });
 
@@ -26,6 +27,7 @@ export const updateLeadSchema = z.object({
   source: z.enum(["website", "referral", "outbound", "linkedin", "other"]).optional(),
   score: z.number().int().min(0).max(100).optional(),
   assignedTo: z.string().uuid().optional(),
+  dealAmount: z.number().min(0).optional(),
   tags: z.array(z.string().max(100)).max(20).optional(),
 });
 
@@ -124,6 +126,8 @@ export const leadImportRowSchema = z.object({
   company: z.string().max(255).optional(),
   Stage: stage.optional(),
   stage: stage.optional(),
+  DealAmount: z.coerce.number().min(0).optional(),
+  dealAmount: z.coerce.number().min(0).optional(),
   Tags: z.string().max(500).optional(),
   tags: z.string().max(500).optional(),
 });

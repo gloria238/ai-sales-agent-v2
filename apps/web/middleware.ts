@@ -4,7 +4,7 @@ import { verifyToken } from "@/lib/auth";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { isTokenRevoked } from "@/lib/token-blacklist";
 
-const publicPaths = ["/", "/login", "/register", "/docs", "/api/demo-login"];
+const publicPaths = ["/", "/login", "/register", "/docs", "/api/demo-login", "/portal/login"];
 const authApiPaths = ["/api/auth/login", "/api/auth/register", "/api/auth/logout", "/api/auth/verify"];
 const apiAuthRateLimitWindow = 10; // requests per window for auth endpoints
 

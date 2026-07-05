@@ -10,8 +10,11 @@ import { IdentityCard, type Customer } from "@/components/identity/identity-card
 import {
   MessageSquare, Mail, Send, Sparkles, Bot, RefreshCw, ChevronLeft,
   Building2, TrendingUp, AlertCircle, ThumbsUp, Clock, User, ExternalLink,
+  Languages, Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
+import { AgentThinkingPanel } from "@/components/inbox/AgentThinkingPanel";
+import type { AgentStep } from "@/components/inbox/AgentThinkingPanel";
 
 type Message = {
   id: string; direction: string; content: string; channel: string;
@@ -93,7 +96,35 @@ export function InboxDetailClient({ conversation, conversations, orgSlug }: Prop
   const [aiTyping, setAiTyping] = useState(false);
   const [sending, setSending] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const [translating, setTranslating] = useState(false);
+  const [translated, setTranslated] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Detect lead's language from the last inbound message
+  const lastInbound = [...messages].reverse().find((m) => m.direction === "inbound");
+  const lastInboundContent = lastInbound?.content?.substring(0, 200) || "";
+
+  async function handleTranslate() {
+    if (!replyDraft.trim()) return;
+    setTranslating(true);
+    try {
+      const res = await fetch("/api/v1/translate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: replyDraft, targetLanguage: "en" }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setTranslated(data.translated);
+        toast.success("翻译完成");
+      } else {
+        toast.error("翻译失败");
+      }
+    } catch {
+      toast.error("网络错误");
+    }
+    setTranslating(false);
+  }
 
   const customer = useMemo(() => toCustomer(conversation), [conversation]);
   const sidebarCustomers = useMemo(() => conversations.map(toCustomer), [conversations]);
@@ -209,10 +240,21 @@ export function InboxDetailClient({ conversation, conversations, orgSlug }: Prop
                   <span className={cn("text-[10px]", msg.direction === "inbound" ? "text-text-muted" : "text-white/60")}>
                     {new Date(msg.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                   </span>
-                  {msg.aiMetadata && (
+                  {msg.aiMetadata && !msg.aiMetadata.agentSteps && (
                     <span className="text-[10px] text-accent/80">AI-generated</span>
                   )}
+                  {msg.aiMetadata?.agentSteps && (
+                    <span className="text-[10px] text-accent/80">AI-generated · {msg.aiMetadata.agentSteps.length} steps</span>
+                  )}
                 </div>
+
+                {/* ReAct Agent reasoning panel — shown below outbound messages with agentSteps */}
+                {msg.aiMetadata?.agentSteps && (
+                  <AgentThinkingPanel
+                    steps={msg.aiMetadata.agentSteps as AgentStep[]}
+                    success={msg.aiMetadata.agentSuccess ?? false}
+                  />
+                )}
               </div>
             </div>
           ))}
@@ -241,21 +283,75 @@ export function InboxDetailClient({ conversation, conversations, orgSlug }: Prop
 
         {/* Compose */}
         <div className="shrink-0 border-t border-border p-4 bg-bg-card/50 backdrop-blur-sm">
+          {/* Translation preview */}
+          {translated && (
+            <div className="mb-3 rounded-xl border border-accent/30 bg-accent/5 p-3 animate-slide-up">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs text-accent font-medium flex items-center gap-1">
+                  <Languages className="size-3" /> 翻译预览
+                </span>
+                <button
+                  onClick={() => setTranslated("")}
+                  className="text-xs text-text-muted hover:text-text transition-colors"
+                >
+                  关闭
+                </button>
+              </div>
+              <p className="text-sm text-text-secondary whitespace-pre-wrap leading-relaxed">{translated}</p>
+              <div className="flex gap-2 mt-2">
+                <Button
+                  size="sm"
+                  variant="default"
+                  onClick={async () => {
+                    setReplyDraft(translated);
+                    setTranslated("");
+                    toast.success("已替换为翻译版本");
+                  }}
+                  className="rounded-lg text-xs"
+                >
+                  <Languages className="size-3 mr-1" /> 使用翻译版本
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setTranslated("")}
+                  className="rounded-lg text-xs"
+                >
+                  保留原文
+                </Button>
+              </div>
+            </div>
+          )}
+
           <div className="flex items-end gap-3">
             <Textarea
               value={replyDraft}
-              onChange={(e) => setReplyDraft(e.target.value)}
-              placeholder="Type a reply or generate an AI draft..."
+              onChange={(e) => { setReplyDraft(e.target.value); setTranslated(""); }}
+              placeholder="输入回复内容，或使用 AI 生成草稿..."
               rows={3}
               className="flex-1 resize-none rounded-xl text-sm"
               onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendReply(); } }}
             />
-            <div className="flex items-center gap-2 shrink-0">
+            <div className="flex items-center gap-2 shrink-0 flex-wrap">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleTranslate}
+                loading={translating}
+                disabled={!replyDraft.trim() || translating}
+                className="rounded-xl"
+                title="翻译成英文"
+              >
+                {translating
+                  ? <Loader2 className="size-3.5 mr-1.5 animate-spin" />
+                  : <Languages className="size-3.5 mr-1.5" />}
+                翻译
+              </Button>
               <Button size="sm" variant="outline" onClick={generateAiDraft} loading={generating} disabled={aiTyping} className="rounded-xl">
-                <Sparkles className="size-3.5 mr-1.5" /> AI Draft
+                <Sparkles className="size-3.5 mr-1.5" /> AI 草稿
               </Button>
               <Button size="sm" onClick={sendReply} loading={sending} disabled={!replyDraft.trim()} className="rounded-xl">
-                <Send className="size-3.5 mr-1.5" /> Send
+                <Send className="size-3.5 mr-1.5" /> 发送
               </Button>
             </div>
           </div>

@@ -69,10 +69,20 @@ Guidelines:
 - Keep it human — don't sound like a robot
 - Never make up facts not in the knowledge base
 
+LANGUAGE RULES (highest priority):
+- Detect the language of the lead's latest inbound message
+- Reply in the EXACT SAME language as the lead used
+- If the lead writes in Chinese (中文), you MUST reply in Chinese
+- If the lead writes in English, you MUST reply in English
+- If the lead writes in Japanese (日本語), you MUST reply in Japanese
+- Never mix languages in a single response
+- If you cannot determine the language, default to the lead's most recently used language
+
 Respond with a JSON object:
-- subject: string (compelling subject line, 5-10 words, no ALL CAPS, no spam triggers)
-- body: string (plain text email with greeting and professional sign-off, paragraphs separated by blank line)
+- subject: string (compelling subject line, 5-10 words, no ALL CAPS, no spam triggers, in the lead's language)
+- body: string (plain text email with greeting and professional sign-off, paragraphs separated by blank line, in the lead's language)
 - tone: string (the detected tone used: "friendly", "professional", "direct", "consultative")
+- detectedLanguage: string (ISO 639-1 code: "zh", "en", "ja", "ko", etc.)
 - suggestedAction: string ("send_now" | "review" | "escalate_to_human")`;
 
 export function buildComposeResponsePrompt(params: {

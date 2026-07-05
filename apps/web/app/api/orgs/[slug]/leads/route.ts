@@ -84,7 +84,7 @@ export async function POST(request: Request, { params }: { params: { slug: strin
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.issues[0]?.message || "Invalid input" }, { status: 400 });
   }
-  const { name, email, stage, tags } = parsed.data;
+  const { name, email, stage, dealAmount, tags } = parsed.data;
 
   // Sequential ops — pgBouncer incompatible with interactive $transaction
   const l = await prisma.lead.create({
@@ -93,6 +93,7 @@ export async function POST(request: Request, { params }: { params: { slug: strin
       name,
       email,
       stage,
+      dealAmount: dealAmount ?? null,
       tags: tags || [],
     },
   });
