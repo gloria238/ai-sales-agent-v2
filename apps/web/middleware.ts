@@ -106,6 +106,11 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // Allow Portal pages (skeleton — no auth required for Phase 19)
+  if (pathname.startsWith("/portal")) {
+    return NextResponse.next();
+  }
+
   // Allow static files and Next.js internals
   if (
     pathname.startsWith("/_next") ||
