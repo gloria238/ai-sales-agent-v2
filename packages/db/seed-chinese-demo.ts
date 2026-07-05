@@ -40,8 +40,24 @@ async function main() {
   const existing = await prisma.organization.findUnique({ where: { slug: ORG_SLUG } });
   if (existing) {
     console.log("清理已有数据...");
-    // FK-safe cascading delete — Prisma handles it via schema onDelete: Cascade
-    await prisma.organization.delete({ where: { id: existing.id } });
+    const orgId = existing.id;
+    // FK-safe cleanup using Prisma API — avoids column name guesswork
+    await prisma.aICallMetric.deleteMany({ where: { organizationId: orgId } });
+    await prisma.message.deleteMany({ where: { conversation: { organizationId: orgId } } });
+    await prisma.conversation.deleteMany({ where: { organizationId: orgId } });
+    await prisma.leadActivity.deleteMany({ where: { organizationId: orgId } });
+    await prisma.campaignRun.deleteMany({ where: { campaign: { organizationId: orgId } } });
+    await prisma.campaign.deleteMany({ where: { organizationId: orgId } });
+    await prisma.documentChunk.deleteMany({ where: { organizationId: orgId } });
+    await prisma.document.deleteMany({ where: { organizationId: orgId } });
+    await prisma.lead.deleteMany({ where: { organizationId: orgId } });
+    await prisma.apiKey.deleteMany({ where: { organizationId: orgId } });
+    await prisma.featureFlag.deleteMany({ where: { organizationId: orgId } });
+    await prisma.auditLog.deleteMany({ where: { organizationId: orgId } });
+    await prisma.script.deleteMany({ where: { organizationId: orgId } });
+    await prisma.agent.deleteMany({ where: { organizationId: orgId } });
+    await prisma.membership.deleteMany({ where: { organizationId: orgId } });
+    await prisma.organization.delete({ where: { id: orgId } });
     console.log("已删除旧组织");
   }
 
@@ -145,24 +161,28 @@ async function main() {
   ]);
   console.log(`✅ 3 AI 坐席`);
 
-  // ── 4. Leads (15 customers) ─────────────────────────────────────
-  const leads = await Promise.all([
-    prisma.lead.create({ data: { organizationId: org.id, name: "赵明辉", email: "zhaomh@yunfan-tech.com", company: "云帆科技", phone: "13800001001", stage: "negotiation", score: 88, source: "referral", dealAmount: 85000 } }),
-    prisma.lead.create({ data: { organizationId: org.id, name: "陈总", email: "chen@zhilian-hardware.com", company: "智联制造", phone: "13800001002", stage: "qualified", score: 75, source: "website", dealAmount: 42000 } }),
-    prisma.lead.create({ data: { organizationId: org.id, name: "王校长", email: "wang@siyuan-edu.com", company: "思源教育", phone: "13800001003", stage: "proposal", score: 82, source: "linkedin", dealAmount: 120000 } }),
-    prisma.lead.create({ data: { organizationId: org.id, name: "李明", email: "liming@baina-tech.com", company: "百纳科技", phone: "13800001004", stage: "new", score: 35, source: "website" } }),
-    prisma.lead.create({ data: { organizationId: org.id, name: "张薇", email: "zhangwei@dahai-group.com", company: "大海集团", phone: "13800001005", stage: "contacted", score: 55, source: "outbound", dealAmount: 200000 } }),
-    prisma.lead.create({ data: { organizationId: org.id, name: "孙浩然", email: "sunhr@huateng.cn", company: "华腾科技", stage: "qualified", score: 72, source: "website", dealAmount: 36000 } }),
-    prisma.lead.create({ data: { organizationId: org.id, name: "周婷", email: "zhouting@meinian.com", company: "美年健康", stage: "new", score: 20, source: "other" } }),
-    prisma.lead.create({ data: { organizationId: org.id, name: "吴刚", email: "wugang@ronghui-fin.com", company: "融汇金融", phone: "13800001008", stage: "closed_won", score: 95, source: "referral", dealAmount: 156000 } }),
-    prisma.lead.create({ data: { organizationId: org.id, name: "郑丽", email: "zhengli@aikang.com", company: "艾康医药", stage: "closed_lost", score: 60, source: "outbound" } }),
-    prisma.lead.create({ data: { organizationId: org.id, name: "马超", email: "machao@feiyu.com", company: "飞宇物流", stage: "contacted", score: 45, source: "linkedin", dealAmount: 29000 } }),
-    prisma.lead.create({ data: { organizationId: org.id, name: "林小红", email: "linxh@yunduan-data.com", company: "云端数据", stage: "proposal", score: 78, source: "website", dealAmount: 67000 } }),
-    prisma.lead.create({ data: { organizationId: org.id, name: "黄建军", email: "huangjj@hengyuan.com", company: "恒源建筑", stage: "new", score: 15, source: "outbound" } }),
-    prisma.lead.create({ data: { organizationId: org.id, name: "许晴", email: "xuqing@ruiyi-law.com", company: "睿义律所", stage: "contacted", score: 40, source: "referral" } }),
-    prisma.lead.create({ data: { organizationId: org.id, name: "何伟", email: "hewei@jucheng-mfg.com", company: "聚成制造", stage: "qualified", score: 68, source: "website", dealAmount: 54000 } }),
-    prisma.lead.create({ data: { organizationId: org.id, name: "沈悦", email: "shenyue@tianyu-logistics.com", company: "天域物流", stage: "negotiation", score: 84, source: "linkedin", dealAmount: 93000 } }),
-  ]);
+  // ── 4. Leads (15 customers) — sequential, connection_limit=1 ──
+  const leadData = [
+    { name: "赵明辉", email: "zhaomh@yunfan-tech.com", company: "云帆科技", phone: "13800001001", stage: "negotiation", score: 88, source: "referral", dealAmount: 85000 },
+    { name: "陈总", email: "chen@zhilian-hardware.com", company: "智联制造", phone: "13800001002", stage: "qualified", score: 75, source: "website", dealAmount: 42000 },
+    { name: "王校长", email: "wang@siyuan-edu.com", company: "思源教育", phone: "13800001003", stage: "proposal", score: 82, source: "linkedin", dealAmount: 120000 },
+    { name: "李明", email: "liming@baina-tech.com", company: "百纳科技", phone: "13800001004", stage: "new", score: 35, source: "website" },
+    { name: "张薇", email: "zhangwei@dahai-group.com", company: "大海集团", phone: "13800001005", stage: "contacted", score: 55, source: "outbound", dealAmount: 200000 },
+    { name: "孙浩然", email: "sunhr@huateng.cn", company: "华腾科技", stage: "qualified", score: 72, source: "website", dealAmount: 36000 },
+    { name: "周婷", email: "zhouting@meinian.com", company: "美年健康", stage: "new", score: 20, source: "other" },
+    { name: "吴刚", email: "wugang@ronghui-fin.com", company: "融汇金融", phone: "13800001008", stage: "closed_won", score: 95, source: "referral", dealAmount: 156000 },
+    { name: "郑丽", email: "zhengli@aikang.com", company: "艾康医药", stage: "closed_lost", score: 60, source: "outbound" },
+    { name: "马超", email: "machao@feiyu.com", company: "飞宇物流", stage: "contacted", score: 45, source: "linkedin", dealAmount: 29000 },
+    { name: "林小红", email: "linxh@yunduan-data.com", company: "云端数据", stage: "proposal", score: 78, source: "website", dealAmount: 67000 },
+    { name: "黄建军", email: "huangjj@hengyuan.com", company: "恒源建筑", stage: "new", score: 15, source: "outbound" },
+    { name: "许晴", email: "xuqing@ruiyi-law.com", company: "睿义律所", stage: "contacted", score: 40, source: "referral" },
+    { name: "何伟", email: "hewei@jucheng-mfg.com", company: "聚成制造", stage: "qualified", score: 68, source: "website", dealAmount: 54000 },
+    { name: "沈悦", email: "shenyue@tianyu-logistics.com", company: "天域物流", stage: "negotiation", score: 84, source: "linkedin", dealAmount: 93000 },
+  ];
+  const leads = [];
+  for (const d of leadData) {
+    leads.push(await prisma.lead.create({ data: { organizationId: org.id, ...d } }));
+  }
   console.log("✅ 15 客户");
 
   // ── 5. Conversations + Messages ──────────────────────────────────
@@ -175,7 +195,7 @@ async function main() {
       messages: {
         create: [
           { direction: "inbound", content: "你好！我们在对比市面上的 AI 销售助手方案。你们和销售易的 AI 功能有什么本质区别？我们团队 80 人，主要做 B2B SaaS。", channel: "email" },
-          { direction: "outbound", content: "赵总您好！这是个很好的问题。核心区别在于：销售易是 CRM——帮您管客户数据、管销售阶段；启云是 AI 销售助手——帮销售主动跟进客户、自动回复、智能评分。\n\n打个比方：CRM 是您的"客户通讯录"，启云是帮您"给客户发消息"的 AI。我们的很多客户是两个系统一起用：销售易管流程，启云做执行。\n\n对于 80 人的 SaaS 团队，建议看看专业版（¥5,999/月，10 个 AI 坐席，全渠道接入）。您方便这周安排 30 分钟产品演示吗？", channel: "email", aiMetadata: { tone: "professional", suggestedAction: "send_now" } },
+          { direction: "outbound", content: "赵总您好！这是个很好的问题。核心区别在于：销售易是 CRM——帮您管客户数据、管销售阶段；启云是 AI 销售助手——帮销售主动跟进客户、自动回复、智能评分。\n\n打个比方：CRM 是您的「客户通讯录」，启云是帮您「给客户发消息」的 AI。我们的很多客户是两个系统一起用：销售易管流程，启云做执行。\n\n对于 80 人的 SaaS 团队，建议看看专业版（¥5,999/月，10 个 AI 坐席，全渠道接入）。您方便这周安排 30 分钟产品演示吗？", channel: "email", aiMetadata: { tone: "professional", suggestedAction: "send_now" } },
           { direction: "inbound", content: "好的，这周五下午 3 点可以吗？另外能否先发一份产品介绍 PDF？我们 CTO 也想看一下技术架构。", channel: "email" },
         ],
       },
@@ -306,7 +326,7 @@ async function main() {
       messages: {
         create: [
           { direction: "inbound", content: "我们是律师事务所，客户沟通内容涉及大量法律术语和保密信息。你们的 AI 能理解法律行业的语境吗？数据保密能不能保证？", channel: "email" },
-          { direction: "outbound", content: "许律师您好！两个问题分别说明：\n\n1. 行业适配：您可以把律所常用的法律文书、常见问题解答、服务介绍上传到知识库（我们支持 PDF/Word），AI 就能"学会"法律行业的语境。已有律所客户在使用，反馈只要知识库内容够详实（通常 30-50 篇文档），AI 可以覆盖 80% 以上的日常客户问题。\n\n2. 数据保密：企业版支持私有化部署，数据完全在您自己的服务器上。传输和存储全程加密。我们签保密协议也是标准流程。\n\n需要我安排一次针对律所场景的演示吗？", channel: "email", aiMetadata: { tone: "consultative" } },
+          { direction: "outbound", content: "许律师您好！两个问题分别说明：\n\n1. 行业适配：您可以把律所常用的法律文书、常见问题解答、服务介绍上传到知识库（我们支持 PDF/Word），AI 就能「学会」法律行业的语境。已有律所客户在使用，反馈只要知识库内容够详实（通常 30-50 篇文档），AI 可以覆盖 80% 以上的日常客户问题。\n\n2. 数据保密：企业版支持私有化部署，数据完全在您自己的服务器上。传输和存储全程加密。我们签保密协议也是标准流程。\n\n需要我安排一次针对律所场景的演示吗？", channel: "email", aiMetadata: { tone: "consultative" } },
         ],
       },
     },
@@ -382,7 +402,7 @@ async function main() {
         "AI 销售坐席是启云科技的核心能力，可以自主完成客户跟进、线索筛选、话术推荐和会议预约。支持 7×24 小时值守，客户消息 30 秒内响应。",
         "支持五个沟通渠道：企业微信、个人微信、电子邮件、网页 Widget（一行代码嵌入官网）、REST API 自定义接入。所有渠道的消息汇聚到统一收件箱。",
         "RAG 知识库采用混合检索技术：向量语义搜索 + 全文关键词搜索并行执行，通过 RRF 算法融合排序。上传 PDF/Word/Markdown/FAQ 文档后自动分段索引，AI 引用来源回答。",
-        "所有 AI 生成的消息默认进入"待审核"状态（HITL 模式），需要销售经理确认后才发送。AI 只写初稿，人工做最终决定。基础版除外——为降低使用门槛，基础版 AI 生成即发送。",
+        "所有 AI 生成的消息默认进入「待审核」状态（HITL 模式），需要销售经理确认后才发送。AI 只写初稿，人工做最终决定。基础版除外——为降低使用门槛，基础版 AI 生成即发送。",
         "数据分析看板包含：销售漏斗实时分布、AI 效能指标（P50/P95 延迟、Token 消耗、AI 回复率）、活动效果（邮件打开率、回复率、ROI 估算）。Boss Dashboard 提供跨团队 AI 使用健康度和成本趋势。",
         "多租户架构：每个客户独立租户，数据物理隔离。4 角色 × 13 权限矩阵（管理员/销售经理/销售代表/只读）。支持 SSO 单点登录（飞书/钉钉/企业微信/OIDC）。",
         "技术栈：AI 引擎 DeepSeek + ReAct Agent，向量检索 pgvector + tsvector，任务队列 BullMQ + Redis，前端 Next.js 14 + React 18 + Tailwind CSS。支持私有化部署到客户自有服务器。",
@@ -410,12 +430,12 @@ async function main() {
       chunkCount: 10,
       chunks: [
         "Q：支持哪些沟通渠道？A：支持企业微信、个人微信、电子邮件、网页 Widget（一行代码嵌入官网）和 REST API 自定义接入，共五个渠道。所有渠道的消息汇聚到统一收件箱。",
-        "Q：AI 会不会自动发消息？A：不会。所有 AI 消息默认进入"待审核"状态（HITL 模式），需要人工确认后才发送。基础版除外——基础版为降低使用门槛，AI 生成即发送，但可升级到专业版开启审核。",
+        "Q：AI 会不会自动发消息？A：不会。所有 AI 消息默认进入「待审核」状态（HITL 模式），需要人工确认后才发送。基础版除外——基础版为降低使用门槛，AI 生成即发送，但可升级到专业版开启审核。",
         "Q：数据安全吗？A：传输层 HTTPS + TLS 1.3，存储层 AES-256 加密，认证层 JWT + bcrypt 12 轮哈希 + httpOnly Cookie。通过国家信息安全等级保护二级认证。企业版支持完全私有化部署。",
         "Q：和销售易/纷享销客有什么区别？A：销售易和纷享销客是 CRM（管理客户数据和销售流程），启云科技是 AI 销售助手（帮销售主动跟进客户、自动回复、智能评分）。两者互补不替代，很多客户是两个系统一起用。",
         "Q：可以对接现有的 CRM 吗？A：可以。专业版和企业版提供 RESTful API，支持 API Key (Bearer Token) 和 Cookie Session 认证。提供 Node.js 和 Python SDK。",
         "Q：知识库支持什么文件格式？A：支持 PDF、Word (.docx)、Markdown (.md)、纯文本 (.txt) 和 FAQ 问答对 (JSON)。单文件最大 10MB。上传后通常 30 秒内完成处理。",
-        "Q：怎么接入企业微信？A：在后台"渠道管理"→"企业微信"中扫码授权即可。需要企业微信管理员账号。接入过程约 2 分钟，授权后消息实时同步。",
+        "Q：怎么接入企业微信？A：在后台「渠道管理」→「企业微信」中扫码授权即可。需要企业微信管理员账号。接入过程约 2 分钟，授权后消息实时同步。",
         "Q：支持哪些语言？A：AI 销售坐席支持中文、英文、日文、韩文——AI 自动检测客户消息语言并用相同语言回复。管理后台目前仅支持中文。客户 Portal 支持中文和英文自动切换。",
         "Q：有免费试用吗？A：有。所有套餐提供 14 天免费试用（基础版功能），无需绑定信用卡。试用期内可随时升级。到期后数据保留 30 天。",
         "Q：退费政策？A：月付客户可随时取消，当月费用不退。年付客户 30 天内可全额退款，超过 30 天按已使用月份（月付原价）扣除后退还余额。",
@@ -452,8 +472,8 @@ async function main() {
     // Create chunks without embeddings — keyword search via regex fallback works fine
     for (let i = 0; i < doc.chunks.length; i++) {
       await prisma.$executeRawUnsafe(
-        `INSERT INTO sales_agent."DocumentChunk" (id, document_id, organization_id, content, chunk_index, metadata, created_at)
-         VALUES ($1, $2, $3, $4, $5, $6, NOW())`,
+        `INSERT INTO sales_agent."DocumentChunk" (id, "documentId", "organizationId", content, "chunkIndex", metadata, "createdAt")
+         VALUES ($1, $2, $3, $4, $5, $6::jsonb, NOW())`,
         crypto.randomUUID(), document.id, org.id, doc.chunks[i], i,
         JSON.stringify({ title: doc.name.replace(".md", ""), fileName: doc.name }),
       );
