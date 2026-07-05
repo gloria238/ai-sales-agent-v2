@@ -29,7 +29,7 @@ function AITypingIndicator() {
       </div>
       <div className="rounded-2xl rounded-tr-sm px-4 py-3 border border-accent/10 bg-bg-card">
         <div className="flex items-center gap-1.5">
-          <span className="text-xs text-accent font-medium">AI drafting…</span>
+          <span className="text-xs text-accent font-medium">AI 起草中…</span>
           <span className="flex gap-0.5">
             <span className="w-1 h-1 rounded-full bg-accent animate-bounce" style={{ animationDelay: "0ms" }} />
             <span className="w-1 h-1 rounded-full bg-accent animate-bounce" style={{ animationDelay: "150ms" }} />
@@ -44,13 +44,13 @@ function AITypingIndicator() {
 // ── Lead detail popover ──────────────────────────────────
 function LeadPopover({ lead }: { lead: any }) {
   const [show, setShow] = useState(false);
-  const sl = lead.score != null ? (lead.score >= 70 ? "Hot" : lead.score >= 40 ? "Warm" : "Cold") : null;
-  const sc = sl === "Hot" ? "text-accent bg-accent-soft" :
-    sl === "Warm" ? "text-warning bg-warning-soft" : "text-text-muted bg-bg-subtle";
+  const sl = lead.score != null ? (lead.score >= 70 ? "高意向" : lead.score >= 40 ? "中等" : "低意向") : null;
+  const sc = sl === "高意向" ? "text-accent bg-accent-soft" :
+    sl === "中等" ? "text-warning bg-warning-soft" : "text-text-muted bg-bg-subtle";
 
   return (
     <div className="relative inline-flex items-center">
-      <button onClick={() => setShow(!show)} className="p-1 rounded-md hover:bg-bg-subtle text-text-muted hover:text-text transition-colors" title="Lead details">
+      <button onClick={() => setShow(!show)} className="p-1 rounded-md hover:bg-bg-subtle text-text-muted hover:text-text transition-colors" title="客户详情">
         <ExternalLink className="size-3.5" />
       </button>
       {show && (
@@ -61,7 +61,7 @@ function LeadPopover({ lead }: { lead: any }) {
               <Avatar name={lead.name} size="md" seed={lead.email || lead.name} />
               <div className="min-w-0">
                 <p className="text-sm font-semibold text-text truncate">{lead.name}</p>
-                <p className="text-xs text-text-muted truncate">{lead.email || "No email"}</p>
+                <p className="text-xs text-text-muted truncate">{lead.email || "无邮箱"}</p>
               </div>
             </div>
             <div className="space-y-2">
@@ -71,11 +71,11 @@ function LeadPopover({ lead }: { lead: any }) {
               {lead.stage && <Badge className="text-[10px]">{lead.stage.replace(/_/g, " ")}</Badge>}
               {lead.score != null && (
                 <div className="flex items-center gap-2 text-xs">
-                  <span className="text-text-muted">Score:</span>
+                  <span className="text-text-muted">评分：</span>
                   <span className={cn("rounded-full px-2 py-0.5 text-[11px] font-semibold", sc)}>{lead.score}</span>
                 </div>
               )}
-              <a href={`/leads/${lead.id}`} className="block text-xs text-accent hover:underline font-medium mt-2 pt-2 border-t border-border">View full profile →</a>
+              <a href={`/leads/${lead.id}`} className="block text-xs text-accent hover:underline font-medium mt-2 pt-2 border-t border-border">查看完整信息 →</a>
             </div>
           </div>
         </>
@@ -88,13 +88,13 @@ function LeadPopover({ lead }: { lead: any }) {
 function DetailHeader({ lead, agent, conversation }: { lead: any; agent: any; conversation: any }) {
   const presence = presenceFromDate(conversation.updatedAt);
   const lastSeen = relativeTime(conversation.updatedAt);
-  const sl = lead.score != null ? (lead.score >= 70 ? "Hot" : lead.score >= 40 ? "Warm" : "Cold") : null;
+  const sl = lead.score != null ? (lead.score >= 70 ? "高意向" : lead.score >= 40 ? "中等" : "低意向") : null;
 
   const suggestion = lead.stage === "new" || lead.stage === "contacted"
-    ? "Qualify: ask about budget & timeline. Share relevant case study."
+    ? "了解客户预算和时间线，分享相关案例。"
     : lead.stage === "qualified"
-    ? "Ready for demo. Highlight ROI and offer a trial."
-    : "Nurture: share new content, stay top-of-mind.";
+    ? "客户已准备就绪，安排产品演示并强调 ROI。"
+    : "保持跟进：分享新内容，持续建立信任。";
 
   return (
     <div className="px-4 py-3 space-y-2.5">
@@ -106,7 +106,7 @@ function DetailHeader({ lead, agent, conversation }: { lead: any; agent: any; co
             <span className="text-sm font-semibold text-text truncate">{lead.name}</span>
             <LeadPopover lead={lead} />
           </div>
-          <div className="text-xs text-text-muted truncate">{lead.email || "No email"}</div>
+          <div className="text-xs text-text-muted truncate">{lead.email || "无邮箱"}</div>
         </div>
         <span className="text-[10px] text-text-muted shrink-0">{lastSeen}</span>
       </div>
@@ -121,8 +121,8 @@ function DetailHeader({ lead, agent, conversation }: { lead: any; agent: any; co
         )}
         {lead.score != null && (
           <span className={cn("inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold",
-            sl === "Hot" ? "text-accent bg-accent-soft" :
-            sl === "Warm" ? "text-warning bg-warning-soft" :
+            sl === "高意向" ? "text-accent bg-accent-soft" :
+            sl === "中等" ? "text-warning bg-warning-soft" :
             "text-text-muted bg-bg-subtle",
           )}>
             <Star className="size-2.5" />{lead.score}
@@ -194,7 +194,7 @@ export function InboxClient({ conversations, orgSlug, selectedId: initialSelecte
     fetch(`/api/orgs/${orgSlug}/conversations/${selectedId}/messages`)
       .then((res) => res.ok ? res.json() : Promise.reject())
       .then((data) => { setMessages(data.messages || []); })
-      .catch(() => toast.error("Failed to load messages"))
+      .catch(() => toast.error("加载消息失败"))
       .finally(() => setMsgsLoading(false));
   }, [selectedId, orgSlug]);
 
@@ -213,8 +213,8 @@ export function InboxClient({ conversations, orgSlug, selectedId: initialSelecte
         const data = await res.json();
         setAiDraft(data.draft);
         setReplyDraft(data.draft.body);
-      } else { toast.error("AI draft failed"); }
-    } catch { toast.error("Network error"); }
+      } else { toast.error("AI 草稿生成失败"); }
+    } catch { toast.error("网络错误"); }
     setAiTyping(false); setGenerating(false);
   }
 
@@ -230,9 +230,9 @@ export function InboxClient({ conversations, orgSlug, selectedId: initialSelecte
         const data = await res.json();
         setMessages((prev) => [...prev, data.message]);
         setReplyDraft(""); setAiDraft(null);
-        toast.success("Reply sent");
-      } else { toast.error("Failed to send"); }
-    } catch { toast.error("Network error"); }
+        toast.success("已发送");
+      } else { toast.error("发送失败"); }
+    } catch { toast.error("网络错误"); }
     setSending(false);
   }
 
@@ -251,7 +251,7 @@ export function InboxClient({ conversations, orgSlug, selectedId: initialSelecte
         LEFT_WIDTH, selectedId ? "hidden md:flex" : "flex",
       )}>
         <div className="p-4 border-b border-border space-y-3 shrink-0">
-          <h1 className="text-lg font-semibold text-text">Inbox</h1>
+          <h1 className="text-lg font-semibold text-text">收件箱</h1>
           <div className="flex gap-1.5 flex-wrap">
             {(["all", "active", "needs_review", "needs_reply", "closed"] as const).map((f) => (
               <button
@@ -262,7 +262,7 @@ export function InboxClient({ conversations, orgSlug, selectedId: initialSelecte
                   filter === f ? "bg-accent text-white shadow-sm" : "text-text-muted hover:text-text hover:bg-bg-subtle",
                 )}
               >
-                <span>{f === "needs_review" ? "⏳ Needs Review" : f === "needs_reply" ? "Needs Reply" : f.charAt(0).toUpperCase() + f.slice(1)}</span>
+                <span>{f === "all" ? "全部" : f === "active" ? "进行中" : f === "needs_review" ? "⏳ 待审核" : f === "needs_reply" ? "待回复" : "已关闭"}</span>
                 {counts[f] > 0 && (
                   <span className={cn(
                     "inline-flex items-center justify-center min-w-[18px] h-[18px] rounded-full text-[10px] font-medium px-1",
@@ -278,8 +278,8 @@ export function InboxClient({ conversations, orgSlug, selectedId: initialSelecte
           {filtered.length === 0 ? (
             <div className="p-12 text-center text-text-muted">
               <MessageSquare className="size-10 mx-auto mb-3 opacity-30" />
-              <p className="text-sm font-medium">No conversations</p>
-              <p className="text-xs mt-1">{filter === "needs_reply" ? "All caught up" : "Nothing to show"}</p>
+              <p className="text-sm font-medium">暂无对话</p>
+              <p className="text-xs mt-1">{filter === "needs_reply" ? "已全部处理" : "暂无数据"}</p>
             </div>
           ) : (
             <div className="py-1">
@@ -291,7 +291,7 @@ export function InboxClient({ conversations, orgSlug, selectedId: initialSelecte
                   <div key={c.id} className="relative">
                     {needsReview && (
                       <div className="absolute top-2 right-2 z-10 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-warning/15 text-warning ring-1 ring-warning/30">
-                        ⏳ Review
+                        ⏳ 待审核
                       </div>
                     )}
                   <IdentityCard
@@ -321,8 +321,8 @@ export function InboxClient({ conversations, orgSlug, selectedId: initialSelecte
         <div className="hidden md:flex flex-1 items-center justify-center bg-bg h-full">
           <div className="text-center text-text-muted">
             <Mail className="size-12 mx-auto mb-3 opacity-20" />
-            <p className="text-sm font-medium">Select a conversation</p>
-            <p className="text-xs mt-1">View messages and AI insights</p>
+            <p className="text-sm font-medium">选择对话查看详情</p>
+            <p className="text-xs mt-1">查看消息与 AI 分析</p>
           </div>
         </div>
       ) : selectedConv ? (
@@ -370,7 +370,7 @@ export function InboxClient({ conversations, orgSlug, selectedId: initialSelecte
                         <span className={cn("text-[10px]", msg.direction === "inbound" ? "text-text-muted" : "text-white/60")}>
                           {new Date(msg.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                         </span>
-                        {msg.aiMetadata && <span className="text-[10px] text-accent/80">AI-generated</span>}
+                        {msg.aiMetadata && <span className="text-[10px] text-accent/80">AI 生成</span>}
                       </div>
                     </div>
                   </div>
@@ -384,12 +384,12 @@ export function InboxClient({ conversations, orgSlug, selectedId: initialSelecte
                       <Sparkles className="size-3.5 text-accent" />
                     </div>
                     <div className="max-w-[70%] rounded-2xl rounded-tr-sm px-4 py-2.5 bg-accent/5 border border-accent/20 border-dashed">
-                      <p className="text-xs text-accent font-medium mb-1">AI Draft — review before sending</p>
+                      <p className="text-xs text-accent font-medium mb-1">AI 草稿 — 发送前请审核</p>
                       <p className="text-sm text-text-secondary whitespace-pre-wrap leading-relaxed">{aiDraft.body}</p>
                       <div className="flex gap-2 mt-2">
-                        <Button size="sm" variant="default" loading={sending} onClick={sendReply}><Send className="size-3 mr-1" /> Send</Button>
-                        <Button size="sm" variant="outline" onClick={() => { setAiDraft(null); setReplyDraft(""); }}>Discard</Button>
-                        <Button size="sm" variant="ghost" onClick={generateAiDraft} loading={generating}><RefreshCw className="size-3 mr-1" /> Regenerate</Button>
+                        <Button size="sm" variant="default" loading={sending} onClick={sendReply}><Send className="size-3 mr-1" /> 发送</Button>
+                        <Button size="sm" variant="outline" onClick={() => { setAiDraft(null); setReplyDraft(""); }}>放弃</Button>
+                        <Button size="sm" variant="ghost" onClick={generateAiDraft} loading={generating}><RefreshCw className="size-3 mr-1" /> 重新生成</Button>
                       </div>
                     </div>
                   </div>
@@ -406,17 +406,17 @@ export function InboxClient({ conversations, orgSlug, selectedId: initialSelecte
               <Textarea
                 value={replyDraft}
                 onChange={(e) => setReplyDraft(e.target.value)}
-                placeholder="Type a reply or generate an AI draft…"
+                placeholder="输入回复内容，或使用 AI 生成草稿…"
                 rows={4}
                 className="w-full resize-none rounded-xl text-sm"
                 onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendReply(); } }}
               />
               <div className="flex items-center gap-2 justify-end">
                 <Button size="sm" variant="outline" onClick={generateAiDraft} loading={generating} disabled={aiTyping} className="rounded-xl">
-                  <Sparkles className="size-3.5 mr-1.5" /> AI Draft
+                  <Sparkles className="size-3.5 mr-1.5" /> AI 草稿
                 </Button>
                 <Button size="sm" onClick={sendReply} loading={sending} disabled={!replyDraft.trim()} className="rounded-xl">
-                  <Send className="size-3.5 mr-1.5" /> Send
+                  <Send className="size-3.5 mr-1.5" /> 发送
                 </Button>
               </div>
             </div>

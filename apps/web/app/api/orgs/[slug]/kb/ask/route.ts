@@ -154,7 +154,8 @@ Answer the question based on the context above. Include source citations like [S
       citations,
       chunks: chunks.map((c) => ({ id: c.id, content: c.content.slice(0, 300), score: Math.round(c.similarity * 100) / 100 })),
     });
-  } catch {
+  } catch (err) {
+    console.error("[kb/ask] Error processing question:", err instanceof Error ? err.message : String(err));
     return NextResponse.json({ error: "Failed to process your question. Please try again." }, { status: 500 });
   }
 }

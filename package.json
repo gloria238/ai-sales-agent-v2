@@ -23,6 +23,7 @@
     "seed-verify-alice": "pnpm tsx packages/db/seed-verify-alice.ts",
     "clean-org": "pnpm tsx packages/db/clean-demo-org.ts",
     "seed-demo": "pnpm tsx packages/db/seed-demo.ts",
+    "seed-chinese-demo": "pnpm tsx packages/db/seed-chinese-demo.ts",
     "postinstall": "pnpm --filter @salesagent/db generate"
   },
   "keywords": [],

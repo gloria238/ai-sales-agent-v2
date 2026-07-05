@@ -60,7 +60,7 @@ export function ActivityFeed({ orgSlug }: Props) {
         <div className="text-center">
           <Sparkles className="size-5 mx-auto mb-2 opacity-20" />
           <p className="text-[11px]">动态将在此显示</p>
-          <p className="text-[10px] mt-1 opacity-60">线索操作与活动事件</p>
+          <p className="text-[10px] mt-1 opacity-60">客户操作与活动事件</p>
         </div>
       </div>
     );

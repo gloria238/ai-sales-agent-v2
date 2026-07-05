@@ -39,7 +39,7 @@ function AITypingIndicator() {
       </div>
       <div className="glass-card rounded-2xl rounded-tr-sm px-4 py-3 border border-accent/10">
         <div className="flex items-center gap-1.5">
-          <span className="text-xs text-accent font-medium">AI drafting response</span>
+          <span className="text-xs text-accent font-medium">AI 正在撰写回复</span>
           <span className="flex gap-0.5">
             <span className="w-1 h-1 rounded-full bg-accent animate-bounce" style={{ animationDelay: "0ms" }} />
             <span className="w-1 h-1 rounded-full bg-accent animate-bounce" style={{ animationDelay: "150ms" }} />
@@ -52,6 +52,10 @@ function AITypingIndicator() {
 }
 
 // ── Stage badge ────────────────────────────────────────────
+const STAGE_LABELS: Record<string, string> = {
+  new: "新客户", contacted: "已联系", qualified: "已确认",
+  proposal: "方案中", negotiation: "洽谈中", closed_won: "已成交", closed_lost: "已流失",
+};
 function StageBadge({ stage }: { stage: string | null }) {
   const map: Record<string, string> = {
     new: "bg-bg-subtle text-text-muted", contacted: "bg-white/[0.04] text-lp-hero-sub",
@@ -59,16 +63,16 @@ function StageBadge({ stage }: { stage: string | null }) {
     negotiation: "bg-warning-soft text-warning", closed_won: "bg-accent-soft text-accent",
     closed_lost: "bg-danger-soft text-danger",
   };
-  return <Badge className={cn("text-[10px]", map[stage || "new"])} variant="default">{stage || "new"}</Badge>;
+  return <Badge className={cn("text-[10px]", map[stage || "new"])} variant="default">{STAGE_LABELS[stage || "new"] || stage || "new"}</Badge>;
 }
 
 // ── Score badge ────────────────────────────────────────────
 function ScoreBadge({ score }: { score: number | null }) {
-  if (score === null) return <Badge variant="default" className="text-[10px]">Not scored</Badge>;
+  if (score === null) return <Badge variant="default" className="text-[10px]">未评分</Badge>;
   const c = score >= 70 ? "bg-accent-soft text-accent border-accent/20" :
     score >= 40 ? "bg-warning-soft text-warning border-warning/20" :
     "bg-bg-subtle text-text-muted border-lp-border/20";
-  const label = score >= 70 ? "Hot" : score >= 40 ? "Warm" : "Cold";
+  const label = score >= 70 ? "高意向" : score >= 40 ? "中等" : "低意向";
   return <Badge className={cn("text-[10px] px-1.5 py-0", c)} variant="default">{label} &middot; {score}</Badge>;
 }
 
@@ -210,7 +214,7 @@ export function InboxDetailClient({ conversation, conversations, orgSlug }: Prop
             />
             <div className="flex items-center gap-2 pr-4 shrink-0">
               <Button size="sm" variant="outline" onClick={() => router.push(`/leads/${lead.id}`)}>
-                <ExternalLink className="size-3 mr-1" /> Lead Profile
+                <ExternalLink className="size-3 mr-1" /> 客户详情
               </Button>
             </div>
           </div>
@@ -241,10 +245,10 @@ export function InboxDetailClient({ conversation, conversations, orgSlug }: Prop
                     {new Date(msg.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                   </span>
                   {msg.aiMetadata && !msg.aiMetadata.agentSteps && (
-                    <span className="text-[10px] text-accent/80">AI-generated</span>
+                    <span className="text-[10px] text-accent/80">AI 生成</span>
                   )}
                   {msg.aiMetadata?.agentSteps && (
-                    <span className="text-[10px] text-accent/80">AI-generated · {msg.aiMetadata.agentSteps.length} steps</span>
+                    <span className="text-[10px] text-accent/80">AI 生成 · {msg.aiMetadata.agentSteps.length} steps</span>
                   )}
                 </div>
 
@@ -362,13 +366,13 @@ export function InboxDetailClient({ conversation, conversations, orgSlug }: Prop
       <div className="hidden xl:flex w-80 shrink-0 border-l border-border flex-col bg-bg-card/30 backdrop-blur-sm overflow-y-auto">
         <div className="p-4 border-b border-border">
           <h3 className="text-sm font-semibold text-text flex items-center gap-2">
-            <Sparkles className="size-3.5 text-accent" /> AI Intelligence
+            <Sparkles className="size-3.5 text-accent" /> AI 智能分析
           </h3>
         </div>
 
         {/* Lead Score */}
         <div className="p-4 border-b border-border">
-          <p className="text-[10px] font-semibold text-text-muted uppercase tracking-wide mb-2">Lead Qualification</p>
+          <p className="text-[10px] font-semibold text-text-muted uppercase tracking-wide mb-2">客户评级</p>
           <div className="flex items-center gap-3 mb-3">
             <div className={cn(
               "size-14 rounded-2xl flex items-center justify-center text-lg font-bold",
@@ -379,8 +383,8 @@ export function InboxDetailClient({ conversation, conversations, orgSlug }: Prop
               {lead.score ?? "—"}
             </div>
             <div>
-              <p className="font-semibold text-text text-sm">{scoreLabel || "Not scored"}</p>
-              <p className="text-xs text-text-muted">Qualification score</p>
+              <p className="font-semibold text-text text-sm">{scoreLabel || "未评分"}</p>
+              <p className="text-xs text-text-muted">客户评分</p>
             </div>
           </div>
           {lead.score && (
@@ -408,46 +412,46 @@ export function InboxDetailClient({ conversation, conversations, orgSlug }: Prop
           <Button size="sm" variant="outline" className="w-full mt-3" onClick={async () => {
             try {
               const res = await fetch(`/api/orgs/${orgSlug}/ai/score-lead`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ leadId: lead.id }) });
-              if (res.ok) { toast.success("Lead re-scored"); router.refresh(); }
-            } catch { toast.error("Scoring failed"); }
+              if (res.ok) { toast.success("重新评分完成"); router.refresh(); }
+            } catch { toast.error("评分失败"); }
           }}>
-            <RefreshCw className="size-3 mr-1" /> Re-score Lead
+            <RefreshCw className="size-3 mr-1" /> 重新评分
           </Button>
         </div>
 
         {/* Company Profile */}
         <div className="p-4 border-b border-border">
-          <p className="text-[10px] font-semibold text-text-muted uppercase tracking-wide mb-2">Company</p>
+          <p className="text-[10px] font-semibold text-text-muted uppercase tracking-wide mb-2">公司信息</p>
           <div className="space-y-2">
             <div className="flex items-center gap-2">
               <Building2 className="size-3.5 text-text-muted" />
-              <span className="text-sm text-text">{lead.company || "Unknown"}</span>
+              <span className="text-sm text-text">{lead.company || "未知"}</span>
             </div>
             <div className="flex items-center gap-2">
               <TrendingUp className="size-3.5 text-text-muted" />
-              <span className="text-sm text-text">{lead.source || "Unknown source"}</span>
+              <span className="text-sm text-text">{lead.source || "未知来源"}</span>
             </div>
             <p className="text-xs text-text-muted leading-relaxed mt-1">
               {lead.company
-                ? `${lead.company} is a technology company in the SaaS space. Active in outbound sales and looking to scale their SDR operations.`
-                : "No company information available. Ask the lead about their company during the next interaction."}
+                ? `${lead.company} 是一家 SaaS 领域的技术公司，专注于外呼销售自动化，正在寻求规模化增长。`
+                : "暂无公司信息，建议在下次沟通中了解客户公司背景。"}
             </p>
           </div>
         </div>
 
         {/* Sentiment & Signals */}
         <div className="p-4 border-b border-border">
-          <p className="text-[10px] font-semibold text-text-muted uppercase tracking-wide mb-2">Sentiment & Signals</p>
+          <p className="text-[10px] font-semibold text-text-muted uppercase tracking-wide mb-2">情感与信号</p>
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-xs text-text-secondary">Sentiment</span>
+              <span className="text-xs text-text-secondary">情感倾向</span>
               <Badge className="text-[10px] bg-accent-soft text-accent" variant="default">
-                <ThumbsUp className="size-2.5 mr-1" /> Positive
+                <ThumbsUp className="size-2.5 mr-1" /> 积极
               </Badge>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-xs text-text-secondary">Buying signals</span>
-              <span className="text-xs font-medium text-accent">3 detected</span>
+              <span className="text-xs text-text-secondary">购买信号</span>
+              <span className="text-xs font-medium text-accent">3 个已检测</span>
             </div>
             <div className="space-y-1 mt-1">
               {["Asked about pricing", "Mentioned timeline urgency", "Decision-maker title"].map((s) => (
@@ -462,22 +466,22 @@ export function InboxDetailClient({ conversation, conversations, orgSlug }: Prop
 
         {/* Recommended Actions */}
         <div className="p-4">
-          <p className="text-[10px] font-semibold text-text-muted uppercase tracking-wide mb-2">AI Recommendation</p>
+          <p className="text-[10px] font-semibold text-text-muted uppercase tracking-wide mb-2">AI 建议</p>
           <div className="glass-card p-3 rounded-xl border border-accent/10">
             <div className="flex items-center gap-2 mb-2">
               <Sparkles className="size-3.5 text-accent" />
-              <span className="text-xs font-medium text-accent">Next best action</span>
+              <span className="text-xs font-medium text-accent">下一步行动</span>
             </div>
             <p className="text-xs text-text-secondary leading-relaxed">
               {lead.stage === "new" || lead.stage === "contacted"
-                ? "Qualify this lead with a discovery call. Ask about budget, timeline, and decision process. Share relevant case study."
+                ? "通过电话沟通了解客户需求，询问预算、时间线和决策流程，分享相关案例。"
                 : lead.stage === "qualified"
-                ? "Schedule a product demo this week. The lead has shown strong buying intent. Prepare ROI analysis for their industry."
-                : "Follow up within 48 hours. Send personalized proposal with pricing options. Address any objections from the last conversation."}
+                ? "本周安排产品演示，客户已展现出明确购买意向。准备针对其行业的 ROI 分析。"
+                : "48 小时内跟进，发送包含定价方案的个性化提案，回应上次沟通中的疑虑。"}
             </p>
             <div className="flex items-center gap-1.5 mt-2 pt-2 border-t border-border/50">
               <Clock className="size-3 text-warning" />
-              <span className="text-[10px] text-warning">Follow up within 24 hours</span>
+              <span className="text-[10px] text-warning">建议 24 小时内跟进</span>
             </div>
           </div>
         </div>

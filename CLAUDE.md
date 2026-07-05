@@ -81,6 +81,7 @@ pnpm seed                          # Reset + seed demo data (destructive)
 pnpm seed-prod <org-slug>          # Non-destructive: 3 scripts + 5 leads
 pnpm seed-members <org-slug>       # RBAC test accounts
 pnpm seed-demo                     # Acme Corp demo (15 leads, 3 agents, 10 conversations)
+pnpm seed-chinese-demo             # 启云科技中文 Demo (5 成员, 3 AI, 15 客户, 4 KB)
 pnpm seed-verify-alice             # Mark alice@example.com as email-verified
 pnpm clean-org <org-slug>          # Delete all conversations + campaigns + leads in an org
 
@@ -312,6 +313,7 @@ packages/db/clean-demo-org.ts       — FK-safe org cleanup before re-seed
 | `pnpm seed-members <slug>` | RBAC test accounts with all 4 roles | Yes |
 | `pnpm seed-verify-alice` | Sets emailVerified=true for alice@example.com | Yes |
 | `pnpm seed-demo` | Acme Corp demo (15 leads, 3 agents, 10 conversations) | Drop first |
+| `pnpm seed-chinese-demo` | 启云科技中文 Demo (5 成员, 3 AI, 15 客户, 4 知识库文档) | Drop first |
 | `pnpm clean-org <slug>` | FK-safe delete of all conversations + campaigns + leads | Destructive |
 
 ### Vercel deployment gotchas (lessons learned)

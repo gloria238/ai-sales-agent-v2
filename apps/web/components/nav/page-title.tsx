@@ -5,7 +5,7 @@ const SECTION_LABELS: Record<string, string> = {
   home: "工作台",
   inbox: "收件箱",
   campaigns: "外呼活动",
-  leads: "线索管理",
+  leads: "客户管理",
   agents: "AI 助理",
   analytics: "数据分析",
   scripts: "话术脚本",

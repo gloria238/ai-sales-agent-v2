@@ -51,7 +51,7 @@ export default async function DashboardHomePage() {
   ].filter(s => s.value > 0);
 
   const pipelineDonut = [
-    { label: "新线索", value: stageMap.new || 0, color: "hsl(240, 5%, 35%)" },
+    { label: "新客户", value: stageMap.new || 0, color: "hsl(240, 5%, 35%)" },
     { label: "已联系", value: stageMap.contacted || 0, color: "hsl(121, 20%, 25%)" },
     { label: "已确认", value: stageMap.qualified || 0, color: "hsl(121, 50%, 38%)" },
     { label: "方案中", value: stageMap.proposal || 0, color: "hsl(121, 75%, 48%)" },
@@ -74,10 +74,10 @@ export default async function DashboardHomePage() {
               <Bot className="size-7 text-white" />
             </div>
             <h3 className="text-lg font-bold text-text mb-2">部署你的 AI 销售团队</h3>
-            <p className="text-sm text-text-secondary mb-6 max-w-xs mx-auto leading-relaxed">创建 AI 助理，导入线索，启动外呼活动。AI 全天候自动筛选线索并预约会议。</p>
+            <p className="text-sm text-text-secondary mb-6 max-w-xs mx-auto leading-relaxed">创建 AI 助理，导入客户，启动外呼活动。AI 全天候自动筛选客户并预约会议。</p>
             <div className="flex items-center justify-center gap-3">
               <Link href="/agents" className="rounded-lg bg-accent text-white text-sm font-medium px-5 py-2.5 hover:bg-accent-hover transition-all shadow-sm shadow-accent/20 hover:shadow-md hover:shadow-accent/25">创建助理</Link>
-              <Link href="/leads" className="rounded-lg border border-border text-text-secondary text-sm font-medium px-5 py-2.5 hover:bg-bg-subtle hover:border-accent/30 transition-all">导入线索</Link>
+              <Link href="/leads" className="rounded-lg border border-border text-text-secondary text-sm font-medium px-5 py-2.5 hover:bg-bg-subtle hover:border-accent/30 transition-all">导入客户</Link>
             </div>
           </div>
         </div>
@@ -159,8 +159,8 @@ export default async function DashboardHomePage() {
         <div className="lg:col-span-2 grid grid-cols-2 gap-4 min-h-0">
           {/* Lead Quality */}
           <div className="rounded-2xl border border-border bg-bg-card/80 backdrop-blur-sm shadow-sm p-5 flex flex-col justify-center">
-            <h3 className="text-sm font-semibold text-text mb-1">线索质量</h3>
-            <p className="text-xs text-text-muted mb-4">共 {leadCount} 条线索</p>
+            <h3 className="text-sm font-semibold text-text mb-1">客户质量</h3>
+            <p className="text-xs text-text-muted mb-4">共 {leadCount} 条客户</p>
             {scoreDonut.length > 0 ? (
               <div className="flex items-center gap-5 flex-1">
                 <div className="w-[120px] h-[120px] shrink-0">
@@ -187,7 +187,7 @@ export default async function DashboardHomePage() {
           {/* Pipeline */}
           <div className="rounded-2xl border border-border bg-bg-card/80 backdrop-blur-sm shadow-sm p-5 flex flex-col justify-center">
             <h3 className="text-sm font-semibold text-text mb-1">销售漏斗</h3>
-            <p className="text-xs text-text-muted mb-4">共 {leadCount} 条线索 · 本月成交 {wonThisMonth}</p>
+            <p className="text-xs text-text-muted mb-4">共 {leadCount} 条客户 · 本月成交 {wonThisMonth}</p>
             {pipelineDonut.length > 0 ? (
               <div className="flex items-center gap-5 flex-1">
                 <div className="w-[120px] h-[120px] shrink-0">
@@ -206,7 +206,7 @@ export default async function DashboardHomePage() {
             ) : (
               <div className="flex-1 flex flex-col items-center justify-center text-text-muted gap-2">
                 <Target className="size-6 opacity-20" />
-                <p className="text-xs">添加线索后显示漏斗</p>
+                <p className="text-xs">添加客户后显示漏斗</p>
               </div>
             )}
           </div>
@@ -258,7 +258,7 @@ export default async function DashboardHomePage() {
             <div className="grid grid-cols-4 gap-3 text-center">
               {[
                 { val: agentCount, label: "AI 助理", icon: Bot },
-                { val: leadCount, label: "线索", icon: Target },
+                { val: leadCount, label: "客户", icon: Target },
                 { val: activeCampaigns, label: "活动", icon: Zap },
                 { val: activeConversations, label: "对话", icon: MessageSquare },
               ].map((s) => (

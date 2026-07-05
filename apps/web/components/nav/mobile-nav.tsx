@@ -10,7 +10,7 @@ const navItems = [
   { href: "/home", label: "工作台", icon: LayoutDashboard },
   { href: "/inbox", label: "收件箱", icon: MessageSquare },
   { href: "/campaigns", label: "外呼活动", icon: Send },
-  { href: "/leads", label: "线索管理", icon: Users },
+  { href: "/leads", label: "客户管理", icon: Users },
   { href: "/analytics", label: "数据分析", icon: TrendingUp },
   { href: "/agents", label: "AI 助理", icon: Bot },
   { href: "/settings", label: "设置", icon: Settings },

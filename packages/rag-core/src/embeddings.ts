@@ -36,14 +36,14 @@ export function createEmbeddingProvider(config?: {
 
   return {
     async embed(text: string, options?: EmbeddingOptions): Promise<number[]> {
-      if (!apiKey) throw new Error("EMBEDDING_API_KEY not configured");
+      if (!effectiveKey) throw new Error("No embedding API key configured — set EMBEDDING_API_KEY or DEEPSEEK_API_KEY");
       const model = options?.model || defaultModel;
 
       const res = await fetch(`${baseUrl}/embeddings`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${apiKey}`,
+          Authorization: `Bearer ${effectiveKey}`,
         },
         body: JSON.stringify({ model, input: text }),
       });
@@ -60,14 +60,14 @@ export function createEmbeddingProvider(config?: {
     },
 
     async embedBatch(texts: string[], options?: EmbeddingOptions): Promise<number[][]> {
-      if (!apiKey) throw new Error("EMBEDDING_API_KEY not configured");
+      if (!effectiveKey) throw new Error("No embedding API key configured");
       const model = options?.model || defaultModel;
 
       const res = await fetch(`${baseUrl}/embeddings`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${apiKey}`,
+          Authorization: `Bearer ${effectiveKey}`,
         },
         body: JSON.stringify({ model, input: texts }),
       });

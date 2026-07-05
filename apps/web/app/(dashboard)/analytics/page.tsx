@@ -108,7 +108,7 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: { 
     const leadsByStage = await prisma.lead.groupBy({ by: ["stage"], where: { organizationId: org.id }, _count: true });
     const stageMap = Object.fromEntries(leadsByStage.map((s) => [s.stage ?? "new", s._count]));
     const funnelStages = [
-      { key: "new", label: "新线索" },
+      { key: "new", label: "新客户" },
       { key: "contacted", label: "已联系" },
       { key: "qualified", label: "已确认" },
       { key: "proposal", label: "方案中" },
@@ -226,7 +226,7 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: { 
           {/* Funnel */}
           <div className="glass-card p-6">
             <h3 className="text-sm font-semibold text-text mb-4 flex items-center gap-2">
-              <BarChart3 className="size-4 text-text-muted" /> 线索漏斗
+              <BarChart3 className="size-4 text-text-muted" /> 客户漏斗
             </h3>
             <div className="space-y-2">
               {funnelStages.map((stage) => {
@@ -254,7 +254,7 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: { 
             <div className="grid grid-cols-2 gap-4 text-center">
               <div className="rounded-xl bg-bg-subtle/50 p-4">
                 <p className="text-2xl font-bold text-text">{recentActivity}</p>
-                <p className="text-xs text-text-muted mt-1">线索活动</p>
+                <p className="text-xs text-text-muted mt-1">客户活动</p>
               </div>
               <div className="rounded-xl bg-bg-subtle/50 p-4">
                 <p className="text-2xl font-bold text-text">{recentMessages}</p>
@@ -320,7 +320,7 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: { 
   }
 
   const stages = [
-    { key: "new", label: "新线索", color: "hsl(240, 5%, 35%)" },
+    { key: "new", label: "新客户", color: "hsl(240, 5%, 35%)" },
     { key: "contacted", label: "已联系", color: "hsl(121, 20%, 25%)" },
     { key: "qualified", label: "已确认", color: "hsl(121, 50%, 38%)" },
     { key: "proposal", label: "方案中", color: "hsl(121, 75%, 48%)" },
@@ -367,7 +367,7 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: { 
           </div>
           <p className="text-xs text-text-muted mb-1">转化率</p>
           <p className="text-2xl font-bold text-text">{conversionRate ? `${conversionRate}%` : "—"}</p>
-          <p className="text-xs text-text-muted mt-1">线索到成交</p>
+          <p className="text-xs text-text-muted mt-1">客户到成交</p>
         </div>
 
         <div className="glass-card p-5">
@@ -404,7 +404,7 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: { 
               })}
             </div>
           ) : (
-            <p className="text-sm text-text-muted py-8 text-center">暂无线索数据，导入线索后查看漏斗。</p>
+            <p className="text-sm text-text-muted py-8 text-center">暂无客户数据，导入客户后查看漏斗。</p>
           )}
         </div>
 

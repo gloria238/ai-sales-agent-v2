@@ -29,7 +29,7 @@ export function OnboardingCard({ show, orgSlug }: Props) {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
           {[
             { step: "1", title: "配置你的 AI 助理", desc: "设置首个销售助理，配置性格、产品知识和筛选目标。", href: "/agents", cta: "前往配置" },
-            { step: "2", title: "导入你的线索", desc: "手动添加或导入 CSV，AI 将自动评分和排序。", href: "/leads", cta: "导入线索" },
+            { step: "2", title: "导入你的客户", desc: "手动添加或导入 CSV，AI 将自动评分和排序。", href: "/leads", cta: "导入客户" },
             { step: "3", title: "启动首个外呼活动", desc: "创建 AI 个性化邮件外呼活动，坐等客户回复。", href: "/campaigns", cta: "创建活动" },
           ].map((item) => (
             <Link key={item.step} href={item.href} className="glass-card rounded-xl p-5 hover:shadow-glass-hover transition-all group">
