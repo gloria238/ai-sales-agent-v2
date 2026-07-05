@@ -57,9 +57,45 @@ export async function POST(request: Request) {
       orderBy: { createdAt: "asc" },
     });
 
+    // ── Customer Portal login (no Membership, but linked to a Lead) ──
     if (!membership) {
-      return NextResponse.json({ error: "No organization found" }, { status: 403 });
+      const lead = await prisma.lead.findFirst({
+        where: { userId: user.id },
+        include: { organization: true },
+      });
+      if (!lead) {
+        return NextResponse.json({ error: "No organization found" }, { status: 403 });
+      }
+
+      const token = await signToken({
+        userId: user.id,
+        email: user.email,
+        name: user.name,
+        orgId: lead.organizationId,
+        orgSlug: lead.organization.slug,
+        role: "customer",
+      });
+
+      const response = NextResponse.json({
+        user: { id: user.id, email: user.email, name: user.name },
+        org: { id: lead.organizationId, slug: lead.organization.slug, name: lead.organization.name },
+        isCustomer: true,
+        redirectTo: "/portal/conversations",
+      });
+
+      response.cookies.set("session", token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: 60 * 60 * 24 * 7,
+        path: "/",
+      });
+
+      logInfo(ctx, "Customer portal login", { userId: user.id, orgSlug: lead.organization.slug });
+      return response;
     }
+
+    // ── Dashboard login (standard Membership) ──────────────────────
 
     const token = await signToken({
       userId: user.id,

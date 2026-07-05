@@ -1,4 +1,4 @@
-export const ROLES = ["owner", "admin", "operator", "viewer"] as const;
+export const ROLES = ["owner", "admin", "operator", "viewer", "customer"] as const;
 export type Role = (typeof ROLES)[number];
 
 export const PERMISSION_MAP: Record<string, Role[]> = {

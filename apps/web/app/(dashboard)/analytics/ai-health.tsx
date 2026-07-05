@@ -3,6 +3,16 @@
 import { useEffect, useState } from "react";
 import { Zap, Timer, DollarSign, AlertTriangle, TrendingUp, TrendingDown } from "lucide-react";
 
+// Job type display names
+const JOB_LABELS: Record<string, string> = {
+  compose_response: "撰写回复",
+  score_lead: "客户评分",
+  summarize_conversation: "对话总结",
+  generate_script: "话术生成",
+  campaign_ai: "活动AI",
+  kb_ask: "知识库问答",
+};
+
 interface AIHealthData {
   summary: {
     totalCalls: number;
@@ -18,13 +28,15 @@ interface AIHealthData {
 }
 
 function formatMs(ms: number): string {
-  if (ms >= 1000) return `${(ms / 1000).toFixed(1)}s`;
-  return `${ms}ms`;
+  if (ms >= 1000) return `${(ms / 1000).toFixed(1)}秒`;
+  return `${ms}毫秒`;
 }
 
 function formatCost(usd: number): string {
-  if (usd < 0.01) return "<$0.01";
-  return `$${usd.toFixed(2)}`;
+  const rmb = usd * 7.2;
+  if (rmb < 0.01) return "<¥0.01";
+  if (rmb >= 1000) return `¥${(rmb / 1000).toFixed(1)}k`;
+  return `¥${rmb.toFixed(2)}`;
 }
 
 function formatTokens(n: number): string {
@@ -46,11 +58,11 @@ export default function AIHealthTab() {
       setError("");
       try {
         const res = await fetch(`/api/v1/metrics/ai-health?period=${period}`);
-        if (!res.ok) throw new Error("Failed to fetch AI metrics");
+        if (!res.ok) throw new Error("获取 AI 指标失败");
         const json = await res.json();
         if (!cancelled) setData(json);
       } catch (err) {
-        if (!cancelled) setError(err instanceof Error ? err.message : "Unknown error");
+        if (!cancelled) setError(err instanceof Error ? err.message : "未知错误");
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -77,7 +89,7 @@ export default function AIHealthTab() {
     return (
       <div className="glass-card p-8 text-center">
         <AlertTriangle className="size-8 text-warning mx-auto mb-3" />
-        <p className="text-sm text-text-muted">{error || "No AI metrics available yet. Trigger an AI action to populate data."}</p>
+        <p className="text-sm text-text-muted">{error || "暂无 AI 调用数据，触发 AI 操作后自动填充。"}</p>
       </div>
     );
   }
@@ -90,7 +102,9 @@ export default function AIHealthTab() {
       {/* Period selector + summary header */}
       <div className="flex items-center justify-between">
         <p className="text-sm text-text-muted">
-          Last {data.summary.totalCalls === 0 ? "(no data yet)" : `${data.summary.totalCalls} AI calls`}
+          {data.summary.totalCalls === 0
+            ? "（暂无数据）"
+            : `近${period === "24h" ? "24小时" : period === "7d" ? "7天" : "30天"} ${data.summary.totalCalls} 次调用`}
         </p>
         <div className="flex gap-1 bg-bg-subtle rounded-lg p-0.5">
           {["24h", "7d", "30d"].map((p) => (
@@ -101,7 +115,7 @@ export default function AIHealthTab() {
                 period === p ? "bg-accent text-white" : "text-text-muted hover:text-text"
               }`}
             >
-              {p}
+              {p === "24h" ? "24小时" : p === "7d" ? "7天" : "30天"}
             </button>
           ))}
         </div>
@@ -113,7 +127,7 @@ export default function AIHealthTab() {
           <div className="size-9 rounded-lg bg-accent/10 flex items-center justify-center mb-2">
             <Zap className="size-4 text-accent" />
           </div>
-          <p className="text-xs text-text-muted">AI Calls</p>
+          <p className="text-xs text-text-muted">调用次数</p>
           <p className="text-xl font-bold text-text">{data.summary.totalCalls}</p>
         </div>
 
@@ -121,15 +135,17 @@ export default function AIHealthTab() {
           <div className="size-9 rounded-lg bg-accent-secondary/10 flex items-center justify-center mb-2">
             <Timer className="size-4 text-accent-secondary" />
           </div>
-          <p className="text-xs text-text-muted">Latency P50 / P95</p>
-          <p className="text-xl font-bold text-text">{formatMs(data.summary.avgLatencyP50)} / {formatMs(data.summary.avgLatencyP95)}</p>
+          <p className="text-xs text-text-muted">延迟 P50 / P95</p>
+          <p className="text-xl font-bold text-text">
+            {formatMs(data.summary.avgLatencyP50)} / {formatMs(data.summary.avgLatencyP95)}
+          </p>
         </div>
 
         <div className="glass-card p-4">
           <div className="size-9 rounded-lg bg-accent/10 flex items-center justify-center mb-2">
             <DollarSign className="size-4 text-accent" />
           </div>
-          <p className="text-xs text-text-muted">Total Cost</p>
+          <p className="text-xs text-text-muted">总费用（估算）</p>
           <p className="text-xl font-bold text-text">{formatCost(data.summary.totalCost)}</p>
         </div>
 
@@ -137,7 +153,7 @@ export default function AIHealthTab() {
           <div className="size-9 rounded-lg bg-accent-secondary/10 flex items-center justify-center mb-2">
             <TrendingUp className="size-4 text-accent-secondary" />
           </div>
-          <p className="text-xs text-text-muted">Success Rate</p>
+          <p className="text-xs text-text-muted">成功率</p>
           <p className="text-xl font-bold text-text">{data.summary.successRate}%</p>
         </div>
 
@@ -145,7 +161,7 @@ export default function AIHealthTab() {
           <div className="size-9 rounded-lg bg-warning/10 flex items-center justify-center mb-2">
             <TrendingDown className="size-4 text-warning" />
           </div>
-          <p className="text-xs text-text-muted">Fallback Rate</p>
+          <p className="text-xs text-text-muted">降级率</p>
           <p className={`text-xl font-bold ${data.summary.fallbackRate > 0.1 ? "text-red-400" : "text-text"}`}>
             {(data.summary.fallbackRate * 100).toFixed(1)}%
           </p>
@@ -156,9 +172,12 @@ export default function AIHealthTab() {
       {data.alerts.length > 0 && (
         <div className="space-y-2">
           {data.alerts.map((a, i) => (
-            <div key={i} className={`flex items-center gap-2 px-4 py-3 rounded-lg text-sm ${
-              a.level === "critical" ? "bg-red-500/10 text-red-400" : "bg-warning/10 text-warning"
-            }`}>
+            <div
+              key={i}
+              className={`flex items-center gap-2 px-4 py-3 rounded-lg text-sm ${
+                a.level === "critical" ? "bg-red-500/10 text-red-400" : "bg-warning/10 text-warning"
+              }`}
+            >
               <AlertTriangle className="size-4 shrink-0" />
               {a.message}
             </div>
@@ -170,11 +189,13 @@ export default function AIHealthTab() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Calls by job type */}
         <div className="glass-card p-5">
-          <p className="text-sm font-medium text-text mb-4">Calls by Type</p>
+          <p className="text-sm font-medium text-text mb-4">按任务类型</p>
           <div className="space-y-3">
             {data.byJobType.map((j) => (
               <div key={j.jobType} className="flex items-center gap-3">
-                <span className="w-24 text-xs text-text-muted truncate">{j.jobType}</span>
+                <span className="w-24 text-xs text-text-muted truncate">
+                  {JOB_LABELS[j.jobType] || j.jobType}
+                </span>
                 <div className="flex-1 bg-bg-subtle rounded-full h-4 overflow-hidden">
                   <div
                     className="h-full bg-accent rounded-full transition-all duration-500"
@@ -182,18 +203,20 @@ export default function AIHealthTab() {
                   />
                 </div>
                 <span className="text-xs text-text tabular-nums w-10 text-right">{j.count}</span>
-                <span className="text-xs text-text-muted tabular-nums w-14 text-right">{formatMs(j.avgLatency)}</span>
+                <span className="text-xs text-text-muted tabular-nums w-14 text-right">
+                  {formatMs(j.avgLatency)}
+                </span>
               </div>
             ))}
           </div>
           {data.byJobType.length === 0 && (
-            <p className="text-xs text-text-muted text-center py-4">No AI calls recorded yet</p>
+            <p className="text-xs text-text-muted text-center py-4">暂无 AI 调用记录</p>
           )}
         </div>
 
         {/* Daily token usage */}
         <div className="glass-card p-5">
-          <p className="text-sm font-medium text-text mb-4">Daily Token Usage (30d)</p>
+          <p className="text-sm font-medium text-text mb-4">每日 Token 用量（近30天）</p>
           <div className="space-y-1 max-h-64 overflow-y-auto">
             {data.dailyTokens.map((d) => {
               const total = d.promptTokens + d.completionTokens;
@@ -210,7 +233,9 @@ export default function AIHealthTab() {
                       style={{ width: `${(d.completionTokens / maxDailyTokens) * 100}%` }}
                     />
                   </div>
-                  <span className="text-xs text-text-muted tabular-nums w-14 text-right">{formatTokens(total)}</span>
+                  <span className="text-xs text-text-muted tabular-nums w-14 text-right">
+                    {formatTokens(total)}
+                  </span>
                 </div>
               );
             })}
@@ -218,11 +243,11 @@ export default function AIHealthTab() {
           <div className="flex items-center gap-4 mt-3">
             <div className="flex items-center gap-1.5">
               <div className="size-2.5 rounded-full bg-accent" />
-              <span className="text-xs text-text-muted">Prompt</span>
+              <span className="text-xs text-text-muted">输入</span>
             </div>
             <div className="flex items-center gap-1.5">
               <div className="size-2.5 rounded-full bg-accent-secondary/60" />
-              <span className="text-xs text-text-muted">Completion</span>
+              <span className="text-xs text-text-muted">输出</span>
             </div>
           </div>
         </div>

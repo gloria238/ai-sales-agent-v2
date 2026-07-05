@@ -28,7 +28,8 @@ export default function LoginPage() {
         return;
       }
       toast.success("欢迎回来！");
-      router.push("/home");
+      const data = await res.json();
+      router.push(data.isCustomer ? "/portal/conversations" : "/home");
       router.refresh();
     } catch {
       setError("网络错误，请重试");
