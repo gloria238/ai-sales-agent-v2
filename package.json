@@ -24,6 +24,7 @@
     "clean-org": "pnpm tsx packages/db/clean-demo-org.ts",
     "seed-demo": "pnpm tsx packages/db/seed-demo.ts",
     "seed-chinese-demo": "pnpm tsx packages/db/seed-chinese-demo.ts",
+    "seed-qicloud-accounts": "pnpm tsx packages/db/seed-qicloud-accounts.ts",
     "postinstall": "pnpm --filter @salesagent/db generate"
   },
   "keywords": [],
