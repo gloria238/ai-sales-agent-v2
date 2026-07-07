@@ -21,6 +21,8 @@ export function createEmbeddingProvider(config?: {
   apiKey?: string;
   baseUrl?: string;
   defaultModel?: string;
+  /** Matryoshka embedding dimension (e.g. 1536, 1024, 512). Qwen3-Embedding supports this. */
+  dimensions?: number;
 }): EmbeddingProvider {
   const apiKey = config?.apiKey || process.env.EMBEDDING_API_KEY;
   const deepseekKey = process.env.DEEPSEEK_API_KEY;
@@ -33,6 +35,15 @@ export function createEmbeddingProvider(config?: {
   const defaultModel = config?.defaultModel
     || process.env.EMBEDDING_MODEL
     || (effectiveKey === deepseekKey && !apiKey ? "deepseek-chat" : "text-embedding-3-small");
+  const dimensions = config?.dimensions
+    ?? (process.env.EMBEDDING_DIMENSIONS ? parseInt(process.env.EMBEDDING_DIMENSIONS, 10) : undefined);
+
+  // Build request body once — embed and embedBatch share the same shape
+  function buildBody(model: string, input: string | string[]) {
+    const body: Record<string, unknown> = { model, input };
+    if (dimensions) body.dimensions = dimensions;
+    return JSON.stringify(body);
+  }
 
   return {
     async embed(text: string, options?: EmbeddingOptions): Promise<number[]> {
@@ -45,7 +56,7 @@ export function createEmbeddingProvider(config?: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${effectiveKey}`,
         },
-        body: JSON.stringify({ model, input: text }),
+        body: buildBody(model, text),
       });
 
       if (!res.ok) {
@@ -69,7 +80,7 @@ export function createEmbeddingProvider(config?: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${effectiveKey}`,
         },
-        body: JSON.stringify({ model, input: texts }),
+        body: buildBody(model, texts),
       });
 
       if (!res.ok) {

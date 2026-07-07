@@ -21,22 +21,25 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
   }
 
   try {
-    // ═══ Semantic Cache Check ════════════════════════════════════════
+    // ═══ Semantic Cache Check (best-effort, silently degrades) ═════
     const embedder = createEmbeddingProvider();
-    const queryEmbedding = await embedder.embed(question);
-    try {
-      const { getSemanticCache } = await import("@salesagent/rag-core");
-      const cache = getSemanticCache();
-      const cacheResult = await cache.get(question, queryEmbedding, membership.organizationId);
-      if (cacheResult.hit && cacheResult.entry) {
-        return NextResponse.json({
-          answer: cacheResult.entry.answer,
-          citations: [],
-          cached: true,
-          cacheMatchType: cacheResult.matchType,
-        });
-      }
-    } catch { /* cache disabled or Redis unavailable — proceed with full pipeline */ }
+    let queryEmbedding: number[] | null = null;
+    try { queryEmbedding = await embedder.embed(question); } catch { /* embedding failed, skip cache */ }
+    if (queryEmbedding) {
+      try {
+        const { getSemanticCache } = await import("@salesagent/rag-core");
+        const cache = getSemanticCache();
+        const cacheResult = await cache.get(question, queryEmbedding, membership.organizationId);
+        if (cacheResult.hit && cacheResult.entry) {
+          return NextResponse.json({
+            answer: cacheResult.entry.answer,
+            citations: [],
+            cached: true,
+            cacheMatchType: cacheResult.matchType,
+          });
+        }
+      } catch { /* cache disabled or Redis unavailable — proceed with full pipeline */ }
+    }
 
     // ═══ Unified Hybrid Retrieval (vector + keyword → RRF → Reranker) ═══
     const sqlExecutor: SqlExecutor = async (query: string, ...params: unknown[]) =>
