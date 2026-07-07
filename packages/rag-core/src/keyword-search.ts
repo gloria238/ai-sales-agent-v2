@@ -34,10 +34,10 @@ export async function keywordSearch(
 
     if (tsquery) {
       const rows = await sql(
-        `SELECT id, document_id, content, chunk_index, metadata,
+        `SELECT id, "documentId", content, "chunkIndex", metadata,
                 ts_rank(search_vector, to_tsquery('english', $1)) AS rank
          FROM sales_agent."DocumentChunk"
-         WHERE organization_id = $2
+         WHERE "organizationId" = $2
            AND search_vector @@ to_tsquery('english', $1)
          ORDER BY rank DESC
          LIMIT $3`,
@@ -49,11 +49,11 @@ export async function keywordSearch(
       if (rows && (rows as unknown[]).length > 0) {
         return (rows as Array<Record<string, unknown>>).map((row) => ({
           id: row.id as string,
-          documentId: row.document_id as string,
+          documentId: row.documentId as string,
           content: row.content as string,
-          chunkIndex: row.chunk_index as number,
+          chunkIndex: row.chunkIndex as number,
           metadata: row.metadata as Record<string, unknown>,
-          score: typeof row.rank === "number" ? row.rank / 10 : 0.5, // normalize rank to 0-1ish
+          score: typeof row.rank === "number" ? row.rank / 10 : 0.5,
         }));
       }
     }
@@ -64,9 +64,9 @@ export async function keywordSearch(
   // 2. Regex fallback (no tsvector column)
   const keywords = query.split(/\s+/).filter((w) => w.length > 2).join(" | ");
   const rows = await sql(
-    `SELECT id, document_id, content, chunk_index, metadata, 0.5 AS rank
+    `SELECT id, "documentId", content, "chunkIndex", metadata, 0.5 AS rank
      FROM sales_agent."DocumentChunk"
-     WHERE organization_id = $1
+     WHERE "organizationId" = $1
        AND content ~* $2
      LIMIT $3`,
     organizationId,
@@ -76,9 +76,9 @@ export async function keywordSearch(
 
   return (rows as Array<Record<string, unknown>>).map((row) => ({
     id: row.id as string,
-    documentId: row.document_id as string,
+    documentId: row.documentId as string,
     content: row.content as string,
-    chunkIndex: row.chunk_index as number,
+    chunkIndex: row.chunkIndex as number,
     metadata: row.metadata as Record<string, unknown>,
     score: 0.5,
   }));
