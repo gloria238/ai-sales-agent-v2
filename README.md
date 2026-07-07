@@ -218,7 +218,8 @@ npx vercel --prod --cwd apps/web     # Web → Vercel
 | `pnpm seed-members <slug>` | RBAC 测试账号 |
 | `pnpm seed-demo` | Acme Corp Demo 组织 |
 | `pnpm seed-chinese-demo` | 启云科技中文 Demo |
-| `pnpm seed-kb-full` | 生成 12 份三层知识库文档 |
+| `pnpm seed-kb-full` | 生成 11 份三层知识库文档 (磁盘) |
+| `pnpm seed-kb-to-db <slug>` | 上传 KB 文档到指定组织 (解析→分块→embed→入库) |
 | `pnpm clean-org <slug>` | FK-safe 组织清理 |
 
 ---

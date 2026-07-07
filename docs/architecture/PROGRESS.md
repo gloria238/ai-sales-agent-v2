@@ -639,22 +639,52 @@ apps/web/package.json                             — socket.io, socket.io-clien
 4. **Upstash Redis free tier** — 500K daily limit. Upgrade when scaling.
 5. **Product analytics (PostHog)** — Planned for Phase 22.
 
-### Resolved from Previous TODOs
+## Phase 21 Extras (2026-07-07) — KB Expansion + Eval + QA
 
+### KB 文档大幅扩充
+- 11 份文档重写为密集中文 QA/表格/案例格式, ~16KB 精选内容
+- 3 层架构 (核心层/销售参考层/运营支撑层) 在 KB 页面文件树可视化展示
+- `seed-kb-to-db.ts`: 直接将 KB 文档解析→分块→embed→写入 PostgreSQL
+  - 直接 fetch SiliconFlow API (绕开 monorepo workspace 解析问题)
+  - 有 EMBEDDING_API_KEY → 写向量, 没有 → keyword search 兜底
+  - 0-chunk 空壳自动删除重建
+
+### RAG Eval 真实化
+- 中文字符 bigram 匹配替代英文分词, 解决中文评测全零问题
+- `scripts/test-kb-eval.ts`: 独立评测脚本, 104 KB chunks 对 15 题
+- 基准分 Precision@5=0.617, 15/15 全命中
+- Landing page 数字同步: "0.62 Precision@5 · 104 chunks · 15 题全命中"
+
+### Embedding 升级
+- SiliconFlow Qwen/Qwen3-Embedding-4B, Matryoshka 1536 维
+- `embeddings.ts` 支持 `dimensions` 参数 (OpenAI 兼容)
+- Vercel 部署: embedding 不可用→ keyword search 降级, 不 500
+
+### Bug Fixes (今日)
+- **keyword-search.ts snake_case→camelCase** (Vercel `column "document_id" does not exist`)
+- **kb/ask 500**: `embedder.embed()` 加 try/catch, embedding 失败静默降级 keyword
+- **Email/Chat 通道隔离**: inbox 消息按 `channel` 字段过滤, 两边不再互通
+- **Vercel WebSocket 降级**: use-socket 自动检测 vercel.app→只 polling+不重连, 消除 WS 报错
+- **Portal 中文化**: 导航/标题/资源中心全中文
+- **Landing page CTA**: /docs 链接修复, hero video 上线, 按钮 token 统一
+
+### Docs Reorganization
+- 根目录 md 文件迁入 docs/ 子目录 (analysis/architecture/guides/reference)
+- 根目录仅保留 CLAUDE.md + README.md
+
+### Resolved from Previous TODOs
 | Issue | Resolution |
 |-------|------------|
-| ~~Reranker dead code~~ | hybrid-retriever.ts unified pipeline — Reranker called in both kb/ask and ai-draft |
-| ~~KB API no DELETE/PATCH~~ | Single doc GET/PATCH/DELETE + reindex endpoint |
-| ~~RAG Eval mock retriever~~ | retriever-adapter.ts connects real PgVector; 30-case SalesAgent dataset |
-| ~~Retriever JS cosine on all chunks~~ | retriever.ts now prefers storage.search() native pgvector <=> |
-| ~~Duplicated SQL in kb/ask + ai-draft~~ | Both routes now call hybridRetrieve() — 120+ lines deduplicated |
-| ~~No query rewriting/routing~~ | query-rewriter.ts + query-router.ts + LLM implementations |
-| ~~No low-confidence fallback~~ | Confidence gate in hybrid-retriever with expanded secondary search |
-| ~~QA semantic cache~~ | RedisSemanticCache — exact + semantic match, 60%+ FAQ hit rate (Phase 21) |
-| ~~Incremental indexing~~ | SHA-256 content hash dedup + doc update detection + cache invalidation (Phase 21) |
-| ~~WebSocket real-time chat~~ | Socket.IO server + ChatWindow component + REST fallback (Phase 21) |
-| ~~Portal disabled chat input~~ | Portal conversations use real-time ChatWindow with WebSocket (Phase 21) |
-| ~~Stripe billing~~ | Removed from scope — internal enterprise OS, not SaaS |
+| ~~Reranker dead code~~ | hybrid-retriever.ts unified pipeline |
+| ~~KB API CRUD~~ | GET/PATCH/DELETE + reindex |
+| ~~RAG Eval mock~~ | retriever-adapter + SalesAgent dataset + bigram matching |
+| ~~No query rewriting/routing~~ | LLMQueryRewriter + LLMQueryRouter |
+| ~~No low-confidence fallback~~ | Confidence Gate in hybrid-retriever |
+| ~~QA semantic cache~~ | RedisSemanticCache (Phase 21) |
+| ~~Incremental indexing~~ | SHA-256 content hash (Phase 21) |
+| ~~WebSocket chat~~ | Socket.IO + ChatWindow + REST fallback (Phase 21) |
+| ~~keyword-search snake_case~~ | Fixed → camelCase (Phase 21 Extra) |
+| ~~Stripe billing~~ | Removed — internal OS |
 | ~~API Key Bearer auth~~ | ApiKey Prisma model with SHA-256 hashing, proper indexes |
 | ~~Auth rate limiting~~ | Defense-in-depth: middleware + per-route rate limits |
 | ~~CSP unsafe-eval~~ | Removed from CSP |

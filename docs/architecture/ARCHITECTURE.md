@@ -3,7 +3,7 @@
 > 企业销售团队 AI 中枢操作系统 — 自研 RAG 管线 + WebSocket 实时聊天 + AI Agent 编排引擎
 > 多租户 AI Agent 平台，覆盖 Web、Worker、Mobile 三大应用端和七层共享基础设施。
 > ~32,000 行 | 440+ 文件 | 50+ API Routes | 16 数据模型
-> 最新：Phase 21 — RAG 语义缓存 + 增量索引 + WebSocket 实时聊天 + 知识库三层架构
+> 最新：Phase 21 — RAG 语义缓存 + 增量索引 + WebSocket 实时聊天 + KB 三层架构 + 评测基准 (Precision@5=0.62)
 
 ---
 

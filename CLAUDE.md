@@ -369,6 +369,7 @@ packages/rag-core/eval/knowledge-base/ — 6 启云科技 KB docs (product/prici
 23. **Chinese curly quotes break esbuild/tsx**: Chinese punctuation `""` (U+201C/U+201D) in `.ts` strings are misinterpreted as JS string delimiters by esbuild on Windows. Use corner brackets `「」` (U+300C/U+300D) for quoted Chinese text in source files.
 24. **connection_limit=1 forbids parallel writes**: `Promise.all([create1, create2, ...])` with `connection_limit=1` causes timeout P2024. Seeds must write sequentially: `for (const d of data) { await prisma.create(...) }`.
 25. **Leads → Organizations cascade**: Prisma marks `onDelete: Cascade` on Lead→Organization, but not on all relations. FK-safe cleanup must delete in dependency order: AICallMetric→Message→Conversation→LeadActivity→CampaignRun→Campaign→DocumentChunk→Document→Lead→ApiKey→FeatureFlag→AuditLog→Script→Agent→Membership→Organization.
+26. **keyword-search.ts uses snake_case in SQL**: The `keywordSearch()` function had raw SQL with `document_id`, `chunk_index`, `organization_id` — but Prisma columns without `@map` use camelCase (`"documentId"`, `"chunkIndex"`, `"organizationId"`). Vercel deployment hit `column "document_id" does not exist` (error 42703). Fixed in Phase 21. Always use quoted camelCase in raw SQL against Prisma-managed tables.
 
 ### Railway deployment (worker)
 
