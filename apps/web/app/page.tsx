@@ -254,8 +254,8 @@ export default function LandingPage() {
               ))}
             </ul>
             <div className="flex items-center gap-4">
-              <Link href="/docs" className="inline-flex items-center rounded-full bg-lp-primary text-white px-6 py-3 text-base font-medium hover:bg-green-700 transition-colors">
-                查看技术文档
+              <Link href="/register" className="inline-flex items-center rounded-full bg-lp-primary text-white px-6 py-3 text-base font-medium hover:bg-green-700 transition-colors">
+                免费开始使用
               </Link>
               <Link href="/api/demo-login" className="liquid-glass inline-flex items-center rounded-full px-6 py-3 text-base font-normal text-lp-foreground hover:bg-white/5 transition-colors">
                 Live Demo →
@@ -346,8 +346,8 @@ export default function LandingPage() {
                 <Link href="/api/demo-login" className="inline-flex items-center rounded-full bg-lp-primary text-white px-6 py-3 text-base font-medium hover:bg-green-700 transition-colors">
                   进入 Demo <ArrowRight className="size-4 ml-1.5" />
                 </Link>
-                <Link href="/docs" className="liquid-glass inline-flex items-center rounded-full px-6 py-3 text-base font-normal text-lp-foreground hover:bg-white/5 transition-colors">
-                  查看文档
+                <Link href="/register" className="liquid-glass inline-flex items-center rounded-full px-6 py-3 text-base font-normal text-lp-foreground hover:bg-white/5 transition-colors">
+                  注册账号
                 </Link>
               </div>
             </div>

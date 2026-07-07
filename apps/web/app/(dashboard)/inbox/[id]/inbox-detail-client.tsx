@@ -241,7 +241,8 @@ export function InboxDetailClient({ conversation, conversations, orgSlug }: Prop
           </div>
         </div>
 
-        {/* Messages */}
+        {/* Messages — hidden in chat mode (ChatWindow has its own) */}
+        {!chatMode && (
         <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
           {messages.map((msg) => (
             <div key={msg.id} className={cn("flex items-start gap-3", msg.direction === "outbound" ? "flex-row-reverse" : "")}>
@@ -308,6 +309,7 @@ export function InboxDetailClient({ conversation, conversations, orgSlug }: Prop
 
           <div ref={messagesEndRef} />
         </div>
+        )}
 
         {/* Compose / Chat — depends on mode */}
         {chatMode ? (

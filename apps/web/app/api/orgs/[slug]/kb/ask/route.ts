@@ -21,8 +21,24 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
   }
 
   try {
-    // ═══ Unified Hybrid Retrieval (vector + keyword → RRF → Reranker) ═══
+    // ═══ Semantic Cache Check ════════════════════════════════════════
     const embedder = createEmbeddingProvider();
+    const queryEmbedding = await embedder.embed(question);
+    try {
+      const { getSemanticCache } = await import("@salesagent/rag-core");
+      const cache = getSemanticCache();
+      const cacheResult = await cache.get(question, queryEmbedding, membership.organizationId);
+      if (cacheResult.hit && cacheResult.entry) {
+        return NextResponse.json({
+          answer: cacheResult.entry.answer,
+          citations: [],
+          cached: true,
+          cacheMatchType: cacheResult.matchType,
+        });
+      }
+    } catch { /* cache disabled or Redis unavailable — proceed with full pipeline */ }
+
+    // ═══ Unified Hybrid Retrieval (vector + keyword → RRF → Reranker) ═══
     const sqlExecutor: SqlExecutor = async (query: string, ...params: unknown[]) =>
       prisma.$queryRawUnsafe(query, ...params);
 
@@ -89,6 +105,21 @@ Answer the question based on the context above. Include source citations like [S
       chunkIndex: r.chunk.index,
       score: Math.round(r.score * 100) / 100,
     }));
+
+    // Write to semantic cache (non-blocking)
+    try {
+      const { getSemanticCache } = await import("@salesagent/rag-core");
+      const cache = getSemanticCache();
+      await cache.set({
+        query: question,
+        queryEmbedding,
+        answer: aiAnswer.answer,
+        chunkIds: results.map((r) => r.chunk.id),
+        scores: results.map((r) => r.score),
+        createdAt: Date.now(),
+        orgId: membership.organizationId,
+      });
+    } catch { /* cache write failure should not block response */ }
 
     return NextResponse.json({
       answer: aiAnswer.answer,

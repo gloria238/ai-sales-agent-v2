@@ -23,5 +23,15 @@ export default async function KbPage() {
     },
   });
 
-  return <KbClient orgSlug={session.orgSlug} initialDocs={docs.map(d => ({ ...d, createdAt: d.createdAt.toISOString() }))} />;
+  const serialized = docs.map((d) => ({
+    id: d.id,
+    name: d.name,
+    type: d.type,
+    status: d.status,
+    chunkCount: d.chunkCount,
+    metadata: d.metadata,
+    createdAt: d.createdAt.toISOString(),
+  }));
+
+  return <KbClient orgSlug={session.orgSlug} initialDocs={serialized} />;
 }

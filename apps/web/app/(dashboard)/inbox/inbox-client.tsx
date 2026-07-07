@@ -10,9 +10,10 @@ import { Avatar } from "@/components/identity/avatar";
 import { relativeTime, presenceFromDate } from "@/lib/time";
 import {
   MessageSquare, Mail, Send, Sparkles, RefreshCw, ChevronLeft,
-  Building2, Clock, User, ExternalLink, Star,
+  Building2, Clock, User, ExternalLink, Star, MessageCircle,
 } from "lucide-react";
 import { toast } from "sonner";
+import { ChatWindow } from "@/components/chat/chat-window";
 
 type Message = {
   id: string; direction: string; content: string; channel: string;
@@ -155,6 +156,7 @@ export function InboxClient({ conversations, orgSlug, selectedId: initialSelecte
   const [aiTyping, setAiTyping] = useState(false);
   const [sending, setSending] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const [chatMode, setChatMode] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const filtered = conversations.filter((c: any) => {
@@ -341,9 +343,34 @@ export function InboxClient({ conversations, orgSlug, selectedId: initialSelecte
                 <ChevronLeft className="size-4 mr-0.5" /> Inbox
               </Button>
             </div>
-            <DetailHeader lead={selectedConv.lead} agent={selectedConv.agent} conversation={selectedConv} />
+            <div className="flex items-center justify-between">
+              <DetailHeader lead={selectedConv.lead} agent={selectedConv.agent} conversation={selectedConv} />
+              <div className="flex items-center gap-2 pr-3 shrink-0">
+                <div className="flex items-center rounded-lg border border-border bg-bg-subtle p-0.5">
+                  <button onClick={() => setChatMode(false)} className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium transition-all ${!chatMode ? "bg-bg-card text-text shadow-sm" : "text-text-muted hover:text-text"}`}>
+                    <Mail className="size-3" /> 邮件
+                  </button>
+                  <button onClick={() => setChatMode(true)} className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium transition-all ${chatMode ? "bg-bg-card text-accent shadow-sm" : "text-text-muted hover:text-text"}`}>
+                    <MessageCircle className="size-3" /> 聊天
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
 
+          {/* Chat mode: ChatWindow replaces messages + compose */}
+          {chatMode ? (
+            <div className="flex-1 min-h-0">
+              <ChatWindow
+                conversationId={selectedId!}
+                userRole="agent"
+                orgSlug={orgSlug}
+                initialMessages={messages.map((m) => ({ id: m.id, direction: m.direction as "inbound" | "outbound", content: m.content, createdAt: m.createdAt }))}
+                otherPartyName={selectedConv?.lead?.name || "客户"}
+              />
+            </div>
+          ) : (
+          <>
           {/* Messages */}
           <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
             {msgsLoading ? (
@@ -432,6 +459,8 @@ export function InboxClient({ conversations, orgSlug, selectedId: initialSelecte
               </div>
             </div>
           </div>
+          </>
+          )}
         </div>
       ) : (
         <div className="hidden md:flex flex-1 items-center justify-center bg-bg h-full">
