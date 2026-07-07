@@ -126,8 +126,13 @@ export default function LandingPage() {
 
       {/* ═══════════ HERO ════════════ */}
       <section className="relative min-h-screen flex flex-col overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-lp-background via-lp-background to-lp-background/60" />
-        <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse at 50% 0%, rgba(22,101,52,0.12) 0%, transparent 60%)" }} />
+        {/* Background video */}
+        <video className="absolute inset-0 w-full h-full object-cover opacity-40" autoPlay loop muted playsInline>
+          <source src="/videos/hero.mp4" type="video/mp4" />
+        </video>
+        {/* Gradient overlays for text readability */}
+        <div className="absolute inset-0 bg-gradient-to-b from-lp-background/70 via-lp-background/40 to-lp-background" />
+        <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse at 50% 0%, rgba(22,101,52,0.2) 0%, transparent 60%)" }} />
 
         <header className="relative z-20 flex justify-center pt-6 px-4">
           <nav className="liquid-glass rounded-3xl w-full max-w-[850px] flex items-center justify-between px-5 py-3">
