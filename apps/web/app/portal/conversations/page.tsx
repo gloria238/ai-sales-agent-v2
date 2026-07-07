@@ -49,8 +49,8 @@ export default function PortalConversationsPage() {
   return (
     <div className="max-w-2xl mx-auto px-4 py-8 animate-slide-up">
       <div className="mb-6">
-        <h1 className="text-xl font-bold tracking-tight text-text">My Conversations</h1>
-        <p className="text-sm text-text-secondary mt-1">Your messages with our AI assistants</p>
+        <h1 className="text-xl font-bold tracking-tight text-text">我的对话</h1>
+        <p className="text-sm text-text-secondary mt-1">与 AI 助理的消息记录</p>
       </div>
 
       {conversations.length === 0 ? (
@@ -93,7 +93,7 @@ export default function PortalConversationsPage() {
 
       {/* Future: Resource Center section */}
       <div className="mt-8 pt-6 border-t border-border">
-        <h2 className="text-sm font-semibold text-text mb-3">Resources</h2>
+        <h2 className="text-sm font-semibold text-text mb-3">资源中心</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {[
             { label: "产品手册", desc: "查看最新产品文档和方案介绍" },

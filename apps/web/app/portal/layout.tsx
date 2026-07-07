@@ -19,14 +19,14 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
             <span className="size-7 rounded-lg bg-accent flex items-center justify-center text-white font-bold text-xs shadow-sm shadow-accent/20">
               S
             </span>
-            <span className="text-sm tracking-tight">Customer Portal</span>
+            <span className="text-sm tracking-tight">客户门户</span>
           </a>
           <nav className="flex items-center gap-4 text-sm">
             <a href="/portal/conversations" className="text-text-secondary hover:text-text transition-colors">
-              Messages
+              消息
             </a>
             <a href="/portal/conversations" className="text-text-muted hover:text-text transition-colors">
-              Resources
+              资源
             </a>
           </nav>
         </div>
