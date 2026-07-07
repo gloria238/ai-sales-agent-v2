@@ -249,7 +249,7 @@ apps/web/components/ui/error-boundary.tsx — Reusable error boundary with retry
 apps/web/app/error.tsx              — Root-level error boundary
 apps/web/app/global-error.tsx       — Global error boundary (root layout errors)
 apps/web/app/(dashboard)/error.tsx  — Dashboard group error boundary (11 routes)
-SECURITY.md                          — Phase 15 audit report (165 findings, 32 fixed) [gitignored]
+docs/architecture/SECURITY.md        — Phase 15 audit report (165 findings, 32 fixed) [gitignored]
 apps/mobile/app/_layout.tsx           — Root layout + theme + DemoModeProvider + playground/system routes
 apps/mobile/app/(tabs)/_layout.tsx    — 3 tabs: Dashboard / Inbox / Knowledge Base
 apps/mobile/app/(tabs)/index.tsx      — Dashboard: 4 KPI cards + recent activity feed + Demo/Live toggle
