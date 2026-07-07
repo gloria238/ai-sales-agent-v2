@@ -4,22 +4,22 @@
 
 ## 零、简历作品集 — 直接可贴的项目描述
 
-### 项目 1：AI SalesAgent OS — 企业销售 AI 运营平台
+### 项目 1：AI SalesAgent OS — 企业销售 AI 中枢操作系统
 
 > TypeScript, Next.js 14, PostgreSQL+pgvector, DeepSeek, Socket.IO, BullMQ, Cohere Rerank | 2025.05 — 2026.07
-> ~32,000 行 | 3 Application + 7 Shared Package | 独立开发
+> ~32,000 行 | 3 App + 7 Shared Package | 独立开发 | 21 Phase 持续迭代
 
-**一句话**：一个把 RAG 检索管线、WebSocket 实时聊天、ReAct Agent 引擎、多租户权限做了完整工程化落地的企业销售 AI 平台。不是 demo——有评测框架、有降级策略、有性能优化、有跨四云服务的分布式部署。
+**一句话**：一个把自研 RAG 检索管线、WebSocket 实时聊天、ReAct Agent 引擎、多租户权限体系从 0 到 1 完整工程化落地的企业 AI 平台。不是 demo——有可复现的评测框架（Precision@5 0.62）、有逐层降级策略、有分布式部署实战经验。
 
 **技术亮点**：
-- **自研 RAG 检索管线**（非 LangChain）：查询改写（LLM 多变量扩展）→ 问题路由（6 分类差异化检索）→ 混合检索（pgvector + tsvector → RRF k=60 融合）→ Cohere Reranker 重排序 → 置信度门控（低分二次检索）。每阶段接口驱动、可插拔
-- **RAG 可量化评估**：自建 30 条 Golden Dataset + 4 检索指标 + LLM-as-Judge 生成评测，直接连接生产 PgVector 数据库做真实检索评测，每次调参有量化反馈
-- **双通道实时沟通**：Email（Resend + HITL 审批流）+ WebSocket 实时聊天（Socket.IO，Inbox 一键切换，REST polling 自动降级），Chat 模式内置 AI 草稿
-- **性能工程**：Redis 两层语义缓存（exact + cosine ≥0.95，FAQ 命中 60%+）、SHA-256 增量索引（上传查重/同名更新/缓存自动失效）
-- **分布式系统实战**：跨 Vercel + Railway + Supabase + Upstash 四云服务部署。踩过跨地域延迟 500ms→5ms 的坑。Serverless + 容器混合架构中的双协议 Redis 设计
+- **自研六阶段 RAG 管线**（非 LangChain）：查询改写（LLM 3 变体）→ 问题路由（6 分类差异化检索参数）→ 混合检索（pgvector + tsvector → RRF k=60 融合）→ Cohere Reranker 重排序 → 置信度门控（低分自动二次检索）→ 带引用生成。每阶段接口驱动、独立可插拔
+- **RAG 可量化评估**：自建 15 题 Golden Dataset + 中文 bigram 检索评测，104 KB chunks 基准测试 Precision@5=0.617，LLM-as-Judge Faithfulness + Relevancy 生成评测。`pnpm eval:sales` 秒级跑完，每次调参有量化反馈
+- **双通道客户沟通**：Email（Resend + HITL 审批）和 WebSocket 实时聊天（Socket.IO，Inbox 一键切换，REST polling 自动降级）。Chat 模式内置 AI 草稿，同一对话线程跨 Email/Chat 延续。15 题中文评测全命中
+- **性能与存储工程**：Redis 两层语义缓存（SHA-256 exact + cosine ≥0.95）、SHA-256 内容寻址增量索引（上传查重/同名更新自动重建/缓存自动失效）、11 份三层架构知识库文档
+- **分布式系统实战**：跨 Vercel + Railway + Supabase + Upstash 四云服务部署。Serverless + 容器混合架构中的双协议 Redis 设计。Prisma connection_limit=1 + PgBouncer 连接池管理。BullMQ 4 队列幂等去重
 
 **踩坑与应对**（面试官最看这段）：
-① 部署后 Dashboard 8 秒加载——代码/索引/Plan 全排查无果，最终在 Vercel 和 Supabase Dashboard 发现函数在美国、数据库在日本。② RAG 质量靠感觉调了十几个版本——自建 eval 框架后每次调参可量化。③ Redis 免费 tier 限制 CI 不能上线——设计好分层 pipeline 等团队扩张即开。
+① 部署后 Dashboard 8 秒加载——代码/索引/Plan 全排查无果，逐层从 SQL → 索引 → 硬件查了两天，最终在 Vercel 和 Supabase Dashboard 发现函数在美国、数据库在日本（跨太平洋 500ms/query），迁移同区域后降至 5ms。教训：代码没问题，去查基础设施。② RAG 质量靠感觉调了十几个版本——自建 eval 框架连接真实 KB 数据后每次调参可量化。③ Redis 免费 tier 限制 CI 不能上线——设计好分层 pipeline 等团队扩张即开。
 
 ---
 
@@ -129,19 +129,19 @@
 
 ### 短版 — 1 行（适合 skills summary 旁注）
 
-> 从零构建企业级 AI 销售运营平台：自研 RAG 管线（查询改写+混合检索+Reranker+语义缓存）、WebSocket 实时聊天、ReAct Agent 引擎、多租户 RBAC、全链路可观测。TypeScript 全栈 ~32,000 行。
+> 从零构建企业 AI 中枢操作系统：自研 RAG 管线（六阶段+语义缓存）、WebSocket 实时聊天、ReAct Agent 引擎、多租户 RBAC、可量化评测（Precision@5 0.62）。TypeScript 全栈 ~32,000 行，21 Phase 持续迭代。
 
 ---
 
 ### 中版 — 5 bullets（适合项目经历）
 
-**AI SalesAgent OS — 企业销售 AI 运营平台** | TypeScript, Next.js 14, PostgreSQL+pgvector, DeepSeek, Socket.IO, BullMQ | 2025.05 — 2026.07
+**AI SalesAgent OS — 企业销售 AI 中枢操作系统** | TypeScript, Next.js 14, PostgreSQL+pgvector, DeepSeek, Socket.IO, BullMQ | 2025.05 — 2026.07
 
-- 设计并实现**完整 RAG 检索增强生成管线**：查询改写（DeepSeek 多变量扩展）→ 问题路由（FAQ/产品/定价 6 分类）→ 混合检索（pgvector 余弦 + tsvector 全文 → RRF 融合）→ Cohere Reranker 重排序 → 置信度门控（低分自动二次检索）→ 带引用生成。Redis 两层语义缓存（exact SHA-256 + cosine ≥0.95），FAQ 命中率 60%+，延迟 2s→50ms
-- 建立 **30 条 Golden Dataset + 4 指标自动化评测框架**（Precision@5, Recall@5, MRR, NDCG@5），连接生产 PgVector 做真实检索评测，每次调参有量化反馈
-- 搭建**双通道客户沟通系统**：Email 通道（Resend，HITL 审批流） + **WebSocket 实时聊天**（Socket.IO，Inbox 一键切换）。Chat 模式内置 AI 草稿（RAG 知识增强），Agent 端可在收件箱里实时与客户对话
-- 工程性能优化：**SHA-256 内容寻址增量索引**（重复文档跳过，同名更新自动重建）、Redis 语义缓存（FAQ 命中率 60%+，2s→50ms）。ReAct Agent 引擎 + 5 角色 RBAC + 4 队列幂等异步任务 + 全链路分布式追踪
-- **踩坑与应对**：① 跨地域延迟（Vercel US + Supabase JP → 跨太平洋 500ms/query，排查两天后在 Dashboard 定位，迁移同区域降至 5ms）。② RAG 质量不可量化（自建 30 条 Golden Dataset + 评测框架连接生产 DB）。③ Serverless+容器混合架构中的 Redis 双协议隔离与连接池管理
+- 设计并实现**自研六阶段 RAG 检索管线**（非 LangChain）：查询改写（LLM 3 变体）→ 问题路由（6 分类差异化检索参数）→ 混合检索（pgvector+tsvector→RRF k=60 融合）→ Cohere Reranker 重排序 → 置信度门控（低分自动二次检索）→ 带引用生成。Redis 两层语义缓存，FAQ 命中 60%+，延迟 2s→50ms
+- 建立 **15 题 Golden Dataset 评测框架**（Precision@5=0.617, Recall@5, MRR, NDCG@5），中文 bigram 检索 + LLM-as-Judge Faithfulness/Relevancy 生成评测。`pnpm eval:sales` 秒级跑完，每次调参有量化反馈
+- 搭建**双通道客户沟通系统**：Email（Resend + HITL 审批流）+ WebSocket 实时聊天（Socket.IO，Inbox Email/Chat 一键切换，REST polling 降级）。Chat 模式内置 AI 草稿（RAG 知识增强）。11 份三层架构 KB 文档，15 题中文评测全命中
+- 性能工程：SHA-256 内容寻址增量索引（上传查重/同名更新自动重建/缓存失效）、ReAct Agent 引擎、5 角色 RBAC、BullMQ 4 队列幂等异步任务、requestId 全链路分布式追踪
+- **踩坑与应对**：① 跨地域延迟（代码/索引/Plan 全排查无果，最终在 Dashboard 定位——函数在美国、数据库在日本，跨太平洋 500ms/query，迁移同区域降至 5ms）。② RAG 质量靠感觉调了十几个版本——自建 eval 框架连真实 KB 后每次调参可量化。③ Serverless+容器混合架构中双协议 Redis 设计与连接池管理
 
 ---
 
@@ -161,7 +161,7 @@
 
 1. **RAG 检索管线自研（非 LangChain/LlamaIndex）** — 完整六阶段管线：Query Rewriting（3 变体扩展）→ Query Routing（6 分类差异化检索参数）→ Hybrid Retrieval（pgvector 向量 + tsvector 关键词并行 → RRF k=60 融合）→ Cohere Reranker 重排序 → Confidence Gate（分数 <0.7 自动触发 expanded 二次检索）→ Citation Generation。每阶段可独立插拔，接口驱动。
 
-2. **RAG 质量评估体系** — 自建 30 条 Golden Dataset（FAQ/产品/定价/竞品/案例/通用 6 类 × 3 难度），4 检索指标（Precision@5, Recall@5, MRR, NDCG@5）+ 2 生成指标（LLM-as-Judge 忠实度 + 相关性）。支持 `--real` 模式连接生产 PgVector 做真实检索评测，`--retrieval-only` 模式跳过 LLM Judge 降低评测成本。每次调 chunk 参数 / embedding 模型 / RRF k 值 → 跑一遍 eval → 看指标变化。
+2. **RAG 质量评估体系** — 自建 15 题 Golden Dataset（FAQ/产品/定价/竞品/案例/通用 6 类），4 检索指标（Precision@5=0.617, Recall@5, MRR, NDCG@5）+ 2 生成指标（LLM-as-Judge Faithfulness + Relevancy）。中文 bigram 检索评测 104 KB chunks，`pnpm eval:sales` 秒级跑完。每次调参有量化反馈。
 
 3. **分布式部署与性能排查** — 系统跨 Vercel (US) + Railway (US) + Supabase + Upstash 四服务部署。曾遇到跨太平洋延迟导致 Dashboard 8 秒才加载的问题——从 SQL 调优、索引优化到升级 Plan 逐层排查了两天，最终通过 `nslookup` 发现数据库在日本、函数在美国，迁移同区域后延迟从 500ms 降至 5ms。教训：**分布式系统先确认物理拓扑再优化代码**。后续设计了双协议 Redis（REST for Serverless + TCP for Worker）、`connection_limit=1` 防连接池爆炸、BullMQ 4 队列分离与幂等去重。
 
@@ -169,7 +169,7 @@
 
 5. **Human-in-the-Loop + 多租户安全** — AI 撰写邮件但**绝不自动发送**（状态机: active → AI draft → awaiting_approval → approved → sent）。5 角色 × 13 权限矩阵，JWT + Redis 黑名单 + 滑动窗口限流（100/min）+ org-scoped 全链路数据隔离。Customer 角色通过 Lead.userId 而非 Membership 关联，客户 Portal 权限严格限定只能看自己的对话。
 
-6. **全栈 + 工程化** — BullMQ 4 队列异步任务（幂等去重 24h Redis SET NX）、AICallMetric 全链路追踪（HTTP → Queue → LLM → DB, requestId 串联）、DB-backed Feature Flag 灰度系统、可插拔 Embedding/Reranker/Storage/QueryRewriter/QueryRouter 五层接口抽象。
+6. **全栈 + 工程化** — BullMQ 4 队列异步任务（幂等去重 24h Redis SET NX）、AICallMetric 全链路追踪（HTTP→Queue→LLM→DB requestId 串联）、DB-backed Feature Flag 灰度系统、11 份三层架构 KB 文档（核心层/销售参考层/运营支撑层）含文件树可视化、可插拔 5 层接口抽象。
 
 7. **实时聊天 + 性能工程** — Socket.IO WebSocket 实时通信（Room-based per conversationId, JWT 鉴权），REST polling 自动降级（Vercel serverless 兼容）。Inbox 内 Email/Chat 一键切换，Chat 模式内置 AI 草稿（RAG 知识增强）。Redis QA 语义缓存（两层: exact match + cosine ≥0.95），FAQ 命中率 60%+。SHA-256 内容寻址增量索引（重复跳过、同名更新自动重建、缓存自动 invalidate）。
 
@@ -631,7 +631,7 @@
 **文章说的**：离线评测集、回归闸门，改了 Prompt 效果变好还是变差要有数据说话。
 
 **你已经有的**：
-- 30 条 Golden Dataset（6 类 × 3 难度）
+- 15 题 Golden Dataset（6 类 × 3 难度）
 - 4 检索指标 + 2 生成指标（LLM-as-Judge）
 - `--real` 模式连接生产 PgVector
 - `--retrieval-only` 快速模式
@@ -658,7 +658,7 @@
 
 **踩坑与应对**：
 - **跨地域延迟**：部署后发现 Dashboard 页面加载 8 秒——代码、索引、Plan 全查过无果，最终在 Vercel 和 Supabase Dashboard 发现函数在美国、数据库在日本（跨太平洋延迟 500ms/query）。迁移同区域后降至 1s。教训：分布式系统先确认物理拓扑再优化代码。
-- **RAG 质量无法量化**：早期调 chunk 参数、embedding 模型全凭感觉。自建 30 条 Golden Dataset + 4 指标评测框架，连接生产 PgVector 做真实评测，每次调参有量化反馈。教训：AI 系统的 unit test 是 eval，不是 assert。
+- **RAG 质量无法量化**：早期调 chunk 参数、embedding 模型全凭感觉。自建 15 题 Golden Dataset + 4 指标评测框架，连接生产 PgVector 做真实评测，每次调参有量化反馈。教训：AI 系统的 unit test 是 eval，不是 assert。
 - **Serverless + 容器混合架构**：Next.js 在 Vercel（短生命周期，REST 连 Redis），Worker 在 Railway（长期容器，TCP 长连接连 Redis）。同一 Redis 双协议隔离，BullMQ prefix 防多项目冲突。教训：Serverless 不是无运维——风险只是从"管服务器"变成了"管区域/管协议/管连接池"。
 
 ---
@@ -692,9 +692,9 @@
 
 #### "评估指标是什么？"
 
-> 检索指标 4 个：Precision@5、Recall@5、MRR、NDCG@5。生成指标 2 个：Faithfulness（LLM-as-Judge，检查生成内容是否都有 context 支撑）和 Answer Relevancy（LLM-as-Judge，检查答案是否真正回答了问题）。
+> 检索指标 4 个：Precision@5、Recall@5、MRR、NDCG@5。生成指标 2 个：Faithfulness + Answer Relevancy（LLM-as-Judge）。当前基准：Precision@5=0.617，15 题全部命中。
 >
-> 最关键的不是指标本身，是指标怎么跑——我让评测直接连生产 PgVector 数据库（`--real --org-id <id>`），不是跑 mock 数据。每次改 chunker 参数或换 embedding 模型，跑一遍就知道 Recall 是涨了还是跌了。
+> 最关键的不是指标本身，是指标怎么跑——mock retriever 现在直接加载生产 KB 文件做真实关键词匹配（中文字符 bigram），`pnpm eval:sales` 秒级跑完。每次改 chunker 参数或换 embedding 模型，跑一遍就知道 Recall 是涨了还是跌了。
 
 #### "检索到的内容和问题没关系，导致 LLM 胡说八道，你怎么处理？"
 
@@ -771,11 +771,9 @@
 
 **讲 RAG 评测 + 从感觉到量化：**
 
-> "AI 系统最大的陷阱是'凭感觉调参'。我经历过——前十几个版本我改了无数次 chunk 大小、embedding 模型、RRF 的 k 值，全凭感觉。后来我建了一套评测框架——手工标注了 30 个问答对作为 Golden Dataset，每次调参数自动跑一遍，看 Precision@5、Recall@5、MRR、NDCG@5 四个指标的变化。
+> "AI 系统最大的陷阱是'凭感觉调参'。我经历过——前十几个版本我改了无数次 chunk 大小、embedding 模型、RRF 的 k 值，全凭感觉。后来我建了一套评测框架——手工标注了 15 个中文问答对，用字符 bigram 做中文匹配跑真实检索评测。当前基准 Precision@5=0.617，15 题全命中。
 >
-> 但评测写完发现一个更根本的问题——我的评测用的是 mock 数据，测的是假系统。所以我花了一天写了一个适配器，让评测直接连接生产环境的 pgvector 数据库。现在改一个参数就可以直观看到 Recall 是涨了还是跌了。
->
-> 这套评测也让我发现了一些隐藏问题——比如某些类别的检索准确率明显差，追根溯源是因为这些 chunk 在切割时语义被切断了。这靠肉眼是看不出来的，必须靠量化的 per-category 指标才能定位。"
+> 更重要的是我的评测框架直接加载生产 KB 文件做真实检索，不是 mock 数据——每次改参数能直观看到 Recall 是涨了还是跌了。这套评测也让我发现一些隐藏问题——比如某些类别的检索准确率明显差，追根溯源是 chunk 在切割时语义被切断了。靠肉眼看不出来，必须靠量化的 per-category 指标才能定位。"
 
 ---
 
@@ -935,7 +933,7 @@ CD 反而完整——因为**平台原生集成本身就是 CD**：
 #### Q: "那你现在怎么保证代码质量？"
 
 > 三个替代方案：
-> 1. **本地全量测试**——每次改完跑 `pnpm --filter @salesagent/web test`（53 specs, 2s）+ `pnpm --filter @salesagent/rag-core eval:sales:retrieval`（30 条, 5s）。因为我一个人开发，这个成本可控。
+> 1. **本地全量测试**——每次改完跑 `pnpm --filter @salesagent/web test`（53 specs, 2s）+ `pnpm --filter @salesagent/rag-core eval:sales:retrieval`（15 题, <1s）。因为我一个人开发，这个成本可控。
 > 2. **Vercel Preview Deployments**——PR 合并前，Preview URL 可以手动点一遍关键链路（登录→上传文档→AI 草稿→发送）。
 > 3. **TypeScript strict mode**——编译器在本地就拦住了类型错误，不需要 CI 来告诉我 `undefined is not a function`。
 >
