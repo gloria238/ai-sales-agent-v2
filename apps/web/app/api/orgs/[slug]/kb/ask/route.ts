@@ -110,12 +110,13 @@ Answer the question based on the context above. Include source citations like [S
     }));
 
     // Write to semantic cache (non-blocking)
-    try {
-      const { getSemanticCache } = await import("@salesagent/rag-core");
-      const cache = getSemanticCache();
-      await cache.set({
-        query: question,
-        queryEmbedding,
+    if (queryEmbedding) {
+      try {
+        const { getSemanticCache } = await import("@salesagent/rag-core");
+        const cache = getSemanticCache();
+        await cache.set({
+          query: question,
+          queryEmbedding,
         answer: aiAnswer.answer,
         chunkIds: results.map((r) => r.chunk.id),
         scores: results.map((r) => r.score),
@@ -123,6 +124,7 @@ Answer the question based on the context above. Include source citations like [S
         orgId: membership.organizationId,
       });
     } catch { /* cache write failure should not block response */ }
+    }
 
     return NextResponse.json({
       answer: aiAnswer.answer,
