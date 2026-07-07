@@ -157,6 +157,13 @@ export function InboxClient({ conversations, orgSlug, selectedId: initialSelecte
   const [sending, setSending] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [chatMode, setChatMode] = useState(false);
+
+  // Filter messages by channel: email mode = email/legacy, chat mode = chat only
+  const channelMessages = useMemo(() => {
+    if (chatMode) return messages.filter((m: any) => m.channel === "chat");
+    // Email mode: show email messages and legacy messages (no channel set)
+    return messages.filter((m: any) => !m.channel || m.channel === "email");
+  }, [messages, chatMode]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const filtered = conversations.filter((c: any) => {
@@ -365,7 +372,7 @@ export function InboxClient({ conversations, orgSlug, selectedId: initialSelecte
                 conversationId={selectedId!}
                 userRole="agent"
                 orgSlug={orgSlug}
-                initialMessages={messages.map((m) => ({ id: m.id, direction: m.direction as "inbound" | "outbound", content: m.content, createdAt: m.createdAt }))}
+                initialMessages={channelMessages.map((m) => ({ id: m.id, direction: m.direction as "inbound" | "outbound", content: m.content, createdAt: m.createdAt }))}
                 otherPartyName={selectedConv?.lead?.name || "客户"}
               />
             </div>
@@ -383,7 +390,7 @@ export function InboxClient({ conversations, orgSlug, selectedId: initialSelecte
               </div>
             ) : (
               <>
-                {messages.map((msg) => (
+                {channelMessages.map((msg) => (
                   <div key={msg.id} className={cn("flex items-start gap-3", msg.direction === "outbound" ? "flex-row-reverse" : "")}>
                     <div className={cn(
                       "size-7 rounded-full flex items-center justify-center shrink-0",
@@ -466,7 +473,7 @@ export function InboxClient({ conversations, orgSlug, selectedId: initialSelecte
         <div className="hidden md:flex flex-1 items-center justify-center bg-bg h-full">
           <div className="text-center text-text-muted">
             <MessageSquare className="size-10 mx-auto mb-3 opacity-40" />
-            <p className="text-sm font-medium">Conversation not found</p>
+            <p className="text-sm font-medium">对话不存在</p>
           </div>
         </div>
       )}

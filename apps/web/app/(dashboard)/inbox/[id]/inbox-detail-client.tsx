@@ -106,6 +106,12 @@ export function InboxDetailClient({ conversation, conversations, orgSlug }: Prop
   const [chatMode, setChatMode] = useState(false); // Toggle: email compose vs real-time chat
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // Filter messages by channel
+  const channelMessages = useMemo(() => {
+    if (chatMode) return messages.filter((m: any) => m.channel === "chat");
+    return messages.filter((m: any) => !m.channel || m.channel === "email");
+  }, [messages, chatMode]);
+
   // Detect lead's language from the last inbound message
   const lastInbound = [...messages].reverse().find((m) => m.direction === "inbound");
   const lastInboundContent = lastInbound?.content?.substring(0, 200) || "";
@@ -244,7 +250,7 @@ export function InboxDetailClient({ conversation, conversations, orgSlug }: Prop
         {/* Messages — hidden in chat mode (ChatWindow has its own) */}
         {!chatMode && (
         <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
-          {messages.map((msg) => (
+          {channelMessages.map((msg) => (
             <div key={msg.id} className={cn("flex items-start gap-3", msg.direction === "outbound" ? "flex-row-reverse" : "")}>
               <div className={cn(
                 "size-7 rounded-full flex items-center justify-center shrink-0",
@@ -296,12 +302,12 @@ export function InboxDetailClient({ conversation, conversations, orgSlug }: Prop
                 <Sparkles className="size-3.5 text-accent" />
               </div>
               <div className="max-w-[70%] rounded-2xl rounded-tr-sm px-4 py-2.5 bg-accent/5 border border-accent/20 border-dashed">
-                <p className="text-xs text-accent font-medium mb-1">AI Draft — review before sending</p>
+                <p className="text-xs text-accent font-medium mb-1">AI 草稿 — 审核后发送</p>
                 <p className="text-sm text-text-secondary whitespace-pre-wrap leading-relaxed line-clamp-4">{aiDraft.body}</p>
                 <div className="flex gap-2 mt-2">
-                  <Button size="sm" variant="default" loading={sending} onClick={sendReply}><Send className="size-3 mr-1" /> Send</Button>
-                  <Button size="sm" variant="outline" onClick={() => { setAiDraft(null); setReplyDraft(""); }}>Discard</Button>
-                  <Button size="sm" variant="ghost" onClick={generateAiDraft} loading={generating}><RefreshCw className="size-3 mr-1" /> Regenerate</Button>
+                  <Button size="sm" variant="default" loading={sending} onClick={sendReply}><Send className="size-3 mr-1" /> 发送</Button>
+                  <Button size="sm" variant="outline" onClick={() => { setAiDraft(null); setReplyDraft(""); }}>丢弃</Button>
+                  <Button size="sm" variant="ghost" onClick={generateAiDraft} loading={generating}><RefreshCw className="size-3 mr-1" /> 重新生成</Button>
                 </div>
               </div>
             </div>
@@ -318,7 +324,7 @@ export function InboxDetailClient({ conversation, conversations, orgSlug }: Prop
               conversationId={conversation.id}
               userRole="agent"
               orgSlug={orgSlug}
-              initialMessages={messages.map((m) => ({
+              initialMessages={channelMessages.map((m) => ({
                 id: m.id,
                 direction: m.direction as "inbound" | "outbound",
                 content: m.content,

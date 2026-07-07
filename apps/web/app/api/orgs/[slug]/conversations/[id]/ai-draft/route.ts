@@ -42,7 +42,13 @@ export async function POST(
   // ═══ Step 1: Search Knowledge Base (hybrid: vector + keyword → RRF → Reranker) ═══
   const latestInbound = [...allMessages].reverse().find((m) => m.direction === "inbound");
   const searchQuery = latestInbound?.content.slice(0, 500) ?? lead.name;
-  const { results: kbResults } = await searchKnowledgeBase(searchQuery, membership.organizationId);
+  let kbResults: Awaited<ReturnType<typeof searchKnowledgeBase>>["results"] = [];
+  try {
+    const result = await searchKnowledgeBase(searchQuery, membership.organizationId);
+    kbResults = result.results;
+  } catch (err) {
+    console.warn("[ai-draft] KB search failed, proceeding without KB context:", err instanceof Error ? err.message : String(err));
+  }
 
   // Build KB context from retrieved chunks
   let kbContext = "";

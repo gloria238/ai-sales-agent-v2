@@ -47,13 +47,18 @@ export function useSocket(conversationId: string | null) {
   useEffect(() => {
     if (!conversationId) return;
 
+    // Detect Vercel/Serverless — WebSocket not supported, use REST only
+    const isVercel = typeof window !== "undefined" &&
+      (window.location.hostname.includes("vercel.app") || !window.location.hostname.includes("localhost"));
+
     const socket = io(SOCKET_URL, {
       withCredentials: true,
-      transports: ["websocket", "polling"], // WebSocket first, HTTP long-polling fallback
-      reconnection: true,
-      reconnectionAttempts: 10,
+      transports: isVercel ? ["polling"] : ["websocket", "polling"],
+      reconnection: !isVercel, // Don't retry on Vercel — no WS server
+      reconnectionAttempts: isVercel ? 1 : 3,
       reconnectionDelay: 1000,
       reconnectionDelayMax: 10_000,
+      timeout: isVercel ? 5000 : 20000,
     });
 
     socketRef.current = socket;
