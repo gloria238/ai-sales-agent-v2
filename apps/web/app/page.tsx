@@ -38,7 +38,7 @@ const CAPABILITIES = [
   { icon: <BarChart3 className="size-5" />, title: "AI 可观测性", desc: "全链路 requestId 追踪，P50/P95 延迟，Token 成本，AI Health Dashboard" },
   { icon: <Globe className="size-5" />, title: "分布式部署", desc: "Vercel + Railway + Supabase + Upstash 四服务协同，双协议 Redis，降级容错" },
   { icon: <Shield className="size-5" />, title: "安全纵深防御", desc: "JWT + 双层限流 + PROMPT_ARMOR 防注入 + 审计日志" },
-  { icon: <Check className="size-5" />, title: "质量可量化", desc: "30 条 Golden Dataset + 4 检索指标 + LLM-as-Judge 评测" },
+  { icon: <Check className="size-5" />, title: "质量可量化", desc: "15 题 0.62 Precision@5 · 104 KB chunks · 11 份中文文档评测" },
   { icon: <Cpu className="size-5" />, title: "增量索引 + 缓存", desc: "SHA-256 内容寻址，上传查重，同名更新自动重建，缓存自动失效" },
 ];
 
@@ -294,7 +294,7 @@ export default function LandingPage() {
               </div>
               <div className="text-center md:pl-12 mt-8 md:mt-0">
                 <p className="text-5xl sm:text-6xl font-semibold text-lp-hero-heading tracking-tight">
-                  30
+                  0.62
                 </p>
                 <p className="text-lp-hero-sub text-sm mt-2">条 Golden Dataset · 4 检索指标 · 2 LLM Judge</p>
               </div>

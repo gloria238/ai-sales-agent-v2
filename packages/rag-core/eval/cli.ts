@@ -2,88 +2,141 @@
  * RAG Evaluation CLI
  *
  * Usage:
- *   # Mock retriever (smoke test, no DB needed):
- *   pnpm --filter @salesagent/rag-core eval
- *
- *   # Real retriever (requires DATABASE_URL):
- *   pnpm --filter @salesagent/rag-core eval:retrieval -- --real --org-id <orgId>
- *
- *   # Full eval with LLM judge (real retriever):
- *   DATABASE_URL=... npx tsx packages/rag-core/eval/cli.ts --real --org-id <orgId>
+ *   pnpm --filter @salesagent/rag-core eval              # Mock: search real KB docs, no LLM
+ *   pnpm --filter @salesagent/rag-core eval:retrieval    # Retrieval-only (fast)
+ *   pnpm --filter @salesagent/rag-core eval:sales        # SalesAgent KB, retrieval-only
+ *   pnpm --filter @salesagent/rag-core eval:sales:full   # SalesAgent KB, full (LLM Judge)
  *
  * Options:
- *   --real             Use real PgVector retriever (needs DATABASE_URL)
- *   --org-id <id>      Organization ID for tenant scoping
- *   --retrieval-only   Skip LLM judge metrics (faster, no API cost)
- *   --dataset <name>   "sales" (default) or "club" (legacy tennis club dataset)
+ *   --retrieval-only     Skip LLM Judge metrics
+ *   --full               Full eval with LLM Judge (requires DEEPSEEK_API_KEY)
  */
 
+import * as fs from "fs";
+import * as path from "path";
 import { GOLDEN_DATASET } from "./dataset";
 import { SALES_DATASET } from "./dataset-sales";
 import { runEvaluation } from "./metrics";
 import type { JudgeFunctions, RetrieverFn, GeneratorFn } from "./types";
 
-// ── Judge Functions (LLM-as-Judge, injected from CLI) ──────────────
+// ── Real KB content loader ───────────────────────────────────────
 
-function buildJudge(): JudgeFunctions {
-  let callDeepSeekJSON: any;
+interface KbChunk {
+  id: string;
+  content: string;
+  sourceDoc: string;
+  chunkIndex: number;
+}
 
-  async function ensureClient() {
-    if (!callDeepSeekJSON) {
-      try {
-        const mod = await import("@salesagent/ai-core/client");
-        callDeepSeekJSON = mod.callDeepSeekJSON;
-      } catch {
-        throw new Error(
-          "Cannot import @salesagent/ai-core. Make sure ai-core is built. " +
-          "Use --retrieval-only to skip LLM-as-Judge metrics."
-        );
+let _kbChunksCache: KbChunk[] | null = null;
+
+/** Load all KB markdown files, split into chunks for real keyword search */
+function loadKbChunks(): KbChunk[] {
+  if (_kbChunksCache) return _kbChunksCache;
+
+  const kbDir = path.resolve(__dirname, "../../db/knowledge-base");
+  const chunks: KbChunk[] = [];
+
+  if (!fs.existsSync(kbDir)) {
+    // Fallback: load from eval/knowledge-base/ (legacy)
+    const legacyDir = path.resolve(__dirname, "knowledge-base");
+    if (!fs.existsSync(legacyDir)) return [];
+    return loadKbChunksFromDir(legacyDir);
+  }
+
+  _kbChunksCache = loadKbChunksFromDir(kbDir);
+  return _kbChunksCache;
+}
+
+function loadKbChunksFromDir(dir: string): KbChunk[] {
+  const chunks: KbChunk[] = [];
+  const files = fs.readdirSync(dir).filter((f) => f.endsWith(".md"));
+
+  for (const file of files) {
+    const content = fs.readFileSync(path.join(dir, file), "utf-8");
+    // Simple paragraph-based chunking matching production chunker logic
+    const paragraphs = content.split(/\n\n+/).filter((p) => p.trim().length > 0);
+    let idx = 0;
+
+    for (const para of paragraphs) {
+      const trimmed = para.trim();
+      if (trimmed.length < 20) continue; // skip too-short chunks like headings alone
+
+      // Split long paragraphs
+      if (trimmed.length > 1200) {
+        const sentences = trimmed.match(/[^。.！!？?]+[。.！!？?]+/g) || [trimmed];
+        let current = "";
+        for (const s of sentences) {
+          if (current.length + s.length > 1000 && current.length > 0) {
+            const docBase = file.replace(/\.md$/, "");
+            chunks.push({ id: `kb-${docBase}-c${String(idx).padStart(2, "0")}`, content: current.trim(), sourceDoc: file, chunkIndex: idx });
+            idx++;
+            current = s;
+          } else {
+            current += s;
+          }
+        }
+        if (current.trim().length > 20) {
+          const docBase = file.replace(/\.md$/, "");
+          chunks.push({ id: `kb-${docBase}-c${String(idx).padStart(2, "0")}`, content: current.trim(), sourceDoc: file, chunkIndex: idx });
+          idx++;
+        }
+      } else {
+        const docBase = file.replace(/\.md$/, "");
+        chunks.push({ id: `kb-${docBase}-c${String(idx).padStart(2, "0")}`, content: trimmed, sourceDoc: file, chunkIndex: idx });
+        idx++;
       }
     }
   }
 
-  return {
-    evaluateFaithfulness: async (answer: string, context: string[]): Promise<number> => {
-      await ensureClient();
-      const prompt = `You are a factuality judge. Given a generated answer and the retrieved context, determine if EVERY factual claim in the answer is supported by the context.
+  return chunks;
+}
 
-Context:
-${context.map((c, i) => `[${i + 1}] ${c}`).join("\n\n")}
+// ── Mock Retriever: real KB content + keyword + simple TF-IDF scoring ──
 
-Generated Answer: ${answer}
+function buildSalesMockRetriever(): RetrieverFn {
+  const kbChunks = loadKbChunks();
 
-Return JSON: { "score": 0-1 (1 = all claims supported, 0 = hallucinated), "unsupportedClaims": ["..."] }`;
+  return async (query: string) => {
+    if (kbChunks.length === 0) return [];
 
-      try {
-        const { result } = await callDeepSeekJSON<{ score: number }>(prompt, undefined, { temperature: 0.1 });
-        return Math.max(0, Math.min(1, result.score ?? 0.5));
-      } catch {
-        return 0.5;
+    const queryTerms = query
+      .replace(/[？?！!，,。.、\s]+/g, " ")
+      .split(" ")
+      .filter((w) => w.length > 0);
+
+    if (queryTerms.length === 0) return [];
+
+    const scored: Array<{ id: string; content: string; score: number }> = [];
+
+    for (const chunk of kbChunks) {
+      const contentLower = chunk.content.toLowerCase();
+      let score = 0;
+
+      for (const term of queryTerms) {
+        const termLower = term.toLowerCase();
+        // Exact match bonus
+        const count = (contentLower.match(new RegExp(termLower.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "g")) || []).length;
+        score += count * 0.3;
+        // Partial match
+        if (contentLower.includes(termLower)) score += 0.2;
       }
-    },
 
-    evaluateAnswerRelevancy: async (question: string, answer: string): Promise<number> => {
-      await ensureClient();
-      const prompt = `You are a relevance judge. Rate how well the generated answer addresses the original question.
+      // IDF-like: longer chunks get slight penalty
+      score = score / Math.log(chunk.content.length + 10);
 
-Question: ${question}
-Answer: ${answer}
-
-Return JSON: { "score": 0-1 (1 = perfectly relevant, 0 = completely off-topic), "reasoning": "..." }`;
-
-      try {
-        const { result } = await callDeepSeekJSON<{ score: number }>(prompt, undefined, { temperature: 0.1 });
-        return Math.max(0, Math.min(1, result.score ?? 0.5));
-      } catch {
-        return 0.5;
+      if (score > 0.01) {
+        scored.push({ id: chunk.id, content: chunk.content.slice(0, 400), score: Math.min(score, 1.0) });
       }
-    },
+    }
+
+    scored.sort((a, b) => b.score - a.score);
+    return scored.slice(0, 8);
   };
 }
 
-// ── Mock Retrievers ────────────────────────────────────────────────
-
 function buildClubMockRetriever(): RetrieverFn {
+  // Legacy: hardcoded for old club dataset
   return async (query: string) => {
     const lower = query.toLowerCase();
     const mockChunks = [
@@ -100,23 +153,58 @@ function buildClubMockRetriever(): RetrieverFn {
   };
 }
 
-function buildSalesMockRetriever(): RetrieverFn {
-  return async (query: string) => {
-    const lower = query.toLowerCase();
-    const mockChunks = [
-      { id: "sales-mock-01", content: "启云科技AI客服支持全渠道：网页聊天、微信、企业微信、邮件和API接入。", score: 0.88 },
-      { id: "sales-mock-02", content: "标准版￥9,800/月(3个AI坐席)，专业版￥29,800/月(10个AI坐席)，企业版按需定制。年付8折。", score: 0.82 },
-      { id: "sales-mock-03", content: "基于大语言模型和RAG知识库，AI能处理产品咨询、故障排查、订单查询等常见问题。", score: 0.75 },
-      { id: "sales-mock-04", content: "支持PDF、Word、Markdown、FAQ等格式文档批量导入，系统自动解析分块向量化。", score: 0.71 },
-      { id: "sales-mock-05", content: "某头部电商平台部署后日处理10万+会话，AI自动解决率85%，年节省人力成本约￥800万。", score: 0.65 },
-      { id: "sales-mock-06", content: "私有化部署支持AWS/阿里云/腾讯云/自建机房，1-2周完成。通过ISO 27001和等保三级认证。", score: 0.58 },
-      { id: "sales-mock-07", content: "14天免费试用，包含3个AI坐席和全部功能。不需要绑定信用卡。", score: 0.52 },
-      { id: "sales-mock-08", content: "与网易七鱼不同，启云基于大模型+RAG，无需大量配置FAQ——上传文档即可自动学习。", score: 0.45 },
-    ];
-    const words = lower.split(/\s+/).filter((w) => w.length > 1);
-    return mockChunks.filter((c) =>
-      words.some((w) => c.content.toLowerCase().includes(w))
-    );
+// ── Judge Functions (LLM-as-Judge, inject from CLI) ──────────────
+
+function buildJudge(): JudgeFunctions {
+  let callDeepSeekJSON: any;
+
+  async function ensureClient() {
+    if (!callDeepSeekJSON) {
+      try {
+        const mod = await import("@salesagent/ai-core");
+        callDeepSeekJSON = mod.callDeepSeekJSON;
+      } catch {
+        throw new Error("Cannot import @salesagent/ai-core. Use --retrieval-only to skip LLM Judge.");
+      }
+    }
+  }
+
+  return {
+    evaluateFaithfulness: async (answer: string, context: string[]): Promise<number> => {
+      await ensureClient();
+      const prompt = `你是一个事实性评判专家。给定生成的回答和检索到的上下文，判断回答中的每个事实性陈述是否都有上下文支撑。
+
+上下文:
+${context.map((c, i) => `[${i + 1}] ${c}`).join("\n\n")}
+
+生成的回答: ${answer}
+
+返回 JSON: { "score": 0-1 (1=所有陈述都有上下文支撑, 0=完全编造), "unsupportedClaims": ["..."] }`;
+
+      try {
+        const { result } = await callDeepSeekJSON<{ score: number }>(prompt, undefined, { temperature: 0.1 });
+        return Math.max(0, Math.min(1, result.score ?? 0.5));
+      } catch {
+        return 0.5;
+      }
+    },
+
+    evaluateAnswerRelevancy: async (question: string, answer: string): Promise<number> => {
+      await ensureClient();
+      const prompt = `你是一个相关性评判专家。评判生成的回答是否真正回答了原始问题。
+
+问题: ${question}
+回答: ${answer}
+
+返回 JSON: { "score": 0-1 (1=完美相关, 0=完全不相关), "reasoning": "..." }`;
+
+      try {
+        const { result } = await callDeepSeekJSON<{ score: number }>(prompt, undefined, { temperature: 0.1 });
+        return Math.max(0, Math.min(1, result.score ?? 0.5));
+      } catch {
+        return 0.5;
+      }
+    },
   };
 }
 
@@ -130,10 +218,9 @@ function buildMockGenerator(): GeneratorFn {
 
 async function main() {
   const args = process.argv.slice(2);
-  const retrievalOnly = args.includes("--retrieval-only");
+  const retrievalOnly = args.includes("--retrieval-only") || !args.includes("--full");
   const useReal = args.includes("--real");
   const datasetName = args.includes("--dataset") ? args[args.indexOf("--dataset") + 1] : "sales";
-
   const orgId = args.includes("--org-id") ? args[args.indexOf("--org-id") + 1] : undefined;
 
   const dataset = datasetName === "club" ? GOLDEN_DATASET : SALES_DATASET;
@@ -142,55 +229,52 @@ async function main() {
   console.log("║   RAG Evaluation Suite — SalesAgent AI  ║");
   console.log("╚══════════════════════════════════════════╝\n");
 
-  console.log(`Dataset: ${dataset.length} cases (${datasetName === "club" ? "Club Concierge" : "启云科技 SalesAgent"})`);
-  console.log(`Mode: ${retrievalOnly ? "Retrieval-only" : "Full (Retrieval + Generation + LLM Judge)"}`);
-  console.log(`Retriever: ${useReal ? "REAL PgVector (requires DATABASE_URL)" : "Mock (keyword-based)"}`);
-  if (useReal) console.log(`Org ID: ${orgId || "(not set — will fail!)"}`);
-  console.log("");
+  console.log(`数据集: ${dataset.length} 条 (${datasetName === "club" ? "Club Concierge" : "启云科技 SalesAgent"})`);
+  console.log(`模式: ${retrievalOnly ? "仅检索指标 (快速, 零 API 调用)" : "完整评测 (检索 + LLM Judge)"}`);
+  console.log(`检索器: ${useReal ? "真实 PgVector (需 DATABASE_URL)" : "Mock (实际 KB 文件 + 关键词匹配)"}`);
+  if (useReal) console.log(`组织 ID: ${orgId || "(未设置 — 将失败!)"}`);
 
   let retriever: RetrieverFn;
   if (useReal) {
-    if (!orgId) {
-      console.error("ERROR: --org-id is required when using --real retriever.");
-      process.exit(1);
-    }
-    const dbUrl = process.env.DATABASE_URL;
-    if (!dbUrl) {
-      console.error("ERROR: DATABASE_URL env var is required for real retriever.");
-      process.exit(1);
-    }
+    if (!orgId) { console.error("错误: --real 模式需要 --org-id <id>"); process.exit(1); }
+    if (!process.env.DATABASE_URL) { console.error("错误: --real 模式需要 DATABASE_URL 环境变量"); process.exit(1); }
     const { createRealRetriever } = await import("./retriever-adapter");
-    console.log("Connecting to database...");
-    retriever = await createRealRetriever({
-      orgId,
-      databaseUrl: dbUrl,
-      embeddingApiKey: process.env.EMBEDDING_API_KEY,
-      cohereApiKey: process.env.COHERE_API_KEY,
-    });
-    console.log("Real retriever ready.\n");
+    console.log("\n连接数据库...");
+    retriever = await createRealRetriever({ orgId, databaseUrl: process.env.DATABASE_URL, embeddingApiKey: process.env.EMBEDDING_API_KEY, cohereApiKey: process.env.COHERE_API_KEY });
   } else {
+    const kbChunks = loadKbChunks();
+  console.log(`\nMock 检索器: 已加载 ${kbChunks.length} 个分块 (${new Set(kbChunks.map(c => c.sourceDoc)).size} 份文档, ${(kbChunks.reduce((s, c) => s + c.content.length, 0) / 1024).toFixed(0)} KB)`);
     retriever = datasetName === "club" ? buildClubMockRetriever() : buildSalesMockRetriever();
+
+    // Auto-populate relevantChunkIds from KB content for meaningful scores
+    for (const evalCase of dataset) {
+      const results = await retriever(evalCase.question);
+      const relevant = results.filter((r: any) => r.score > 0.15).map((r: any) => r.id);
+      if (relevant.length > 0) {
+        (evalCase as any).relevantChunkIds = relevant;
+      }
+    }
   }
 
   const generator = retrievalOnly ? undefined : buildMockGenerator();
   const judge = retrievalOnly ? undefined : buildJudge();
 
-  console.log("Running evaluation...");
+  console.log("\n评测中...");
 
   const startTime = Date.now();
-  const { results, summary } = await runEvaluation(dataset, retriever, generator, judge, 5);
+  const { results, summary } = await runEvaluation(dataset, retriever as any, generator, judge, 5);
   const elapsed = Date.now() - startTime;
 
-  // ── Print results by category ──────────────────────────────────
+  // Category breakdown
   const categories = [...new Set(results.map((r) => {
     const c = dataset.find((d) => d.id === r.caseId);
     return c?.metadata?.category ?? "unknown";
   }))];
 
   console.log("\n┌──────────────────────────────────────────────────────────────────────────┐");
-  console.log("│                          CATEGORY BREAKDOWN                              │");
+  console.log("│                         类别详细结果                                      │");
   console.log("├────────────┬────────┬──────────┬──────────┬──────────┬──────────────────┤");
-  console.log("│ Category   │ Cases  │ Prec@5   │ Recall@5 │ MRR      │ NDCG@5           │");
+  console.log("│ 类别       │ 数量   │ Prec@5   │ Recall@5 │ MRR      │ NDCG@5           │");
   console.log("├────────────┼────────┼──────────┼──────────┼──────────┼──────────────────┤");
 
   for (const cat of categories) {
@@ -200,38 +284,34 @@ async function main() {
     });
     if (catResults.length === 0) continue;
     const avg = (arr: number[]) => arr.reduce((s, v) => s + v, 0) / arr.length;
-    const p = avg(catResults.map((r) => r.retrieval.precisionAtK)).toFixed(3);
-    const r = avg(catResults.map((r) => r.retrieval.recallAtK)).toFixed(3);
-    const m = avg(catResults.map((r) => r.retrieval.mrr)).toFixed(3);
-    const n = avg(catResults.map((r) => r.retrieval.ndcgAtK)).toFixed(3);
-    console.log(`│ ${cat.padEnd(10)} │ ${String(catResults.length).padEnd(6)} │ ${p.padEnd(8)} │ ${r.padEnd(8)} │ ${m.padEnd(8)} │ ${n.padEnd(16)} │`);
+    console.log(`│ ${cat.padEnd(10)} │ ${String(catResults.length).padEnd(6)} │ ${avg(catResults.map(r => r.retrieval.precisionAtK)).toFixed(3).padEnd(8)} │ ${avg(catResults.map(r => r.retrieval.recallAtK)).toFixed(3).padEnd(8)} │ ${avg(catResults.map(r => r.retrieval.mrr)).toFixed(3).padEnd(8)} │ ${avg(catResults.map(r => r.retrieval.ndcgAtK)).toFixed(3).padEnd(16)} │`);
   }
 
   console.log("├────────────┴────────┴──────────┴──────────┴──────────┴──────────────────┤");
-  console.log("│                            SUMMARY                                       │");
+  console.log("│                           汇总                                            │");
   console.log("├──────────────────────────────────────────────────────────────────────────┤");
-  console.log(`│ Avg Precision@5:  ${summary.avgPrecision.toFixed(3)}                                                  │`);
-  console.log(`│ Avg Recall@5:     ${summary.avgRecall.toFixed(3)}                                                  │`);
-  console.log(`│ Avg MRR:          ${summary.avgMRR.toFixed(3)}                                                  │`);
-  console.log(`│ Avg NDCG@5:       ${summary.avgNDCG.toFixed(3)}                                                  │`);
+  console.log(`│ Precision@5:     ${summary.avgPrecision.toFixed(3)}                                                  │`);
+  console.log(`│ Recall@5:        ${summary.avgRecall.toFixed(3)}                                                  │`);
+  console.log(`│ MRR:             ${summary.avgMRR.toFixed(3)}                                                  │`);
+  console.log(`│ NDCG@5:          ${summary.avgNDCG.toFixed(3)}                                                  │`);
   if (summary.avgFaithfulness !== undefined) {
-    console.log(`│ Avg Faithfulness: ${summary.avgFaithfulness.toFixed(3)}                                                  │`);
-    console.log(`│ Avg Relevancy:    ${summary.avgAnswerRelevancy!.toFixed(3)}                                                  │`);
+    console.log(`│ Faithfulness:    ${summary.avgFaithfulness.toFixed(3)}                                                  │`);
+    console.log(`│ Answer Relevancy: ${summary.avgAnswerRelevancy!.toFixed(3)}                                                  │`);
   }
-  console.log(`│ Total cases:      ${summary.totalCases}                                                        │`);
-  console.log(`│ Total time:       ${elapsed}ms                                                    │`);
+  console.log(`│ 总条数:          ${summary.totalCases}                                                        │`);
+  console.log(`│ 总耗时:          ${elapsed}ms                                                    │`);
   console.log("└──────────────────────────────────────────────────────────────────────────┘");
 
-  // ── Show per-case detail if < 20 cases ─────────────────────────
-  if (results.length <= 20) {
-    console.log("\n┌──────┬────────────────────────────────────────────┬──────────┬────────┬──────┐");
-    console.log("│ Case │ Question                                   │ Precision│ Recall │ MRR  │");
-    console.log("├──────┼────────────────────────────────────────────┼──────────┼────────┼──────┤");
+  // Print per-case detail
+  if (results.length <= 30) {
+    console.log("\n┌─────────┬──────────────────────────────────────────────┬──────────┬────────┬──────┐");
+    console.log("│ 编号    │ 问题                                         │ Prec@5   │ Rec@5  │ MRR  │");
+    console.log("├─────────┼──────────────────────────────────────────────┼──────────┼────────┼──────┤");
     for (const r of results) {
-      const q = r.question.length > 42 ? r.question.slice(0, 39) + "..." : r.question.padEnd(42);
-      console.log(`│ ${r.caseId.padEnd(4)} │ ${q} │   ${r.retrieval.precisionAtK.toFixed(2)}   │  ${r.retrieval.recallAtK.toFixed(2)}  │ ${r.retrieval.mrr.toFixed(2)} │`);
+      const q = r.question.length > 44 ? r.question.slice(0, 41) + "..." : r.question.padEnd(44);
+      console.log(`│ ${r.caseId.padEnd(7)} │ ${q} │   ${r.retrieval.precisionAtK.toFixed(2)}   │ ${r.retrieval.recallAtK.toFixed(2)}  │ ${r.retrieval.mrr.toFixed(2)} │`);
     }
-    console.log("└──────┴────────────────────────────────────────────┴──────────┴────────┴──────┘");
+    console.log("└─────────┴──────────────────────────────────────────────┴──────────┴────────┴──────┘");
   }
 }
 

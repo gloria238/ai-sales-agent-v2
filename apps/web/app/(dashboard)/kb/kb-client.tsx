@@ -176,6 +176,69 @@ export function KbClient({ orgSlug, initialDocs }: { orgSlug: string; initialDoc
         </div>
       )}
 
+      {/* File Explorer Tree — only when docs > 0 */}
+      {docs.length > 0 && (
+        <div className="rounded-xl border border-border bg-bg-card overflow-hidden">
+          <div className="px-4 py-2.5 border-b border-border bg-bg-subtle/50 flex items-center gap-2">
+            <Layers className="size-3.5 text-text-muted" />
+            <span className="text-xs font-semibold text-text-muted uppercase tracking-wider">知识库文档结构</span>
+            <span className="text-xs text-text-muted">— 按层级组织，RAG 检索时自动关联</span>
+          </div>
+          <div className="p-3 font-mono text-xs space-y-0.5">
+            {/* Layer 1: Core */}
+            <div className="flex items-center gap-1.5 text-accent">
+              <span>📁</span><span className="font-semibold">core/</span>
+              <span className="text-text-muted text-[10px]">核心层 · 权威数据源</span>
+            </div>
+            {["product-overview.md", "pricing-v3.md", "technical-specs.md"].map((f, i) => {
+              const doc = docs.find((d) => d.name === f);
+              return (
+                <div key={f} className="flex items-center gap-1.5 ml-5">
+                  <span className="text-text-muted">{i === 2 ? "└──" : "├──"}</span>
+                  <span className={doc ? "text-text" : "text-text-muted/50"}>{f}</span>
+                  {doc && <span className="text-text-muted text-[10px]">{doc.chunkCount} chunks</span>}
+                </div>
+              );
+            })}
+
+            {/* Layer 2: Sales Reference */}
+            <div className="flex items-center gap-1.5 text-blue-400 mt-1">
+              <span>📁</span><span className="font-semibold">sales/</span>
+              <span className="text-text-muted text-[10px]">销售参考层 · FAQ/话术/案例/竞品</span>
+            </div>
+            {["faq-v2.md", "objection-handbook.md", "case-studies.md", "competitor-battlecards.md", "sales-playbook.md"].map((f, i, arr) => {
+              const doc = docs.find((d) => d.name === f);
+              return (
+                <div key={f} className="flex items-center gap-1.5 ml-5">
+                  <span className="text-text-muted">{i === arr.length - 1 ? "└──" : "├──"}</span>
+                  <span className={doc ? "text-text" : "text-text-muted/50"}>{f}</span>
+                  {doc && <span className="text-text-muted text-[10px]">{doc.chunkCount} chunks</span>}
+                </div>
+              );
+            })}
+
+            {/* Layer 3: Operations */}
+            <div className="flex items-center gap-1.5 text-amber-400 mt-1">
+              <span>📁</span><span className="font-semibold">ops/</span>
+              <span className="text-text-muted text-[10px]">运营支撑层 · 流程/合规/内部</span>
+            </div>
+            {["onboarding-guide.md", "compliance-policy.md", "internal-escalation.md"].map((f, i, arr) => {
+              const doc = docs.find((d) => d.name === f);
+              return (
+                <div key={f} className="flex items-center gap-1.5 ml-5">
+                  <span className="text-text-muted">{i === arr.length - 1 ? "└──" : "├──"}</span>
+                  <span className={doc ? "text-text" : "text-text-muted/50"}>{f}</span>
+                  {doc && <span className="text-text-muted text-[10px]">{doc.chunkCount} chunks</span>}
+                </div>
+              );
+            })}
+          </div>
+          <div className="px-4 py-2 border-t border-border bg-bg-subtle/30 text-[10px] text-text-muted">
+            共 {docs.length} 个文档 · 三层架构 · 四种关联关系（引用/派生/场景/权威）
+          </div>
+        </div>
+      )}
+
       {/* Document List */}
       {docs.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-24 text-center">
