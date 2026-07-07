@@ -126,13 +126,14 @@ export default function LandingPage() {
 
       {/* ═══════════ HERO ════════════ */}
       <section className="relative min-h-screen flex flex-col overflow-hidden">
-        {/* Background video */}
-        <video className="absolute inset-0 w-full h-full object-cover opacity-40" autoPlay loop muted playsInline>
+        {/* Background video — APEX-style opacity for video texture */}
+        <video className="absolute inset-0 w-full h-full object-cover" autoPlay loop muted playsInline>
           <source src="/videos/hero.mp4" type="video/mp4" />
         </video>
-        {/* Gradient overlays for text readability */}
-        <div className="absolute inset-0 bg-gradient-to-b from-lp-background/70 via-lp-background/40 to-lp-background" />
-        <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse at 50% 0%, rgba(22,101,52,0.2) 0%, transparent 60%)" }} />
+        {/* APEX Reference gradient overlay: gradual reveal from top, full dark at bottom */}
+        <div className="absolute inset-0 pointer-events-none" style={{
+          background: "linear-gradient(to bottom, transparent 0%, transparent 30%, hsl(260 87% 3% / 0.1) 45%, hsl(260 87% 3% / 0.4) 60%, hsl(260 87% 3% / 0.75) 75%, hsl(260 87% 3%) 95%)",
+        }} />
 
         <header className="relative z-20 flex justify-center pt-6 px-4">
           <nav className="liquid-glass rounded-3xl w-full max-w-[850px] flex items-center justify-between px-5 py-3">
@@ -145,9 +146,8 @@ export default function LandingPage() {
             <div className="hidden md:flex items-center gap-1">
               <a href="#features" className="text-sm text-lp-hero-sub hover:text-lp-foreground px-3 py-2 rounded-lg transition-colors">功能</a>
               <a href="#architecture" className="text-sm text-lp-hero-sub hover:text-lp-foreground px-3 py-2 rounded-lg transition-colors">架构</a>
-              <a href="#docs" className="text-sm text-lp-hero-sub hover:text-lp-foreground px-3 py-2 rounded-lg transition-colors">文档</a>
             </div>
-            <Link href="/api/demo-login" className="inline-flex items-center rounded-full bg-lp-primary text-white px-5 py-2 text-sm font-semibold hover:bg-green-700 transition-colors">
+            <Link href="/api/demo-login" className="inline-flex items-center rounded-full bg-lp-primary text-lp-primary-foreground px-5 py-2 text-sm font-semibold hover:bg-lp-primary/90 transition-colors">
               体验 Demo
             </Link>
           </nav>
@@ -171,7 +171,7 @@ export default function LandingPage() {
           </p>
 
           <div className="flex items-center gap-4 mt-8">
-            <Link href="/api/demo-login" className="inline-flex items-center rounded-full bg-lp-primary text-white px-6 py-3 text-base font-medium hover:bg-green-700 transition-colors">
+            <Link href="/api/demo-login" className="inline-flex items-center rounded-full bg-lp-primary text-lp-primary-foreground px-6 py-3 text-base font-medium hover:bg-lp-primary/90 transition-colors">
               立即体验 Demo <ArrowRight className="size-4 ml-1.5" />
             </Link>
             <a href="#features" className="liquid-glass inline-flex items-center rounded-full px-6 py-3 text-base font-normal text-lp-foreground hover:bg-white/5 transition-colors">
@@ -259,11 +259,11 @@ export default function LandingPage() {
               ))}
             </ul>
             <div className="flex items-center gap-4">
-              <Link href="/register" className="inline-flex items-center rounded-full bg-lp-primary text-white px-6 py-3 text-base font-medium hover:bg-green-700 transition-colors">
-                免费开始使用
+              <Link href="/api/demo-login" className="inline-flex items-center rounded-full bg-lp-primary text-lp-primary-foreground px-6 py-3 text-base font-medium hover:bg-lp-primary/90 transition-colors">
+                进入 Demo <ArrowRight className="size-4 ml-1.5" />
               </Link>
-              <Link href="/api/demo-login" className="liquid-glass inline-flex items-center rounded-full px-6 py-3 text-base font-normal text-lp-foreground hover:bg-white/5 transition-colors">
-                Live Demo →
+              <Link href="/register" className="liquid-glass inline-flex items-center rounded-full px-6 py-3 text-base font-normal text-lp-foreground hover:bg-white/5 transition-colors">
+                注册账号
               </Link>
             </div>
           </div>
@@ -275,20 +275,28 @@ export default function LandingPage() {
         <HlsBackground src={NUMBERS_HLS} overlayClass="bg-gradient-to-t from-lp-background via-lp-background/[0.85] to-lp-background/[0.15]">
           <div className="relative z-10 max-w-5xl mx-auto px-6 text-center">
             <div className="mb-24">
-              <p className="text-7xl sm:text-[8rem] lg:text-[10rem] font-semibold tracking-tighter text-lp-hero-heading leading-none">21</p>
-              <p className="text-lp-hero-sub text-xl mt-4">个 Phase 持续迭代 · 每阶段有设计文档、有决策记录、有 eval 验证</p>
+              <p className="text-7xl sm:text-[8rem] lg:text-[10rem] font-semibold tracking-tighter text-lp-hero-heading leading-none">
+                21
+              </p>
+              <p className="text-lp-hero-sub text-xl mt-4">
+                Phase 迭代 · 每阶段有设计文档、有决策记录、有 eval 验证
+              </p>
               <p className="text-lp-muted-foreground text-sm mt-2 max-w-md mx-auto">
-                从基础设施到 AI 管线，从评测框架到实时聊天——每条链路都经过工程化打磨。
+                从基础设施到 AI 管线，从评测框架到实时聊天——每条链路经过工程化打磨。
               </p>
             </div>
             <div className="liquid-glass rounded-3xl p-12 grid md:grid-cols-2 max-w-3xl mx-auto">
               <div className="text-center md:border-r border-lp-border/50 md:pr-12">
-                <p className="text-5xl sm:text-6xl font-semibold text-lp-hero-heading tracking-tight">~32,000</p>
-                <p className="text-lp-hero-sub text-sm mt-2">行 TypeScript 代码 · 440+ 文件</p>
+                <p className="text-5xl sm:text-6xl font-semibold text-lp-hero-heading tracking-tight">
+                  ~32,000
+                </p>
+                <p className="text-lp-hero-sub text-sm mt-2">行 TypeScript · 440+ 文件</p>
               </div>
               <div className="text-center md:pl-12 mt-8 md:mt-0">
-                <p className="text-5xl sm:text-6xl font-semibold text-lp-hero-heading tracking-tight">30</p>
-                <p className="text-lp-hero-sub text-sm mt-2">条 Golden Dataset · 4 检索指标 · 2 生成指标</p>
+                <p className="text-5xl sm:text-6xl font-semibold text-lp-hero-heading tracking-tight">
+                  30
+                </p>
+                <p className="text-lp-hero-sub text-sm mt-2">条 Golden Dataset · 4 检索指标 · 2 LLM Judge</p>
               </div>
             </div>
           </div>
@@ -348,7 +356,7 @@ export default function LandingPage() {
                 一键启动 Demo 环境——打开 Dashboard，上传一份 PDF 到知识库，在 Portal 发一条消息，亲眼看到 RAG 如何检索、AI 如何回复。无需注册。
               </p>
               <div className="flex items-center justify-center gap-4 mt-8">
-                <Link href="/api/demo-login" className="inline-flex items-center rounded-full bg-lp-primary text-white px-6 py-3 text-base font-medium hover:bg-green-700 transition-colors">
+                <Link href="/api/demo-login" className="inline-flex items-center rounded-full bg-lp-primary text-lp-primary-foreground px-6 py-3 text-base font-medium hover:bg-lp-primary/90 transition-colors">
                   进入 Demo <ArrowRight className="size-4 ml-1.5" />
                 </Link>
                 <Link href="/register" className="liquid-glass inline-flex items-center rounded-full px-6 py-3 text-base font-normal text-lp-foreground hover:bg-white/5 transition-colors">
