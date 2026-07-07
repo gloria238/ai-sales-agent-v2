@@ -14,17 +14,6 @@ declare module "mammoth" {
   export { extractRawText };
 }
 
-// Dynamic imports — used by rag-init.ts and eval/cli.ts for LLM-powered features.
-// Not a hard dependency; gracefully degrades when unavailable.
-declare module "@salesagent/ai-core" {
-  export function callDeepSeekJSON<T>(prompt: string, system?: string, options?: Record<string, unknown>): Promise<{ result: T; usage?: Record<string, number> }>;
-  export function callDeepSeek(prompt: string, system?: string, options?: Record<string, unknown>): Promise<string>;
-}
-declare module "@salesagent/ai-core/client" {
-  export function callDeepSeekJSON<T>(prompt: string, system?: string, options?: Record<string, unknown>): Promise<{ result: T; usage?: Record<string, number> }>;
-  export function callDeepSeek(prompt: string, system?: string, options?: Record<string, unknown>): Promise<string>;
-}
-
 // Dynamic import — used by eval/retriever-adapter.ts for real DB-backed evaluation.
 declare module "@prisma/client" {
   export class PrismaClient {

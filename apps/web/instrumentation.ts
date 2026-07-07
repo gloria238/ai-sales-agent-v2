@@ -12,11 +12,14 @@ export async function register() {
 
   // ── RAG Pipeline ────────────────────────────────────────────────
   // Wire LLM-powered Query Rewriter + Router at startup.
-  // Silently degrades to Noop if DEEPSEEK_API_KEY is not set.
+  // The caller passes callDeepSeekJSON — rag-core never imports ai-core directly.
   if (process.env.NEXT_RUNTIME === "nodejs") {
     try {
+      const { callDeepSeekJSON } = await import("@salesagent/ai-core");
       const { initRagPipeline } = await import("@salesagent/rag-core/rag-init");
-      await initRagPipeline();
-    } catch { /* rag-core may not be available (e.g. edge runtime) */ }
+      if (typeof callDeepSeekJSON === "function") {
+        initRagPipeline(callDeepSeekJSON);
+      }
+    } catch { /* rag-core or ai-core unavailable — use Noop rewriter + Keyword router */ }
   }
 }
