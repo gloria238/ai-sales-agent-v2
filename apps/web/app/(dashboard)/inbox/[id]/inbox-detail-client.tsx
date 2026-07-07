@@ -10,11 +10,12 @@ import { IdentityCard, type Customer } from "@/components/identity/identity-card
 import {
   MessageSquare, Mail, Send, Sparkles, Bot, RefreshCw, ChevronLeft,
   Building2, TrendingUp, AlertCircle, ThumbsUp, Clock, User, ExternalLink,
-  Languages, Loader2,
+  Languages, Loader2, MessageCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 import { AgentThinkingPanel } from "@/components/inbox/AgentThinkingPanel";
 import type { AgentStep } from "@/components/inbox/AgentThinkingPanel";
+import { ChatWindow } from "@/components/chat/chat-window";
 
 type Message = {
   id: string; direction: string; content: string; channel: string;
@@ -102,6 +103,7 @@ export function InboxDetailClient({ conversation, conversations, orgSlug }: Prop
   const [generating, setGenerating] = useState(false);
   const [translating, setTranslating] = useState(false);
   const [translated, setTranslated] = useState("");
+  const [chatMode, setChatMode] = useState(false); // Toggle: email compose vs real-time chat
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Detect lead's language from the last inbound message
@@ -213,6 +215,25 @@ export function InboxDetailClient({ conversation, conversations, orgSlug }: Prop
               showPresence
             />
             <div className="flex items-center gap-2 pr-4 shrink-0">
+              {/* Email / Chat toggle */}
+              <div className="flex items-center rounded-lg border border-border bg-bg-subtle p-0.5">
+                <button
+                  onClick={() => setChatMode(false)}
+                  className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium transition-all ${
+                    !chatMode ? "bg-bg-card text-text shadow-sm" : "text-text-muted hover:text-text"
+                  }`}
+                >
+                  <Mail className="size-3" /> 邮件
+                </button>
+                <button
+                  onClick={() => setChatMode(true)}
+                  className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium transition-all ${
+                    chatMode ? "bg-bg-card text-accent shadow-sm" : "text-text-muted hover:text-text"
+                  }`}
+                >
+                  <MessageCircle className="size-3" /> 聊天
+                </button>
+              </div>
               <Button size="sm" variant="outline" onClick={() => router.push(`/leads/${lead.id}`)}>
                 <ExternalLink className="size-3 mr-1" /> 客户详情
               </Button>
@@ -288,8 +309,24 @@ export function InboxDetailClient({ conversation, conversations, orgSlug }: Prop
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Compose */}
-        <div className="shrink-0 border-t border-border p-4 bg-bg-card/50 backdrop-blur-sm">
+        {/* Compose / Chat — depends on mode */}
+        {chatMode ? (
+          <div className="flex-1 min-h-0">
+            <ChatWindow
+              conversationId={conversation.id}
+              userRole="agent"
+              orgSlug={orgSlug}
+              initialMessages={messages.map((m) => ({
+                id: m.id,
+                direction: m.direction as "inbound" | "outbound",
+                content: m.content,
+                createdAt: m.createdAt,
+              }))}
+              otherPartyName={lead.name}
+            />
+          </div>
+        ) : (
+          <div className="shrink-0 border-t border-border p-4 bg-bg-card/50 backdrop-blur-sm">
           {/* Translation preview */}
           {translated && (
             <div className="mb-3 rounded-xl border border-accent/30 bg-accent/5 p-3 animate-slide-up">
@@ -363,6 +400,7 @@ export function InboxDetailClient({ conversation, conversations, orgSlug }: Prop
             </div>
           </div>
         </div>
+        )}
       </div>
 
       {/* ── Right: Lead Intelligence panel ───────────────── */}

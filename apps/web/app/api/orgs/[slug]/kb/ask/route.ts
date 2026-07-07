@@ -3,8 +3,7 @@ import { prisma } from "@salesagent/db";
 import { getSession } from "@/lib/session";
 import { checkPermission } from "@/lib/permissions";
 import { callDeepSeekJSON, PROMPT_ARMOR, safe } from "@salesagent/ai-core";
-import { createEmbeddingProvider } from "@salesagent/rag-core/embeddings";
-import { reciprocalRankFusion } from "@salesagent/rag-core";
+import { createEmbeddingProvider, hybridRetrieve, type SqlExecutor } from "@salesagent/rag-core";
 
 export async function POST(req: NextRequest, { params }: { params: { slug: string } }) {
   const session = await getSession();
@@ -22,79 +21,20 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
   }
 
   try {
-    type ChunkRow = {
-      id: string; documentId: string; content: string; chunkIndex: number;
-      metadata: Record<string, unknown>; similarity: number;
-    };
+    // ═══ Unified Hybrid Retrieval (vector + keyword → RRF → Reranker) ═══
+    const embedder = createEmbeddingProvider();
+    const sqlExecutor: SqlExecutor = async (query: string, ...params: unknown[]) =>
+      prisma.$queryRawUnsafe(query, ...params);
 
-    // 1. Parallel: vector search + keyword search (hybrid)
-    //    NOTE: Prisma columns are camelCase (no @map) — use quoted identifiers
-    const vectorPromise = (async (): Promise<ChunkRow[]> => {
-      try {
-        const embedder = createEmbeddingProvider();
-        const queryEmbedding = await embedder.embed(question);
-        const embStr = `[${queryEmbedding.join(",")}]`;
-        return await prisma.$queryRawUnsafe<ChunkRow[]>(
-          `SELECT id, "documentId", content, "chunkIndex", metadata,
-                  1 - (embedding <=> $1::vector) AS similarity
-           FROM sales_agent."DocumentChunk"
-           WHERE "organizationId" = $2 AND embedding IS NOT NULL
-           ORDER BY embedding <=> $1::vector
-           LIMIT 10`,
-          embStr,
-          membership.organizationId,
-        );
-      } catch {
-        return [];
-      }
-    })();
-
-    const keywordPromise = (async (): Promise<ChunkRow[]> => {
-      try {
-        // Try tsvector FTS first
-        const tsquery = question.split(/\s+/).filter((w) => w.length > 1).map((w) => `${w}:*`).join(" & ");
-        if (tsquery) {
-          try {
-            return await prisma.$queryRawUnsafe<ChunkRow[]>(
-              `SELECT id, "documentId", content, "chunkIndex", metadata,
-                      ts_rank(search_vector, to_tsquery('english', $1)) AS similarity
-               FROM sales_agent."DocumentChunk"
-               WHERE "organizationId" = $2 AND search_vector @@ to_tsquery('english', $1)
-               ORDER BY similarity DESC LIMIT 10`,
-              tsquery,
-              membership.organizationId,
-            );
-          } catch { /* tsvector column may not exist — fall through */ }
-        }
-      } catch { /* ignore */ }
-
-      // Regex fallback — works without embeddings or tsvector
-      const keywords = question.split(/\s+/).filter((w) => w.length > 1).join(" | ");
-      return await prisma.$queryRawUnsafe<ChunkRow[]>(
-        `SELECT id, "documentId", content, "chunkIndex", metadata, 0.5 AS similarity
-         FROM sales_agent."DocumentChunk"
-         WHERE "organizationId" = $1 AND content ~* $2 LIMIT 10`,
-        membership.organizationId,
-        keywords || question,
-      );
-    })();
-
-    const [vectorChunks, keywordChunks] = await Promise.all([vectorPromise, keywordPromise]);
-
-    // 2. RRF fusion
-    const fused = reciprocalRankFusion(
-      [
-        vectorChunks.map((c) => ({ id: c.id, score: c.similarity })),
-        keywordChunks.map((c) => ({ id: c.id, score: c.similarity })),
-      ],
-      60,
-      5,
+    const { results, secondaryRetrievalUsed } = await hybridRetrieve(
+      sqlExecutor,
+      embedder,
+      question,
+      membership.organizationId,
+      { topK: 5 },
     );
 
-    // 3. Map fused IDs back to full chunk data (dedup by ID)
-    const allChunks = [...vectorChunks, ...keywordChunks];
-    const chunkMap = new Map(allChunks.map((c) => [c.id, c]));
-    const chunks = fused.map((f) => chunkMap.get(f.id)!).filter(Boolean);
+    const chunks = results.map((r) => r.chunk);
 
     if (chunks.length === 0) {
       return NextResponse.json({
@@ -104,12 +44,12 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
       });
     }
 
-    // 3. Build context from retrieved chunks
+    // ═══ Build context from retrieved chunks ════════════════════════════
     const context = chunks.map((c, i) =>
-      `[Source ${i + 1}] (from ${(c.metadata as Record<string,string>)?.title || "Document"}, chunk ${c.chunkIndex}):\n${safe(c.content)}`
+      `[Source ${i + 1}] (from ${c.metadata?.title || "Document"}, chunk ${c.index}):\n${safe(c.content)}`
     ).join("\n\n");
 
-    // 4. Answer with LLM — PROMPT_ARMOR + <user_data> wrapping on user question
+    // ═══ Answer with LLM ════════════════════════════════════════════════
     const system = `${PROMPT_ARMOR}
 You are a helpful AI assistant. Answer questions based ONLY on the provided context. If the context doesn't contain the answer, say so. Never make up information. Cite sources using [Source N] notation. Return JSON only.`;
 
@@ -134,26 +74,30 @@ Answer the question based on the context above. Include source citations like [S
           llmLatencyMs: 0,
           totalLatencyMs: 0,
           success: chunks.length > 0,
-          fallbackUsed: chunks.length > 0 && (chunks[0] as any).similarity === 0.5,
+          fallbackUsed: secondaryRetrievalUsed,
         },
       });
     } catch { /* metrics logging failure should not block */ }
 
-    // 5. Build citations
-    const citations = chunks.map((c) => ({
-      id: c.id,
-      documentId: c.documentId,
-      title: (c.metadata as Record<string,string>)?.title || "Document",
-      fileName: (c.metadata as Record<string,string>)?.fileName || "Unknown",
-      excerpt: c.content.slice(0, 200) + (c.content.length > 200 ? "…" : ""),
-      chunkIndex: c.chunkIndex,
-      score: Math.round(c.similarity * 100) / 100,
+    // Build citations
+    const citations = results.map((r) => ({
+      id: r.chunk.id,
+      documentId: r.chunk.documentId,
+      title: r.chunk.metadata?.title || "Document",
+      fileName: r.chunk.metadata?.fileName || "Unknown",
+      excerpt: r.chunk.content.slice(0, 200) + (r.chunk.content.length > 200 ? "…" : ""),
+      chunkIndex: r.chunk.index,
+      score: Math.round(r.score * 100) / 100,
     }));
 
     return NextResponse.json({
       answer: aiAnswer.answer,
       citations,
-      chunks: chunks.map((c) => ({ id: c.id, content: c.content.slice(0, 300), score: Math.round(c.similarity * 100) / 100 })),
+      chunks: results.map((r) => ({
+        id: r.chunk.id,
+        content: r.chunk.content.slice(0, 300),
+        score: Math.round(r.score * 100) / 100,
+      })),
     });
   } catch (err) {
     console.error("[kb/ask] Error processing question:", err instanceof Error ? err.message : String(err));

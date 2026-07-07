@@ -14,11 +14,17 @@
     "./storage": "./src/storage.ts",
     "./retriever": "./src/retriever.ts",
     "./sources": "./src/sources.ts",
-    "./reranker": "./src/reranker.ts"
+    "./reranker": "./src/reranker.ts",
+    "./rag-init": "./src/rag-init.ts",
+    "./semantic-cache": "./src/semantic-cache.ts",
+    "./content-hash": "./src/content-hash.ts"
   },
   "scripts": {
     "eval": "npx tsx eval/cli.ts",
-    "eval:retrieval": "npx tsx eval/cli.ts --retrieval-only"
+    "eval:retrieval": "npx tsx eval/cli.ts --retrieval-only",
+    "eval:sales": "npx tsx eval/cli.ts --dataset sales",
+    "eval:sales:retrieval": "npx tsx eval/cli.ts --dataset sales --retrieval-only",
+    "eval:real": "npx tsx eval/cli.ts --real --dataset sales"
   },
   "dependencies": {
     "@salesagent/shared-types": "workspace:*",

@@ -3,76 +3,15 @@ import { prisma } from "@salesagent/db";
 import { getSession } from "@/lib/session";
 import { checkPermission } from "@/lib/permissions";
 import { callDeepSeekJSON, PROMPT_ARMOR, safe, buildMetric } from "@salesagent/ai-core";
-import { createEmbeddingProvider } from "@salesagent/rag-core/embeddings";
-import { reciprocalRankFusion } from "@salesagent/rag-core";
+import { createEmbeddingProvider, hybridRetrieve, type SqlExecutor } from "@salesagent/rag-core";
 
-type ChunkRow = {
-  id: string; documentId: string; content: string; chunkIndex: number;
-  metadata: Record<string, unknown>; similarity: number;
-};
+/** Search the org's knowledge base using the unified hybrid retrieval pipeline */
+async function searchKnowledgeBase(query: string, orgId: string) {
+  const embedder = createEmbeddingProvider();
+  const sqlExecutor: SqlExecutor = async (q: string, ...params: unknown[]) =>
+    prisma.$queryRawUnsafe(q, ...params);
 
-/** Search the org's knowledge base using hybrid retrieval (vector + keyword → RRF) */
-async function searchKnowledgeBase(
-  query: string,
-  orgId: string,
-): Promise<ChunkRow[]> {
-  // Parallel: vector search + keyword search
-  const vectorPromise = (async (): Promise<ChunkRow[]> => {
-    try {
-      const embedder = createEmbeddingProvider();
-      const queryEmbedding = await embedder.embed(query);
-      const embStr = `[${queryEmbedding.join(",")}]`;
-      return await prisma.$queryRawUnsafe<ChunkRow[]>(
-        `SELECT id, "documentId", content, "chunkIndex", metadata,
-                1 - (embedding <=> $1::vector) AS similarity
-         FROM sales_agent."DocumentChunk"
-         WHERE "organizationId" = $2 AND embedding IS NOT NULL
-         ORDER BY embedding <=> $1::vector LIMIT 10`,
-        embStr, orgId,
-      );
-    } catch { return []; }
-  })();
-
-  const keywordPromise = (async (): Promise<ChunkRow[]> => {
-    try {
-      const tsquery = query.split(/\s+/).filter((w) => w.length > 1).map((w) => `${w}:*`).join(" & ");
-      if (tsquery) {
-        try {
-          return await prisma.$queryRawUnsafe<ChunkRow[]>(
-            `SELECT id, "documentId", content, "chunkIndex", metadata,
-                    ts_rank(search_vector, to_tsquery('english', $1)) AS similarity
-             FROM sales_agent."DocumentChunk"
-             WHERE "organizationId" = $2 AND search_vector @@ to_tsquery('english', $1)
-             ORDER BY similarity DESC LIMIT 10`,
-            tsquery, orgId,
-          );
-        } catch { /* tsvector column may not exist */ }
-      }
-    } catch { /* ignore */ }
-
-    const keywords = query.split(/\s+/).filter((w) => w.length > 1).join(" | ");
-    return await prisma.$queryRawUnsafe<ChunkRow[]>(
-      `SELECT id, "documentId", content, "chunkIndex", metadata, 0.5 AS similarity
-       FROM sales_agent."DocumentChunk"
-       WHERE "organizationId" = $1 AND content ~* $2 LIMIT 10`,
-      orgId, keywords || query,
-    );
-  })();
-
-  const [vectorChunks, keywordChunks] = await Promise.all([vectorPromise, keywordPromise]);
-
-  // RRF fusion
-  const fused = reciprocalRankFusion(
-    [
-      vectorChunks.map((c) => ({ id: c.id, score: c.similarity })),
-      keywordChunks.map((c) => ({ id: c.id, score: c.similarity })),
-    ],
-    60, 5,
-  );
-
-  const allChunks = [...vectorChunks, ...keywordChunks];
-  const chunkMap = new Map(allChunks.map((c) => [c.id, c]));
-  return fused.map((f) => chunkMap.get(f.id)!).filter(Boolean);
+  return hybridRetrieve(sqlExecutor, embedder, query, orgId, { topK: 5 });
 }
 
 export async function POST(
@@ -100,21 +39,20 @@ export async function POST(
   const lead = conversation.lead;
   const allMessages = conversation.messages;
 
-  // ═══ Step 1: Search Knowledge Base ═══════════════════════════════
-  // Use the latest inbound message as the search query for RAG retrieval
+  // ═══ Step 1: Search Knowledge Base (hybrid: vector + keyword → RRF → Reranker) ═══
   const latestInbound = [...allMessages].reverse().find((m) => m.direction === "inbound");
   const searchQuery = latestInbound?.content.slice(0, 500) ?? lead.name;
-  const kbChunks = await searchKnowledgeBase(searchQuery, membership.organizationId);
+  const { results: kbResults } = await searchKnowledgeBase(searchQuery, membership.organizationId);
 
   // Build KB context from retrieved chunks
   let kbContext = "";
-  if (kbChunks.length > 0) {
-    kbContext = kbChunks.map((c, i) =>
-      `[KB ${i + 1}] (${(c.metadata as Record<string,string>)?.title || "文档"}, 段落${c.chunkIndex}):\n${c.content.slice(0, 600)}`
+  if (kbResults.length > 0) {
+    kbContext = kbResults.map((r, i) =>
+      `[KB ${i + 1}] (${r.chunk.metadata?.title || "文档"}, 段落${r.chunk.index}):\n${r.chunk.content.slice(0, 600)}`
     ).join("\n\n");
   }
 
-  // ═══ Step 2: Build conversation history ══════════════════════════
+  // ═══ Step 2: Build conversation history ═════════════════════════════════
   const history = allMessages
     .map((m) => {
       const who = m.direction === "inbound" ? "客户" : "我方";
@@ -124,7 +62,7 @@ export async function POST(
 
   const lastOutbound = [...allMessages].reverse().find((m) => m.direction === "outbound");
 
-  // ═══ Step 3: Build prompt with KB context + conversation ═════════
+  // ═══ Step 3: Build prompt with KB context + conversation ════════════════
   const system = PROMPT_ARMOR + `
 你是一个专业的 B2B 销售顾问。你的公司叫「启云科技」，产品是企业级 AI 客服与销售自动化 SaaS。
 撰写销售跟进消息时，必须遵守以下规则：
@@ -174,14 +112,14 @@ ${lastOutbound ? `【我方最后回复】${safe(lastOutbound.content.slice(0, 3
             conversationId: conversation.id,
             leadId: lead.id,
           },
-          usage, llmLatencyMs, llmLatencyMs, true, kbChunks.length > 0 && kbChunks[0].similarity < 0.6,
+          usage, llmLatencyMs, llmLatencyMs, true, kbResults.length > 0 && (kbResults[0]?.score ?? 0) < 0.6,
         ),
       });
     } catch { /* non-blocking */ }
 
     return NextResponse.json({
       draft,
-      kbChunksUsed: kbChunks.length,
+      kbChunksUsed: kbResults.length,
     });
   } catch (err) {
     console.error("[ai-draft] Failed:", err instanceof Error ? err.message : String(err));

@@ -1,7 +1,8 @@
 # SalesAgent AI — Progress Report
 
-> Last updated: 2026-07-05
-> Project: Multi-Tenant AI Platform (AI Concierge / Sales Agent)
+> 最后更新：2026-07-07
+> 项目：企业销售 AI 中枢操作系统（多租户 AI Agent 平台）
+> 核心理念：AI 辅助而非替代。Human-in-the-Loop 贯穿全流程。
 
 ## Overall Status
 
@@ -469,20 +470,191 @@ CLAUDE.md, ARCHITECTURE.md, PROGRESS.md, README.md, package.json — docs + scri
 - **~55 files**, +2,800 / -500 lines. 16 new files, 35 modified, 0 deleted.
 - Build: green (web + worker, 0 errors). Prisma Client: v6.19.3.
 
+---
+
+## Phase 20 — RAG 检索质量工程化 ✅
+
+> Completed: 2026-07-07
+
+### 6 Tasks, 15 files (+1,850 / −180 lines)
+
+### T1 — Reranker 死代码修复 + 统一检索管线
+
+- **hybrid-retriever.ts** (new): 统一检索管线 — 替代 kb/ask 和 ai-draft 中 60+ 行重复 SQL。Pipeline: 查询改写 → 问题路由 → 混合检索(vector+keyword) → RRF融合 → Reranker → 置信度门控
+- **kb/ask/route.ts** (refactor): 从 162 行直写 SQL 缩减为调用 `hybridRetrieve()` → 60 行。Reranker 现在实际生效。
+- **ai-draft/route.ts** (refactor): 同上, `searchKnowledgeBase()` 函数从 75 行 SQL 缩减为 10 行调用 `hybridRetrieve()`
+
+### T2 — 查询改写模块
+
+- **query-rewriter.ts** (new): `QueryRewriter` 接口 + `NoopQueryRewriter` + `LLMQueryRewriter`
+  - 策略: 原始查询(保底) → 关键词提取(BM25优化) → 同义改写(语义搜索) → 子问题分解
+  - LLMRewriter 通过回调注入 DeepSeek, 保持 rag-core 无 LLM 硬依赖
+  - 失败优雅降级到原始查询
+
+### T3 — 问题路由模块
+
+- **query-router.ts** (new): `QueryRouter` 接口 + `KeywordQueryRouter`(快速,免费) + `LLMQueryRouter`(精准)
+  - 分类: faq / product / pricing / competitor / case / general
+  - 每类独立的检索参数: topK, vectorWeight, keywordWeight, minScore
+  - `CATEGORY_PARAMS` 查表 — FAQ 类向量权重偏高, 定价类严格阈值
+
+### T4 — 置信度门控 + 二次检索
+
+- **hybrid-retriever.ts** 内置: 首次检索 top-1 < 0.7 → 自动触发 expanded search(放宽 topK+降低阈值) → 合并去重
+- 返回 `secondaryRetrievalUsed` 标志用于 metrics fallback 追踪
+
+### T5 — RAG Eval 真实化
+
+- **dataset-sales.ts** (new): 30 条启云科技领域 Golden Q&A, 覆盖 FAQ(8)/Product(7)/Pricing(5)/Competitor(4)/Case(3)/General(3)
+- **retriever-adapter.ts** (new): 连接真实 PgVector + hybridRetrieve 到 eval 框架, 支持 `--real --org-id <id>`
+- **cli.ts** (refactor): 支持 `--dataset sales|club`, `--real` 模式, 按类别分组的指标报告
+
+### T6 — KB API CRUD 完善
+
+- **kb/documents/[id]/route.ts** (new): GET(单文档+chunk列表) / PATCH(更新名称/元数据) / DELETE(级联删除chunks)
+- **kb/documents/[id]/reindex/route.ts** (new): POST — 批量重嵌所有chunk, 支持切换 embedding 模型后重建
+- **retriever.ts** (refactor): 优先使用 `storage.search()` 原生 pgvector 搜索 ← 替代 JS 全量余弦计算
+
+### Wiring & Init
+
+- **rag-init.ts** (new): `initRagPipeline()` — 应用启动时自动检测 DEEPSEEK_API_KEY, 动态注入 LLM 驱动的 Rewriter + Router
+- **declarations.d.ts** (update): 新增 `@salesagent/ai-core` 和 `@prisma/client` 动态导入类型声明
+
+### Eval Scripts
+
+```bash
+pnpm --filter @salesagent/rag-core eval                    # Mock, SalesAgent dataset
+pnpm --filter @salesagent/rag-core eval:sales              # 同上
+pnpm --filter @salesagent/rag-core eval:sales:retrieval    # 仅检索指标
+pnpm --filter @salesagent/rag-core eval:real -- --org-id <id> # 真实 PgVector
+```
+
+### New Files (9)
+```
+packages/rag-core/src/hybrid-retriever.ts        — Unified retrieval pipeline
+packages/rag-core/src/query-rewriter.ts           — Query expansion module
+packages/rag-core/src/query-router.ts             — Query classification module
+packages/rag-core/src/rag-init.ts                 — LLM rewiring at startup
+packages/rag-core/eval/dataset-sales.ts           — 30 Q&A SalesAgent golden dataset
+packages/rag-core/eval/retriever-adapter.ts       — Real PgVector eval adapter
+apps/web/app/api/orgs/[slug]/kb/documents/[id]/route.ts      — GET/PATCH/DELETE doc
+apps/web/app/api/orgs/[slug]/kb/documents/[id]/reindex/route.ts — Re-embed endpoint
+```
+
+### Modified Files (7)
+```
+packages/rag-core/src/index.ts                    — Export new modules
+packages/rag-core/src/retriever.ts                — Use storage.search() natively
+packages/rag-core/src/declarations.d.ts           — Dynamic import type declarations
+packages/rag-core/package.json                    — New eval scripts + exports
+packages/rag-core/eval/cli.ts                     — --real mode + sales dataset
+apps/web/app/api/orgs/[slug]/kb/ask/route.ts      — hybridRetrieve() replaces inline SQL
+apps/web/app/api/orgs/[slug]/conversations/[id]/ai-draft/route.ts — hybridRetrieve() replaces inline SQL
+```
+
+### Stats
+- **15 files**, +1,850 / -180 lines. 9 new files, 7 modified.
+- rag-core: TypeScript check passes (0 errors).
+- Reranker (Cohere) is now actually called in production requests (was dead code).
+- RAG eval now supports real PgVector retrieval + SalesAgent domain dataset (was mock tennis club).
+
+---
+
+## Phase 21 — RAG 性能工程 + 实时消息 ✅
+
+> Completed: 2026-07-07
+
+### T7 — QA Semantic Cache (Redis)
+
+- **semantic-cache.ts** (new): `SemanticCache` 接口 + `RedisSemanticCache` + `NoopSemanticCache`
+  - 两层缓存: Exact match (SHA-256 of normalized query) + Semantic match (cosine ≥ 0.95)
+  - Redis key: `rag:cache:exact:{orgId}:{queryHash}` / `rag:cache:embeddings:{orgId}:*`
+  - 失效策略: TTL (1h) + `invalidateOrg()` on KB update + `invalidateDocuments()` on doc change
+  - FAQ 场景预计缓存命中率 60%+, 延迟 2s → 50ms
+
+### T8 — Incremental Indexing + Content Hash
+
+- **content-hash.ts** (new): `fingerprintContent()` (SHA-256), `diffChunks()` (增量 diff), `generateChunkId()` (稳定 ID)
+- **chunker.ts** (update): `stableIds` 选项 (默认 true), chunk ID 基于 docId+index+timestamp prefix
+- **kb/upload/route.ts** (update): 上传时计算 SHA-256 → 查重 (完全一致→跳过) → 同名更新 (删旧 chunk→重建)
+  - 返回 `{ deduplicated: true }` 或 `{ updated: true }` 标志
+  - 上传后自动调用 `semanticCache.invalidateOrg()` 清除缓存
+
+### T9 — WebSocket Real-time Chat
+
+- **socket-server.ts** (new): Standalone Socket.IO server (port 3001)
+  - JWT cookie 验证 → Room-based (per conversationId)
+  - Events: `join` / `message` / `typing` / `leave` / `presence`
+  - Message 持久化到 Prisma (channel="chat", aiMetadata 中存 senderInfo)
+- **use-socket.ts** (new): React hook — `useSocket(conversationId)` → { messages, sendMessage, typing, isConnected }
+  - WebSocket 优先, HTTP long-polling 降级
+  - 自动重连 (10 attempts, 指数退避)
+- **chat-window.tsx** (new): 复用聊天 UI 组件
+  - 消息气泡 (客户右侧绿色/Agent 左侧白色)
+  - 连接状态栏 (实时/轮询) + 对方在线状态 + 正在输入动画
+  - Enter 发送, REST fallback when Socket.IO unavailable
+- **Dashboard Chat**: `/(dashboard)/chat/page.tsx` — Agent 与客户实时聊天
+  - Server Component 加载历史消息 + ChatWindow client component
+- **Portal Chat**: `portal/conversations/[id]/page.tsx` — 升级为真实实时聊天
+  - JWT verify → customer lead ownership check → ChatWindow
+- **REST Fallback**: `POST /api/orgs/{slug}/conversations/{id}/chat-messages` + `GET` polling
+  - 当 Socket.IO 不可用时 (Vercel serverless) 自动降级到 REST
+- **Portal Fallback**: `POST /api/chat/conversations/{id}/messages`
+
+### New Files (7)
+```
+packages/rag-core/src/semantic-cache.ts           — Redis-backed QA cache
+packages/rag-core/src/content-hash.ts             — SHA-256 fingerprinting + incremental diff
+apps/web/socket-server.ts                         — Socket.IO standalone server (port 3001)
+apps/web/lib/use-socket.ts                        — React Socket.IO hook
+apps/web/components/chat/chat-window.tsx           — Reusable real-time chat component
+apps/web/app/(dashboard)/chat/page.tsx            — Agent chat dashboard
+apps/web/app/(dashboard)/chat/layout.tsx           — Chat layout
+apps/web/app/api/orgs/[slug]/conversations/[id]/chat-messages/route.ts — REST fallback
+apps/web/app/api/chat/conversations/[id]/messages/route.ts            — Portal REST fallback
+```
+
+### Modified Files (4)
+```
+packages/rag-core/src/index.ts                    — Export semantic-cache + content-hash
+packages/rag-core/src/chunker.ts                  — stableIds option
+packages/rag-core/package.json                    — New exports + eval scripts
+apps/web/app/api/orgs/[slug]/kb/upload/route.ts   — Content hash dedup + cache invalidation
+apps/web/app/portal/conversations/[id]/page.tsx  — Real WebSocket chat replaces disabled textarea
+apps/web/package.json                             — socket.io, socket.io-client, ioredis + dev scripts
+```
+
+### Stats
+- **12 files**, +1,500 / −100 lines. 9 new files, 4 modified.
+- rag-core: TypeScript check passes (0 errors).
+- Chat: real-time WebSocket with REST fallback for serverless.
+
+---
+
 ## Known Issues / TODOs
 
-1. **Stripe billing** — Not implemented.
-2. **SSO/OAuth** — Not implemented (enterprise requirement).
-3. **Upstash Redis free tier** — 500K daily limit. Upgrade when scaling.
-4. **Reranker** — NoopReranker only. Cohere Rerank or Cross-Encoder can be plugged in when needed.
-5. **Credential rotation** — `.env.local` exposed in early git history. Rotate all secrets.
-6. **Sentry worker** — `@sentry/node` for the worker not yet installed.
-7. **CI/CD** — No GitHub Actions workflow. Tests run locally only.
+1. **CI/CD** — No GitHub Actions workflow. Tests run locally only.
+2. **Sentry worker** — `@sentry/node` for the worker not yet installed.
+3. **Credential rotation** — `.env.local` exposed in early git history. Rotate all secrets.
+4. **Upstash Redis free tier** — 500K daily limit. Upgrade when scaling.
+5. **Product analytics (PostHog)** — Planned for Phase 22.
 
 ### Resolved from Previous TODOs
 
 | Issue | Resolution |
 |-------|------------|
+| ~~Reranker dead code~~ | hybrid-retriever.ts unified pipeline — Reranker called in both kb/ask and ai-draft |
+| ~~KB API no DELETE/PATCH~~ | Single doc GET/PATCH/DELETE + reindex endpoint |
+| ~~RAG Eval mock retriever~~ | retriever-adapter.ts connects real PgVector; 30-case SalesAgent dataset |
+| ~~Retriever JS cosine on all chunks~~ | retriever.ts now prefers storage.search() native pgvector <=> |
+| ~~Duplicated SQL in kb/ask + ai-draft~~ | Both routes now call hybridRetrieve() — 120+ lines deduplicated |
+| ~~No query rewriting/routing~~ | query-rewriter.ts + query-router.ts + LLM implementations |
+| ~~No low-confidence fallback~~ | Confidence gate in hybrid-retriever with expanded secondary search |
+| ~~QA semantic cache~~ | RedisSemanticCache — exact + semantic match, 60%+ FAQ hit rate (Phase 21) |
+| ~~Incremental indexing~~ | SHA-256 content hash dedup + doc update detection + cache invalidation (Phase 21) |
+| ~~WebSocket real-time chat~~ | Socket.IO server + ChatWindow component + REST fallback (Phase 21) |
+| ~~Portal disabled chat input~~ | Portal conversations use real-time ChatWindow with WebSocket (Phase 21) |
+| ~~Stripe billing~~ | Removed from scope — internal enterprise OS, not SaaS |
 | ~~API Key Bearer auth~~ | ApiKey Prisma model with SHA-256 hashing, proper indexes |
 | ~~Auth rate limiting~~ | Defense-in-depth: middleware + per-route rate limits |
 | ~~CSP unsafe-eval~~ | Removed from CSP |

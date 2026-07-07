@@ -4,7 +4,7 @@
   <img src="https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql&logoColor=white" />
   <img src="https://img.shields.io/badge/Prisma-6-2D3748?logo=prisma&logoColor=white" />
   <img src="https://img.shields.io/badge/pgvector-Hybrid%20Search-4169E1?logo=postgresql" />
-  <img src="https://img.shields.io/badge/Expo-Mobile-000020?logo=expo" />
+  <img src="https://img.shields.io/badge/Socket.IO-Real--time-010101?logo=socket.io" />
   <img src="https://img.shields.io/badge/BullMQ-4%20Queues-DC2626" />
   <img src="https://img.shields.io/badge/Redis-Idempotent-red?logo=redis&logoColor=white" />
   <img src="https://img.shields.io/badge/ReAct-Agent%20Executor-8B5CF6" />
@@ -14,122 +14,126 @@
   <img src="https://img.shields.io/badge/Sentry-Observability-362D59?logo=sentry" />
   <img src="https://img.shields.io/badge/Vercel-Web%20Deploy-black?logo=vercel" />
   <img src="https://img.shields.io/badge/Railway-Worker-0B0D0E?logo=railway" />
+  <img src="https://img.shields.io/badge/Phase-21-22C55E" />
 </p>
 
-<h1 align="center">
-  SalesAgent AI
-</h1>
+<h1 align="center">SalesAgent AI</h1>
 
 <p align="center">
-  Multi-tenant AI Agent Platform with Web, Mobile, Worker, and Knowledge Infrastructure.
+  <strong>企业销售团队的 AI 中枢操作系统</strong>
 </p>
 
 <p align="center">
-  Build and deploy AI Sales, Concierge, and Support Agents on a shared platform.
+  自研 RAG 检索管线 · WebSocket 实时聊天 · AI Agent 编排引擎 · 多租户 RBAC · 全链路可观测
+</p>
+
+<p align="center">
+  TypeScript 全栈 · ~32,000 行 · 440+ 文件 · 21 个 Phase 持续迭代
 </p>
 
 ---
 
-## What is this?
+## 这是什么
 
-SalesAgent AI is a **Multi-Tenant AI Agent Platform**.
+SalesAgent AI 是一个**企业内部的销售运营 OS 平台**。它不是对外售卖的 SaaS 产品，也不是 LangChain demo——它是一个真实的、工程化落地的 AI 系统。
 
-Not a chatbot wrapper. Not a workflow builder. Not a generic CRM.
+核心理念：**AI 辅助而非替代**。AI 负责线索评分、回复起草、知识检索、活动编排等重复性工作，人类销售负责关系建立和最终决策。Human-in-the-Loop 贯穿全流程。
 
-It's infrastructure for running domain-specific AI agents — sales agents that qualify leads and book meetings, concierge agents that answer knowledge-base questions, support agents that handle inquiries — all on a shared, multi-tenant platform with web, mobile, and background worker.
-
-### Three layers:
+### 三层架构
 
 ```
-Presentation  →  Web (Next.js 14)  +  Mobile (Expo)
-Application   →  AI Core  +  RAG Core  +  API Client
-Foundation    →  Domain entities  +  Types  +  Database (PostgreSQL + pgvector)
+表示层   →  Next.js 14 (App Router)  +  Socket.IO 实时聊天  +  Expo Mobile
+应用层   →  AI Core (6 大能力 + ReAct Agent)  +  RAG Core (六阶段检索管线 + 评测框架)
+基础层   →  Domain 实体 + Shared Types + PostgreSQL + pgvector + tsvector
 ```
 
-### AI Engineering Highlights
+### AI 工程亮点
 
-| Capability | Implementation | Why it matters |
-|---|---|---|
-| **Agent Lifecycle** | 4 BullMQ queues with timeout, retry, exponential backoff | AI tasks never block HTTP requests |
-| **RAG Pipeline** | Hybrid search (pgvector + tsvector → RRF fusion), recursive chunking, source citation, multi-tenant isolation | Semantics + exact keywords, fallback to regex |
-| **Prompt Injection Defense** | PROMPT_ARMOR + `<user_data>` context boundary on all 4 agent functions | Prevents lead-originated prompt injection |
-| **Human-in-the-loop** | Explicit `awaiting_approval` state machine, AI drafts never auto-sent | Safety boundary — AI assists, humans decide |
-| **Prompt Versioning** | Registry with Feature Flag-driven canary rollout (rollout% + per-org rules) | A/B test prompts without redeploy |
-| **AI Observability** | AICallMetric model: token usage, P50/P95 latency, cost tracking, requestId tracing (HTTP→Queue→LLM→DB) | End-to-end visibility into every AI call |
-| **Job Idempotency** | Redis SET NX dedup on all 4 queues | Exactly-once processing on retry storms |
-| **Feature Flags** | DB-backed with 5-layer evaluation (cache→DB per-org→DB global→env→default) | Runtime toggles, canary rollout, cost boundary control |
+| 能力 | 实现 | 为什么重要 |
+|------|------|-----------|
+| **RAG 检索管线** | 查询改写 → 问题路由 → 混合检索(pgvector+tsvector→RRF) → Cohere Reranker → 置信度门控 → 语义缓存 | 不是"扔向量搜一下"，是六阶段完整信息检索管线 |
+| **评测框架** | 30 条 Golden Dataset + 4 检索指标 + LLM-as-Judge 生成评测，连接生产 PgVector 做真实评测 | 每次调参有量化反馈，不是凭感觉 |
+| **双通道沟通** | Email (Resend + HITL 审批) + WebSocket 实时聊天 (Socket.IO, REST polling 降级) | 同一 Inbox 一键切换 Email/Chat |
+| **Agent 引擎** | ReAct Agent (Thought→Action→Observation), 4 内置 Tool, AgentThinkingPanel 可视化 | 自主推理，推理链路透明 |
+| **Prompt 安全** | PROMPT_ARMOR + `<user_data>` 标签 + HITL 审批 | AI 起草但不发送，人类做最终决策 |
+| **AI 可观测性** | AICallMetric 模型：Token、延迟、成本、requestId 全链路追踪 | 每次 AI 调用可追溯 |
+| **语义缓存** | Redis 两层缓存 (SHA-256 exact + cosine ≥0.95) | FAQ 命中 60%+，延迟 2s→50ms |
+| **增量索引** | SHA-256 内容寻址：上传查重、同名更新自动重建、缓存自动失效 | 文档更新不重建全量 |
+| **多租户 RBAC** | 5 角色 × 13 权限，数据 org-scoped 隔离，Customer Portal 独立认证 | 企业内部多团队协作 |
+| **降级设计** | Embedding→Keyword、Cohere→Noop、Redis→内存，每层有 fallback | 系统不会因单个外部服务挂掉而完全不可用 |
 
 ---
 
-## Platform Capabilities
+## 平台功能
 
-### AI Agents
-Configure agents with personality, knowledge, and goals. Each agent handles conversations autonomously — qualifying leads, answering questions, booking meetings.
+### AI Agent
+配置 Agent 的个性化特征、知识库和目标。每个 Agent 自主处理对话——评分线索、回答问题、起草回复。ReAct Agent 支持多步推理和工具调用。
 
-### Knowledge Base (RAG)
-Upload PDFs, DOCXs, FAQs, and documents. The platform chunks, embeds, indexes, and retrieves — so agents answer with source citations, not hallucinations.
+### RAG 知识库
+上传 PDF、DOCX、FAQ、Markdown——系统自动解析、分块、向量化、双索引存储。检索时走完整六阶段管线，AI 回答带引用溯源。12 份文档分 3 层架构（核心层/销售参考层/运营支撑层）。
 
 ```
-Upload → Parse → Chunk → Embed → pgvector + tsvector → Hybrid RRF → Answer + Citations
+查询 → 改写 → 路由 → 混合检索 → RRF 融合 → Reranker → 置信度门控 → 生成 + 引用
 ```
 
-### Conversation Inbox
-Unified inbox across all channels. See conversations, AI drafts (⏳ awaiting approval), lead context, and qualification scores. Split-pane design — no page navigation. HITL: human approves every AI draft before send.
+### 对话收件箱
+统一 Split-Pane 界面。Email 和 Chat 双通道一键切换。AI 草稿 + HITL 审批流——Agent 审核后才发送。ReAct 推理链路可视化面板。
 
-### Outbound Campaigns
-Multi-step sequences with AI-personalized emails, delays, and automatic reply detection. Campaigns run in the background via BullMQ worker. Idempotent job processing prevents duplicate sends.
-
-### Lead Qualification
-AI scores leads across 5 BANT dimensions (intent, budget, authority, need, timeline). Hot leads route to humans. Warm leads stay in AI nurture.
+### 外呼活动引擎
+多步骤序列编排——每步骤支持 AI 个性化改写。BullMQ 延迟执行，自动回复检测暂停序列。幂等去重防止重复发送。
 
 ### AI Health Dashboard
-`/analytics?tab=ai` — Real-time metrics: token usage trends, P50/P95 latency, cost attribution per job type, fallback rate alerts, daily usage charts.
+实时 Token 消耗趋势、P50/P95 延迟、成本归因、回退率告警。requestId 全链路串联（HTTP → Queue → LLM → DB）。
+
+### 客户端门户
+客户独立登录（JWT 双路径认证），查看自己的对话历史，与 Agent 实时聊天。
 
 ### Mobile App
-Expo app with Dashboard + Inbox + Knowledge Base + AI Playground. Shares types, API client, and design tokens with the web app.
+Expo 52 + React Native。Dashboard + Inbox + KB + AI Playground（6 步 RAG 管线可视化）。Demo/Live 双模式。
 
 ---
 
-## Stack
+## 技术栈
 
-| Layer | Technology |
-|-------|-----------|
-| **Web** | Next.js 14 App Router, React 18, Tailwind CSS |
+| 层 | 技术 |
+|----|------|
+| **Web** | Next.js 14 App Router, React 18, Tailwind CSS, Socket.IO |
 | **Mobile** | Expo SDK 52, React Native |
-| **Language** | TypeScript (strict) |
-| **Design** | Corporate Green palette, glass morphism, design tokens |
-| **Database** | PostgreSQL (Supabase) + pgvector + tsvector (hybrid search) |
+| **语言** | TypeScript (strict) |
+| **设计** | 企业绿调色板 (Corporate Green), Glass Morphism, Inter 字体 |
+| **数据库** | PostgreSQL 16 (Supabase) + pgvector + tsvector 全文搜索 |
 | **ORM** | Prisma 6 |
-| **Queue** | BullMQ + Upstash Redis (4 queues, idempotent, prefix: `sales-agent`) |
-| **Email** | Resend (AI composition, template engine, open/click tracking) |
-| **AI** | DeepSeek API (compose w/RAG, score, summarize, generate-script, translate, ReAct agent) |
-| **RAG** | Hybrid: pgvector cosine + PostgreSQL FTS → RRF fusion; keyword fallback |
-| **Observability** | AICallMetric model + AI Health dashboard + Sentry + structured logging with PII redaction + distributed tracing (requestId) |
-| **Auth** | Custom JWT (jose) + bcryptjs 12 rounds + httpOnly cookies + Redis blacklist |
+| **队列** | BullMQ + Upstash Redis (4 队列, 幂等, prefix: `sales-agent`) |
+| **实时通信** | Socket.IO (WebSocket → HTTP long-polling 自动降级) |
+| **邮件** | Resend (AI 组合 + 模板引擎) |
+| **AI** | DeepSeek API (6 大能力 + ReAct Agent) |
+| **RAG** | Hybrid: pgvector cosine + tsvector FTS → RRF k=60 + Cohere Reranker |
+| **可观测性** | AICallMetric + AI Health Dashboard + Sentry + 结构化日志 + requestId 分布式追踪 |
+| **认证** | 自定义 JWT (jose) + bcryptjs 12 轮 + httpOnly Cookies + Redis 黑名单 |
 | **Monorepo** | pnpm workspaces + Turborepo |
-| **Hosting** | Vercel (web) + Railway (worker) |
+| **部署** | Vercel (Web, Serverless) + Railway (Worker, 长期容器) |
 
 ---
 
-## Architecture
+## 项目结构
 
 ```
 apps/
-  web/       — Next.js 14 (App Router, ~40 API routes)
-  worker/    — BullMQ Worker (AI + campaigns + email + scoring)
-  mobile/    — Expo (Dashboard + Inbox + KB + Playground)
+  web/       — Next.js 14 (App Router, 50+ API Routes, Socket.IO Chat Server)
+  worker/    — BullMQ Worker (AI + Email + Campaign + Scoring)
+  mobile/    — Expo (Dashboard + Inbox + KB + AI Playground + System Overview)
 
 packages/
-  shared-types/  — API contract types (wire format)
-  domain/        — Business entities (LeadStage, CampaignStatus, etc.)
-  ui-tokens/     — Corporate Green palette + Tailwind preset
-  ai-core/       — Unified AI client + prompts (versioned) + agents + metrics
-  rag-core/      — Full RAG pipeline (parse → chunk → embed → hybrid retrieve → cite) + eval
-  api-client/    — Type-safe fetch client (web + mobile share)
-  db/            — Prisma schema + pgvector (15 models)
+  shared-types/  — API 合约类型
+  domain/        — 业务实体 (LeadStage, CampaignStatus 等)
+  ui-tokens/     — 企业绿调色板 + Tailwind preset + JS tokens (RN 共享)
+  ai-core/       — 统一 AI 客户端 + Prompt (版本化) + Agents + ReAct + Metrics
+  rag-core/      — 完整 RAG 管线 (parse→chunk→embed→hybrid retrieve→cite) + eval
+  api-client/    — 类型安全 fetch 客户端 (web + mobile 共享)
+  db/            — Prisma 6 schema + pgvector (16 数据模型)
 ```
 
-### Database (15 models)
+### 数据模型 (16 个)
 
 ```
 Organization  ──< Memberships >── User
@@ -138,57 +142,31 @@ Organization  ──< Memberships >── User
       ├──< Lead ──< LeadActivity
       ├──< Script ──< Campaign ──< CampaignRun
       ├──< Document ──< DocumentChunk (pgvector + tsvector)
-      ├──< AICallMetric (token usage, latency, cost)
-      ├──< AuditLog
-      ├──< ApiKey
+      ├──< AICallMetric (token, 延迟, 成本)
+      ├──< AuditLog (不可变审计)
+      ├──< ApiKey (SHA-256 哈希)
       └──< FeatureFlag (DB-backed, per-org rollout%)
 ```
 
-### Multi-Tenant RBAC
-
-| Role | Manage Org | Manage Members | Manage Agents | View All | Customer Portal |
-|------|:---:|:---:|:---:|:---:|:---:|
-| Owner | ✅ | ✅ | ✅ | ✅ | — |
-| Admin | — | ✅ | ✅ | ✅ | — |
-| Operator | — | — | ✅ | ✅ | — |
-| Viewer | — | — | — | ✅ | — |
-| Customer | — | — | — | — | ✅ |
-
 ---
 
-## Color System
+## 快速开始
 
-**Corporate Green palette** — Premium Enterprise SaaS aesthetic (Notion / Linear / Stripe / Ramp).
-
-| Token | Hex | CSS Variable | Role |
-|---|---|---|---|
-| Primary | `#166534` | `--accent` | CTAs, active states |
-| Dark Accent | `#4ADE80` | `--accent` (dark) | Dark mode vibrant green |
-| Dark BG | `#0a1108` | `--bg` (dark) | Near-OLED black |
-| Light BG | `#F8F9FA` | `--bg` (light) | Cool slate |
-| Card | `#FFFFFF` | `--bg-card` (light) | Pure white cards |
-| Dark Card | `#111A0E` | `--bg-card` (dark) | Dark surfaces |
-| Accent Secondary | `#849b70` | `--accent-secondary` | Dividers, muted accents |
-
----
-
-## Getting Started
-
-### Prerequisites
+### 前置条件
 - Node.js 20+, pnpm 9+
-- PostgreSQL (Supabase) + pgvector extension
+- PostgreSQL (Supabase) + pgvector 扩展
 - Upstash Redis
 
-### Install
+### 安装
 
 ```bash
 pnpm install
-pnpm --filter @salesagent/db push     # Push schema
-pnpm --filter @salesagent/db generate  # Generate Prisma client
-node packages/db/setup-vector.mjs     # Enable pgvector + embedding + tsvector
+pnpm --filter @salesagent/db push
+pnpm --filter @salesagent/db generate
+node packages/db/setup-vector.mjs
 ```
 
-### Environment
+### 环境变量
 
 ```bash
 # packages/db/.env
@@ -200,121 +178,86 @@ JWT_SECRET="64-char-random-string"
 DEEPSEEK_API_KEY="sk-..."
 REDIS_URL="redis://..."
 
-# Optional: for vector search (falls back to keyword search)
-EMBEDDING_API_KEY="sk-..."   # OpenAI API key
+# 可选：向量搜索（无 Key 时自动降级到关键词搜索）
+EMBEDDING_API_KEY="sk-..."
 EMBEDDING_MODEL="text-embedding-3-small"
 
-# Optional: Sentry error tracking
+# 可选：Cohere Reranker（无 Key 时自动 Noop 透传）
+COHERE_API_KEY="..."
+
+# 可选：Sentry 错误追踪
 SENTRY_DSN="https://..."
 ```
 
-### Develop
+### 开发
 
 ```bash
-pnpm dev              # Web app
-pnpm dev-worker       # Worker
-pnpm seed-demo        # Demo data (Acme Corp)
-pnpm --filter @salesagent/web test  # Unit tests
-pnpm --filter @salesagent/rag-core eval  # RAG evaluation
+pnpm dev                 # Web 应用 (Next.js)
+pnpm dev-worker          # Worker (BullMQ)
+pnpm --filter @salesagent/web dev-socket  # 实时聊天服务器 (端口 3001)
+pnpm seed-demo           # Demo 数据
+pnpm --filter @salesagent/web test        # 单元测试 (53 specs)
+pnpm --filter @salesagent/rag-core eval:sales  # RAG 评测
 ```
 
-### Deploy
+### 部署
 
 ```bash
 npx vercel --prod --cwd apps/web     # Web → Vercel
-# Worker auto-deploys via Railway on git push
+# Worker → Railway (git push main 自动部署)
 ```
 
 ---
 
-## Seed Scripts
+## 种子脚本
 
-| Command | What |
-|---------|------|
-| `pnpm seed` | Full reset + demo data |
-| `pnpm seed-prod <slug>` | 3 scripts + 5 leads (idempotent) |
-| `pnpm seed-members <slug>` | RBAC test accounts |
-| `pnpm seed-verify-alice` | Verify alice@example.com |
-| `pnpm seed-demo` | Acme Corp demo org |
-| `pnpm clean-org <slug>` | FK-safe org cleanup |
-
----
-
-## Demo
-
-```bash
-pnpm seed-demo
-```
-
-Creates **Acme Corp** with 15 leads, 3 AI agents, 10 conversations, 2 campaigns.
-
-Login: `demo@acmecorp.com` / `demo123456`
+| 命令 | 说明 |
+|------|------|
+| `pnpm seed` | 全量重置 + Demo 数据 |
+| `pnpm seed-prod <slug>` | 幂等种子：3 脚本 + 5 线索 |
+| `pnpm seed-members <slug>` | RBAC 测试账号 |
+| `pnpm seed-demo` | Acme Corp Demo 组织 |
+| `pnpm seed-chinese-demo` | 启云科技中文 Demo |
+| `pnpm seed-kb-full` | 生成 12 份三层知识库文档 |
+| `pnpm clean-org <slug>` | FK-safe 组织清理 |
 
 ---
 
-## Phase 18 Changelog (2026-07-04)
+## 设计系统
 
-### L1 — AI Runtime
-- **Token usage tracking**: `AICallMetric` model captures prompt/completion tokens, latency, cost per AI call. Previously discarded by `DeepSeekResponse` type.
-- **Worker deduplication**: Eliminated 300+ line duplicate DeepSeek client in `apps/worker/src/ai.ts` — worker now uses `@salesagent/ai-core`.
+**企业绿 (Corporate Green)** — 专业 SaaS 美学 (Notion / Linear / Stripe 风格)
 
-### L2 — AI Retrieval
-- **Hybrid search**: pgvector cosine + PostgreSQL tsvector → RRF (Reciprocal Rank Fusion). BM25 keyword + vector semantic, parallel retrieval with `k=60` fusion.
-- **RAG evaluation framework**: 20-case golden dataset, precision/recall/MRR/NDCG metrics, LLM-as-Judge injected at CLI boundary. Run via `pnpm eval`.
-- **DOCX parsing**: `mammoth` dependency installed — KB now supports Word documents.
-
-### L3 — AI Observability
-- **AI Health dashboard**: `/analytics?tab=ai` — P50/P95 latency, token cost, fallback rate, daily usage charts, alert thresholds (latency >10s, fallback >10%).
-- **Distributed tracing**: `requestId` propagates HTTP → BullMQ Job → DeepSeek API → AICallMetric. Full-chain traceable.
-- **Sentry globalThis fix**: Replaced fragile `globalThis.__SENTRY__` pattern (no-op cleanup).
-
-### L4 — AI Reliability
-- **Job idempotency**: Redis SET NX dedup on all 4 BullMQ queues. Exactly-once processing on retry storms.
-- **HITL formalization**: `awaiting_approval` state machine, Inbox ⏳ Needs Review badge, `hitl.ts` documentation.
-- **BullMQ bug fix**: `defaultJobOptions` readonly error (pre-existing in BullMQ 5.x) moved to queue constructor.
-- **Prisma schema drift fix**: `Unsupported("tsvector")` + `Unsupported("vector")` annotations prevent `db push` from dropping pgvector columns.
-
-### Prompt Engineering
-- **Version registry**: 4 prompt types registered with version + deployedAt. Feature Flag `compose_prompt_version = "v2"` enables canary rollout.
-- **A/B testing ready**: `getPromptVersionFlag()` reads DB rules → hash-bucketed rollout → runtime prompt switch.
-
-### Stats
-- **35 files**, +1,715 / −276 lines. 11 new files, 14 modified, 1 deleted, 1 DB migration.
-- Build: ✅ green (web + worker, 0 errors). Prisma Client: v6.19.3.
+| Token | Hex | 用途 |
+|-------|-----|------|
+| Primary | `#166534` | CTA, 激活状态 |
+| Dark Accent | `#4ADE80` | 暗色模式 vibrant green |
+| Dark BG | `#0a1108` | 近 OLED 黑色背景 |
+| Light BG | `#F8F9FA` | 冷色调 Slate 背景 |
+| Card Light | `#FFFFFF` | 纯白卡片 |
+| Card Dark | `#111A0E` | 暗色表面 |
+| Accent Secondary | `#849b70` | 分割线, 弱化强调 |
 
 ---
 
-### V1.9 (2026-07-05) — China Market Adaptation
-- Customer Portal (Lead.userId, /portal routes, customer JWT login)
-- Full Chinese i18n (17 dashboard files — navigation, inbox, analytics, campaigns, leads, agents, settings)
-- Channel Feature Flags (email_channel/wechat_channel) — same codebase, different markets
-- Real pipeline value (Lead.dealAmount) replacing hardcoded $5K
-- ReAct Agent executor (agent-executor.ts) + AgentThinkingPanel UI + Worker campaign step type="react"
-- AI draft RAG integration (Knowledge Base grounding before composing replies)
-- Cohere Reranker with NoopReranker fallback (createReranker factory)
-- Translation API (/api/v1/translate) + inbox translate button + detectLanguage()
-- Boss Dashboard tab (/analytics?tab=boss) — HITL rate, AI cost trends, agent performance
-- AI Health full Chinese translation + RMB cost display
-- AI auto-detects customer language and matches response language (prompt rule)
-- 启云科技 Chinese Demo seed (5 members, 3 AI, 15 customers, 4 KB docs with 31 chunks)
-- ~55 files, +2,800 / -500 lines. Build: green.
+## 关键版本
 
-## Previous Changelog
+### Phase 21 (2026-07-07) — RAG 性能 + 实时聊天
+- Redis 两层语义缓存 (exact + cosine ≥0.95)
+- SHA-256 内容寻址增量索引
+- Socket.IO WebSocket 实时聊天 + REST polling 降级
+- ChatWindow + Inbox Email/Chat 一键切换 + AI 草稿
+- 知识库 12 份文档三层架构
 
-### V1.7 (2026-06-28) — Production Hardening
-- Auth rate limiting (defense-in-depth), bcrypt 12 rounds, CSP unsafe-eval removed
-- API versioning (`/api/v1/` rewrites), Sentry graceful opt-in, 14 error boundaries
-- Feature flags v2 (DB-backed, per-org rollout%), file upload 10MB cap + magic bytes
-- PII redaction logger, API 401 JSON responses, E2E security spec
+### Phase 20 (2026-07-07) — RAG 检索质量工程化
+- 统一检索管线 `hybrid-retriever.ts` (消除 120+ 行重复 SQL)
+- 查询改写 (LLMQueryRewriter) + 问题路由 (6 分类) + 置信度门控
+- RAG Eval 连接生产 PgVector + 30 条 SalesAgent Golden Dataset
+- KB API CRUD (DELETE/PATCH/reindex)
 
-### V1.6 (2026-06-28) — UI/UX Commercial Overhaul
-- Real human avatars (Pravatar.cc), Inter typography, Corporate Green palette
-- 26 files changed across web + mobile + packages
-
-### V1.5 (2026-06-03) — Agent Platform
-- Monorepo refactor: 3 apps + 7 packages
-- RAG pipeline (pgvector), Knowledge Base, Mobile Expo app
-- AI deduplication, Luxury Nature palette
+### Phase 19 (2026-07-05) — 中国市场适配
+- Customer Portal + 全界面中文化 + Email/Chat Feature Flag 渠道开关
+- ReAct Agent executor + Cohere Reranker + AI Draft RAG 集成
+- 翻译 API + Boss Dashboard + AI Health 中文化
 
 ---
 
@@ -322,4 +265,4 @@ Login: `demo@acmecorp.com` / `demo123456`
 
 **Gloria Han**
 
-Focus: AI Agent Platforms · Multi-Tenant SaaS · RAG Infrastructure · Full-Stack Product Engineering
+方向：AI Agent 平台 · RAG 基础设施 · 多租户 SaaS · 全栈产品工程

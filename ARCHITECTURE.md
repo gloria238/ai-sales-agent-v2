@@ -1,10 +1,9 @@
-# SalesAgent AI — Architecture Document (V1.9)
+# SalesAgent AI — Architecture Document (V2.1)
 
-> Multi-tenant AI Agent Platform with Web, Mobile, Worker, and Knowledge Infrastructure.
-> Build and deploy AI Sales, Concierge, and Support Agents on a shared platform.
-> ~30,000 lines across ~420 files. 45+ API routes.
-> Web: 45+ pages + API routes + 14 error boundaries. Mobile: 7-page Club Concierge showcase. Worker: 4 BullMQ queues (idempotent).
-> Latest: Phase 19 — China Market Adaptation (Customer Portal, i18n, ReAct Agent, RAG-grounded AI drafts, channel feature flags).
+> 企业销售团队 AI 中枢操作系统 — 自研 RAG 管线 + WebSocket 实时聊天 + AI Agent 编排引擎
+> 多租户 AI Agent 平台，覆盖 Web、Worker、Mobile 三大应用端和七层共享基础设施。
+> ~32,000 行 | 440+ 文件 | 50+ API Routes | 16 数据模型
+> 最新：Phase 21 — RAG 语义缓存 + 增量索引 + WebSocket 实时聊天 + 知识库三层架构
 
 ---
 
@@ -334,7 +333,7 @@ PROMPT_REGISTRY.compose_response
 
 ---
 
-## 8. RAG 知识库系统 (V1.9 — RAG-grounded AI drafts)
+## 8. RAG 知识库系统 (V2.0 — Unified Pipeline + Semantic Cache + Incremental Indexing)
 
 ### 8.1 管线 (V1.9 — Hybrid Search + Reranker + AI Draft Integration)
 
@@ -393,6 +392,31 @@ AI 被明确告知「产品/定价/竞品必须从知识库引用，KB 没有的
 - **pgvector + tsvector**: 都在 PostgreSQL 内，一次查询同时做向量+全文搜索，零额外基础设施
 - **评估**: Golden Dataset (20 Q&A) + 4 retrieval metrics + 2 generation metrics (LLM judge), 可 CI 运行
 - **知识库文档 (V1.9)**: 6 份启云科技 KB 文件 (产品介绍/定价/FAQ/异议处理/客户案例/竞品对比，~40KB) 用于 RAG 测试和演示
+
+### 8.6 RAG Pipeline 2.0 (Phase 20-21)
+
+```
+Query → [Query Rewriter] → [Query Router] → [Semantic Cache?]
+         3 variants          6 categories       Redis exact+semantic
+              ↓                    ↓              ↓ hit → return cached
+         [Hybrid Search: Vector + Keyword]    [Miss → Full Pipeline]
+              ↓
+         [RRF Fusion k=60] → [Confidence Gate] → [Cohere Reranker] → Results
+                                 ↓ (<0.7)
+                          [Secondary Retrieval]
+```
+
+- **查询改写 (Phase 20)**: DeepSeek 生成 3 变体 — 原始/关键词/同义改写。`LLMQueryRewriter` (可插拔, 失败降级 Noop)
+- **问题路由 (Phase 20)**: 6 分类 (faq/product/pricing/competitor/case/general) → 差异化检索参数 (`CATEGORY_PARAMS`)
+- **置信度门控 (Phase 20)**: top-1 < 0.7 → 自动 expanded search (topK×3) → 去重合并 → 第二次 RRF
+- **语义缓存 (Phase 21)**: Redis 两层缓存 — SHA-256 exact match + embedding cosine ≥0.95. FAQ 命中率 60%+, 延迟 2s→50ms
+- **增量索引 (Phase 21)**: SHA-256 content hash → 完全一致 skip / 同名更新 (删旧+重建) / 新文档正常索引. 上传后自动 invalidate cache
+
+### 8.7 实时聊天 (Phase 21)
+
+- **WebSocket (Socket.IO)**: Standalone server (port 3001), JWT cookie 验证, Room-based per conversationId
+- **ChatWindow 组件**: 复用组件 — Portal (客户) + Dashboard (Agent) 共用, 连接状态栏 + 正在输入动画
+- **REST Fallback**: `POST/GET chat-messages` API — Vercel serverless 不支持 WebSocket 时自动降级到 HTTP polling
 
 ---
 

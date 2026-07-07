@@ -4,6 +4,7 @@ import { getSession } from "@/lib/session";
 import { checkPermission } from "@/lib/permissions";
 import { chunkText } from "@salesagent/rag-core/chunker";
 import { createEmbeddingProvider } from "@salesagent/rag-core/embeddings";
+import { fingerprintContent } from "@salesagent/rag-core";
 
 export async function POST(req: NextRequest, { params }: { params: { slug: string } }) {
   const session = await getSession();
@@ -19,7 +20,6 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
   const file = formData.get("file") as File | null;
   if (!file) return NextResponse.json({ error: "No file provided" }, { status: 400 });
 
-  // File size limit: 10MB
   const MAX_FILE_SIZE = 10_000_000;
   if (file.size > MAX_FILE_SIZE) {
     return NextResponse.json({ error: "File too large. Maximum size is 10MB." }, { status: 413 });
@@ -33,23 +33,65 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
     return NextResponse.json({ error: "Unsupported file type. Supported: PDF, TXT, JSON, Markdown." }, { status: 415 });
   }
 
-  const docId = `doc-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  // ═══ Content Fingerprinting — check for duplicates ═════════════════════
+  const fingerprint = await fingerprintContent(buffer);
+  const orgId = membership.organizationId;
 
-  // 1. Create document record (status: processing)
-  const doc = await prisma.document.create({
-    data: {
-      id: docId,
-      organizationId: membership.organizationId,
-      name: file.name,
-      type: fileType,
-      status: "processing",
-      chunkCount: 0,
-      metadata: { fileSize: file.size, uploadedAt: new Date().toISOString(), source: "upload" },
-    },
+  // Check if the exact same content already exists in this org
+  const existingByHash = await prisma.document.findFirst({
+    where: { organizationId: orgId, metadata: { path: ["contentHash"], equals: fingerprint.hash } },
+  });
+  if (existingByHash) {
+    return NextResponse.json({
+      document: {
+        id: existingByHash.id,
+        name: existingByHash.name,
+        type: existingByHash.type,
+        chunkCount: existingByHash.chunkCount,
+        status: existingByHash.status,
+      },
+      deduplicated: true,
+      message: "This exact document is already indexed. Skipping upload.",
+    });
+  }
+
+  // Check if a document with the same name exists (potential update)
+  const existingByName = await prisma.document.findFirst({
+    where: { organizationId: orgId, name: file.name },
   });
 
+  const isUpdate = existingByName !== null;
+  const docId = isUpdate
+    ? existingByName.id // Reuse same ID for update
+    : `doc-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+  // If updating, delete old chunks first
+  if (isUpdate) {
+    await prisma.documentChunk.deleteMany({ where: { documentId: docId } });
+    await prisma.document.update({
+      where: { id: docId },
+      data: {
+        status: "processing",
+        chunkCount: 0,
+        metadata: { fileSize: file.size, uploadedAt: new Date().toISOString(), source: "upload", contentHash: fingerprint.hash },
+      },
+    });
+  } else {
+    await prisma.document.create({
+      data: {
+        id: docId,
+        organizationId: orgId,
+        name: file.name,
+        type: fileType,
+        status: "processing",
+        chunkCount: 0,
+        metadata: { fileSize: file.size, uploadedAt: new Date().toISOString(), source: "upload", contentHash: fingerprint.hash },
+      },
+    });
+  }
+
   try {
-    // 2. Parse content based on type
+    // Parse content based on type
     let content = "";
     if (fileType === "pdf") {
       const { PDFParse } = await import("pdf-parse");
@@ -73,13 +115,13 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
     }
     if (!content.trim()) throw new Error("No text content extracted from file");
 
-    // 3. Chunk
-    const chunks = chunkText(content, docId, membership.organizationId, {
+    // Chunk (stable IDs based on docId + index for update compatibility)
+    const chunks = chunkText(content, docId, orgId, {
       title: file.name.replace(/\.[^.]+$/, ""),
       fileName: file.name,
-    });
+    }, { stableIds: true });
 
-    // 4. Embed (optional — if no embedding key, store without vectors and use keyword search)
+    // Embed (optional — if no embedding key, store without vectors)
     let embeddings: number[][] = [];
     try {
       const embedder = createEmbeddingProvider();
@@ -89,14 +131,14 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
       console.warn("Embedding not available — storing without vectors. Keyword search will be used.");
     }
 
-    // 5. Store chunks
+    // Store chunks (sequential to avoid connection pool exhaustion)
     for (let i = 0; i < chunks.length; i++) {
       const chunk = chunks[i];
       await prisma.documentChunk.create({
         data: {
           id: chunk.id,
           documentId: docId,
-          organizationId: membership.organizationId,
+          organizationId: orgId,
           content: chunk.content,
           chunkIndex: chunk.index,
           metadata: chunk.metadata as any,
@@ -112,21 +154,29 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
       }
     }
 
-    // 6. Update document status
+    // Update document status
     await prisma.document.update({
       where: { id: docId },
       data: { status: "ready", chunkCount: chunks.length },
     });
 
+    // Invalidate RAG cache for this org (non-blocking, best-effort)
+    try {
+      const { getSemanticCache } = await import("@salesagent/rag-core");
+      getSemanticCache().invalidateOrg(orgId);
+    } catch { /* cache not configured */ }
+
     return NextResponse.json({
       document: { id: docId, name: file.name, type: fileType, chunkCount: chunks.length, status: "ready" },
+      updated: isUpdate,
+      contentHash: fingerprint.hash,
     });
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Unknown error";
     console.error("KB upload error:", msg, err instanceof Error ? err.stack : "");
     await prisma.document.update({
       where: { id: docId },
-      data: { status: "failed", metadata: { ...(doc.metadata as Record<string,unknown> || {}), error: msg } },
+      data: { status: "failed", metadata: { fileSize: file.size, uploadedAt: new Date().toISOString(), source: "upload", contentHash: fingerprint.hash, error: msg } },
     });
     return NextResponse.json({ error: `Upload failed: ${msg}` }, { status: 500 });
   }
@@ -137,20 +187,13 @@ function detectTypeByMagic(buffer: Buffer, fileName: string): string | null {
   const ext = fileName.split(".").pop()?.toLowerCase() || "";
   const head = buffer.slice(0, 16).toString("utf-8").trimStart();
 
-  // PDF: starts with %PDF-<version>
   if (buffer.slice(0, 5).toString() === "%PDF-") return "pdf";
-
-  // JSON/FAQ: starts with [ or { after optional whitespace
   if (head.startsWith("[") || head.startsWith("{")) return "faq";
-
-  // Markdown: starts with # (heading) or common markdown markers
   if (/^(#|<|>|\*|-)/.test(head) && ext === "md") return "md";
 
-  // Plain text: printable ASCII/UTF-8 without binary null bytes
   const isText = !buffer.slice(0, Math.min(buffer.length, 512)).includes(0x00);
   if (isText && ["txt", "md", "csv"].includes(ext)) return ext === "md" ? "md" : "txt";
 
-  // Extension-only fallback for known types
   if (ext === "json") return "faq";
   if (ext === "txt") return "txt";
   if (ext === "md") return "md";

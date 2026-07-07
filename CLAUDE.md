@@ -1,5 +1,14 @@
 # CLAUDE.md
 
+> **SalesAgent AI** — 企业销售团队 AI 中枢操作系统 → 未来演进方向 **CompanyOS**（sales 作为首个业务板块，架构预留了客服/HR/运营等横向扩展能力）。
+> 自研 RAG 检索管线（六阶段：查询改写→问题路由→混合检索→Reranker→置信度门控→语义缓存）、WebSocket 实时聊天、ReAct Agent 编排引擎、多租户 RBAC。TypeScript 全栈，~32,000 行，440+ 文件，21 个 Phase 持续迭代。
+>
+> **核心理念**：AI 辅助而非替代。Human-in-the-Loop 贯穿全流程——AI 起草但不发送，人类做最终决策。
+>
+> **部署拓扑**：Vercel (Web, Serverless) + Railway (Worker, 长期容器) + Supabase (PostgreSQL+pgvector) + Upstash (Redis, REST+TCP 双协议)
+>
+> **技术栈**：Next.js 14 · React 18 · Prisma 6 · DeepSeek · Socket.IO · BullMQ · Cohere Rerank · Tailwind CSS · TypeScript strict
+
 1. Think Before Coding
 Don't assume. Don't hide confusion. Surface tradeoffs.
 
@@ -58,6 +67,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 # Development
 pnpm dev                        # Start web app (Next.js dev server)
 pnpm dev-worker                 # Start worker explicitly (BullMQ consumers — uses Redis quota)
+pnpm --filter @salesagent/web dev-socket  # Start Socket.IO chat server (port 3001, required for real-time chat)
 
 # Build all packages
 pnpm build
@@ -77,13 +87,14 @@ pnpm --filter @salesagent/db prisma studio  # Open Prisma Studio
 node packages/db/setup-vector.mjs        # Enable pgvector + embedding + tsvector columns
 
 # Seeds
-pnpm seed                          # Reset + seed demo data (destructive)
-pnpm seed-prod <org-slug>          # Non-destructive: 3 scripts + 5 leads
-pnpm seed-members <org-slug>       # RBAC test accounts
-pnpm seed-demo                     # Acme Corp demo (15 leads, 3 agents, 10 conversations)
+pnpm seed                          # 全量重置 + Demo 数据（破坏性）
+pnpm seed-prod <org-slug>          # 幂等种子：3 脚本 + 5 线索
+pnpm seed-members <org-slug>       # RBAC 测试账号
+pnpm seed-demo                     # Acme Corp Demo (15 线索, 3 Agent, 10 对话)
 pnpm seed-chinese-demo             # 启云科技中文 Demo (5 成员, 3 AI, 15 客户, 4 KB)
-pnpm seed-verify-alice             # Mark alice@example.com as email-verified
-pnpm clean-org <org-slug>          # Delete all conversations + campaigns + leads in an org
+pnpm seed-kb-full                  # 生成 12 份三层知识库文档 (核心层/销售参考层/运营支撑层)
+pnpm seed-verify-alice             # 将 alice@example.com 标记为 email-verified
+pnpm clean-org <org-slug>          # FK-safe 删除指定组织下所有对话+活动+线索
 
 # Testing
 pnpm --filter @salesagent/web test              # Unit tests (vitest, ~2s): 53 specs
@@ -92,6 +103,7 @@ pnpm --filter @salesagent/web test:integration  # API integration tests
 pnpm --filter @salesagent/web test:e2e          # Playwright E2E
 pnpm --filter @salesagent/rag-core eval          # RAG evaluation (20-case golden dataset)
 pnpm --filter @salesagent/rag-core eval:retrieval # RAG eval — retrieval metrics only (no LLM judge)
+
 
 # Deploy
 npx vercel --cwd apps/web          # Deploy web app to Vercel
@@ -298,23 +310,25 @@ packages/db/clean-demo-org.ts       — FK-safe org cleanup before re-seed
 packages/rag-core/eval/knowledge-base/ — 6 启云科技 KB docs (product/pricing/FAQ/objections/cases/competitors) for RAG testing
 ```
 
-### State of the project (2026-07-05)
+### State of the project (2026-07-07)
 
 - **Phase 1-12**: Foundation → CRM → Campaigns → AI → Polish → Testing → Security → UI/UX → Identity Layer → Route hardening → UX Rework → Bugfix Sprint.
 - **Phase 13-14**: Monorepo refactor, RAG (pgvector), Mobile Expo app, Club Concierge showcase.
 - **Phase 15-17**: Security audit 165 findings→32 fixed, UI/UX overhaul (Corporate Green, Inter, Pravatar), Production hardening (auth rate limits, bcrypt 12, CSP, Sentry, Feature Flags, 14 error boundaries).
-- **Phase 18 (Production AI Builder — 2026-07-04)**: AICallMetric, Hybrid search (pgvector+tsvector→RRF), AI Health dashboard, prompt version registry, job idempotency, HITL formalization, distributed tracing, RAG eval. 35 files.
-- **Phase 19 (China Market Adaptation — 2026-07-05)**: Customer Portal (Lead.userId, /portal routes, customer JWT login). Full Chinese i18n (~17 files). Channel Feature Flags (email_channel/wechat_channel). Real pipeline value (Lead.dealAmount). ReAct Agent executor (agent-executor.ts). Cohere Reranker with noop fallback. AI draft RAG integration (Knowledge Base grounding). AgentThinkingPanel reasoning UI. Translation API + inbox translate button. Boss Dashboard tab. 启云科技 Chinese Demo seed (5 members, 3 AI, 15 customers, 4 KB docs). Vercel SQL column name fix (snake_case→camelCase). ~55 files, +2,800/−500 lines.
-- **~30,000 lines** across ~420 files. 45+ API routes. 52 unit tests. 16 models.
-- Web app: ✅ Vercel (JWT, API versioning, Customer Portal, Full Chinese UI, RAG-grounded AI drafts, ReAct reasoning UI, Hybrid Search, AI Health + Boss dashboards, Translation API).
+- **Phase 18**: AICallMetric, Hybrid search (pgvector+tsvector→RRF), AI Health dashboard, prompt version registry, job idempotency, HITL formalization, distributed tracing, RAG eval.
+- **Phase 19**: Customer Portal, full Chinese i18n, ReAct Agent executor, Cohere Reranker, AI Draft RAG integration, Translation API, Boss Dashboard, 启云科技中文 Demo.
+- **Phase 20**: Unified RAG pipeline (`hybrid-retriever.ts`), Query Rewriter (LLM 3-variant), Query Router (6 categories), Confidence Gate, RAG Eval connected to real PgVector, 30-case SalesAgent Golden Dataset, KB API CRUD, Retriever native pgvector search.
+- **Phase 21**: Redis semantic cache (exact + cosine ≥0.95), SHA-256 incremental indexing, Socket.IO WebSocket real-time chat, ChatWindow with Email/Chat toggle + AI Draft, 12-document 3-layer knowledge base.
+- **~32,000 lines** across ~440 files. 50+ API routes. 52 unit tests. 16 models.
+- Web: ✅ Vercel (JWT, API versioning, Customer Portal, Full Chinese UI, RAG-grounded AI drafts, ReAct reasoning UI, Hybrid Search, AI Health + Boss dashboards, Translation API, WebSocket real-time chat).
 - Worker: ✅ Railway (4 BullMQ workers, idempotent, channel feature flags, ReAct agent campaign steps).
 - Mobile: ✅ Expo 52 (7 pages). Club Concierge demo.
-- Email: ✅ Resend with per-org Feature Flag control (default off for China market).
-- RAG: ✅ Hybrid pgvector+tsvector→RRF. Cohere reranker (optional). AI drafts grounded in KB. KB docs for 启云科技 (6 documents, ~40KB). Golden dataset + eval.
+- Email: ✅ Resend with per-org Feature Flag control.
+- RAG: ✅ 6-stage pipeline (Query Rewriting → Query Routing → Hybrid pgvector+tsvector→RRF → Cohere Reranker → Confidence Gate → Semantic Cache). 30-case Golden Dataset + eval.
+- Chat: ✅ Socket.IO WebSocket (Room-based, JWT auth, REST polling fallback), ChatWindow with AI Draft.
 - Observability: ✅ AICallMetric, AI Health dashboard (中文), Sentry, structured logging, distributed tracing.
 - Design: ✅ Corporate Green. Full Chinese UI. Inter typography. 14 error boundaries.
 - Security: Auth rate limiting, fail-closed, IP protection, bcrypt 12, CSP, file upload validation, prompt armor, customer role isolation.
-- Known: Upstash Redis 500K limit. Stripe/SSO not implemented. No GitHub Actions CI/CD.
 
 ### Seed scripts reference
 

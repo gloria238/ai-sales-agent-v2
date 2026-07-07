@@ -1,4 +1,4 @@
-import type { EmbeddedChunk, SearchResult, SearchResponse } from "./types";
+import type { EmbeddedChunk, SearchResult, SearchResponse, Chunk } from "./types";
 import type { EmbeddingProvider } from "./embeddings";
 import type { StorageAdapter } from "./storage";
 import type { Reranker } from "./reranker";
@@ -10,7 +10,12 @@ export interface RetrieveOptions {
   reranker?: Reranker;
 }
 
-/** Retrieve relevant chunks for a query using cosine similarity.
+/** Retrieve relevant chunks for a query.
+ *
+ *  Two paths:
+ *    1. If storage.search() is available (PgVector), use native pgvector <=> search.
+ *    2. Otherwise fall back to in-memory cosine similarity (InMemoryStorage / MVP).
+ *
  *  Multi-tenant: only searches within the given organization. */
 export async function retrieve(
   query: string,
@@ -23,38 +28,65 @@ export async function retrieve(
   const minScore = options.minScore ?? 0;
   const reranker = options.reranker ?? createReranker();
 
-  // 1. Embed the query
-  const queryEmbedding = await embedder.embed(query);
+  let scored: SearchResult[];
 
-  // 2. Get all chunks for this org
-  const chunks = await storage.getChunks(organizationId);
-  if (chunks.length === 0) {
-    return { query, results: [], topK };
+  // ── Path 1: Native pgvector search ─────────────────────────────────
+  if (storage.search) {
+    const queryEmbedding = await embedder.embed(query);
+    const nativeResults = await storage.search(queryEmbedding, organizationId, Math.max(topK * 4, 15));
+
+    scored = nativeResults
+      .filter((r) => r.score >= minScore)
+      .map((r) => ({
+        chunk: {
+          id: r.id,
+          documentId: r.documentId,
+          organizationId: r.organizationId,
+          content: r.content,
+          index: r.index,
+          metadata: r.metadata,
+        } satisfies Chunk,
+        score: r.score,
+      }));
+
+  // ── Path 2: In-memory cosine similarity fallback ───────────────────
+  } else {
+    const queryEmbedding = await embedder.embed(query);
+    const chunks = await storage.getChunks(organizationId);
+    if (chunks.length === 0) {
+      return { query, results: [], topK };
+    }
+
+    scored = chunks
+      .map((chunk) => ({
+        chunk: embeddedChunkToChunk(chunk),
+        score: cosineSimilarity(queryEmbedding, chunk.embedding),
+      }))
+      .filter((r) => r.score >= minScore)
+      .sort((a, b) => b.score - a.score);
   }
 
-  // 3. Compute cosine similarity
-  let scored: SearchResult[] = chunks.map((chunk) => ({
-    chunk,
-    score: cosineSimilarity(queryEmbedding, chunk.embedding),
-  }));
-
-  // 4. Filter by minimum score
-  scored = scored.filter((r) => r.score >= minScore);
-
-  // 5. Sort by score descending
-  scored.sort((a, b) => b.score - a.score);
-
-  // 6. Apply reranker (Cohere if COHERE_API_KEY set, else Noop)
+  // ── Reranker ───────────────────────────────────────────────────────
   if (scored.length > 0) {
-    const toRerank = scored.slice(0, Math.min(topK * 4, scored.length)); // rerank 4x topK for better recall
+    const toRerank = scored.slice(0, Math.min(topK * 4, scored.length));
     scored = await reranker.rerank(query, toRerank, topK);
   }
 
-  // 7. Take top K
   return {
     query,
     results: scored.slice(0, topK),
     topK,
+  };
+}
+
+function embeddedChunkToChunk(ec: EmbeddedChunk): Chunk {
+  return {
+    id: ec.id,
+    documentId: ec.documentId,
+    organizationId: ec.organizationId,
+    content: ec.content,
+    index: ec.index,
+    metadata: ec.metadata,
   };
 }
 
