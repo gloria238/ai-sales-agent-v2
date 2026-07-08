@@ -67,7 +67,8 @@ jobs:
   rag-eval:
     name: RAG eval (optional)
     runs-on: ubuntu-latest
-    if: ${{ secrets.EMBEDDING_API_KEY != '' }}
+    env:
+      EMBEDDING_API_KEY: ${{ secrets.EMBEDDING_API_KEY }}
     steps:
       - uses: actions/checkout@v4
 
@@ -87,6 +88,7 @@ jobs:
         run: pnpm --filter @salesagent/db generate
 
       - name: RAG retrieval eval
+        if: ${{ env.EMBEDDING_API_KEY != '' }}
         run: pnpm --filter @salesagent/rag-core eval:sales:retrieval
         env:
           EMBEDDING_API_KEY: ${{ secrets.EMBEDDING_API_KEY }}
