@@ -1,9 +1,9 @@
-# SalesAgent AI — Architecture Document (V2.1)
+# SalesAgent AI — Architecture Document (V2.2)
 
 > 企业销售团队 AI 中枢操作系统 — 自研 RAG 管线 + WebSocket 实时聊天 + AI Agent 编排引擎
 > 多租户 AI Agent 平台，覆盖 Web、Worker、Mobile 三大应用端和七层共享基础设施。
-> ~32,000 行 | 440+ 文件 | 50+ API Routes | 16 数据模型
-> 最新：Phase 21 — RAG 语义缓存 + 增量索引 + WebSocket 实时聊天 + KB 三层架构 + 评测基准 (Precision@5=0.62)
+> ~34,000 行 | 470+ 文件 | 50+ API Routes | 16 数据模型
+> 最新：Phase 22 — Inbox 全面加固 + 企业 UI 重构 + HITL 审计 + AI 四层指标体系 + CI/CD
 
 ---
 
@@ -420,22 +420,35 @@ Query → [Query Rewriter] → [Query Router] → [Semantic Cache?]
 
 ---
 
-## 9. 对话收件箱 (V1.8 — HITL)
+## 9. 对话收件箱 (V2.2 — Enterprise UI + HITL Audit)
 
-统一单页面分栏（Linear/Figma 风格）：
-- 左侧: `w-80 lg:w-96` 对话列表, 筛选标签页 (all\|active\|⏳ Needs Review\|needs_reply\|closed), 计数徽章
-- 右侧: DetailHeader (头像 + 线索信息) + 消息流 + 输入区
-- LeadPopover: 悬停图标 → 完整线索卡片
-- **HITL**: AI 生成草稿 → Conversation 状态变为 `awaiting_approval` → Inbox 列表显示橙色 ⏳ Review 徽章 → 人工审核后 approve/reject
+双页面模式：
+- `/inbox` — 两栏 (列表 + 详情), `setSelectedId()` state 切换, `InboxClient`
+- `/inbox/[id]` — 三栏 (列表 + 消息 + AI 智能分析面板), `InboxDetailClient`
+
+左侧列表: 5 筛选标签 (all\|active\|⏳ Needs Review\|needs_reply\|closed), 计数徽章
+右侧详情: IdentityCard(expanded) + Email/Chat toggle + 消息流 (cursor分页) + compose 区
+Email 模式: Textarea + AI 草稿虚线气泡 (发送/丢弃/重新生成) + 翻译按钮
+Chat 模式: ChatWindow (WebSocket + REST fallback), AI 草稿同 Email 模式气泡
 
 ### HITL 状态机
 
 ```
 active → inbound received → [AI drafts] → awaiting_approval
-                                              ├── [Approve] → approved (email sent)
-                                              ├── [Reject]  → active (draft discarded)
+                                              ├── [Approve] → reviewAction="approved" → 发送
+                                              ├── [Reject]  → reviewAction="rejected" → active
                                               └── [24h timeout] → active (draft expired)
 ```
+
+### reviewAction 审计 (Phase 22)
+- `Message.reviewAction`: "approved" | "rejected" | null
+- 双路径写入: 客户端草稿 POST 时带 + Worker 草稿 PATCH 单独写
+- HITL 审核决策全量可追溯 → draftAdoptionRate 可在数据积累后自动聚合
+
+### 消息分页 (Phase 22)
+- `GET /messages?cursor=&limit=50` — cursor-based, `take: limit+1` 防边界误判
+- 前端 `loadMoreMessages()` + scrollHeight 位移保持滚动位置
+- 初始 SSR load: `take: 50` — 防止大对话 TTFB 爆炸
 
 ---
 
@@ -592,9 +605,19 @@ apps/mobile/
 
 ### 19.2 AI Health Dashboard
 
-`/analytics?tab=ai` — 两个标签页:
+`/analytics?tab=ai` — 代理视角:
 - **Sales**: 原有 Pipeline、Campaign 指标
 - **AI Health**: P50/P95 延迟, 总成本, 成功率, 回退率, 按 jobType 分组的调用量/延迟/成本, 30 天 token 趋势, 告警 (延迟 >10s, 回退 >10%)
+
+### 19.3 AI 四层指标看板 (Phase 22)
+
+`/analytics?tab=metrics` — 质量视角:
+- **系统层**: P50/P95 (`percentile_cont` 原始 SQL), AI 回复总量, KB 命中率 (待接入)
+- **能力质量层**: 每日 AI 调用量趋势, KB 命中率趋势 (待接入)
+- **业务结果层**: 对话状态分布, AI 参与率 (handoffRate), 草稿采纳率 (draftAdoptionRate, 数据积累中)
+- **风险指标层**: 超时中断次数 (errorType ILIKE '%timeout%'), 置信度门控触发次数 (待接入)
+- 数据源: `GET /api/orgs/{slug}/metrics/ai?days=7` → AICallMetric + Conversation + Message.aggregate
+- Null placeholder 模式: 缺失字段返回 `null` → 前端显示 "数据待接入" (非 0 或空白)
 
 ### 19.3 分布式追踪
 
@@ -613,24 +636,40 @@ HTTP Request (x-request-id or UUID)
 
 ---
 
-## 15. 设计系统
+## 15. 设计系统 (V2.2 — Enterprise Flat)
 
-### 15.1 企业绿调色板
+Phase 22 完成全面重构，从 glass morphism → Linear/Stripe/Ramp 风格的企业级扁平设计。
 
-| Token | Hex | CSS Variable | 用途 |
-|---|---|---|---|
-| Primary | `#166534` | `--accent` | CTA, 激活状态 |
-| Primary Hover | `#15803d` | `--accent-hover` | 悬停 |
-| Dark BG | `#0a1108` | `--bg` (暗色) | 近 OLED 黑 |
-| Light BG | `#F8F9FA` | `--bg` (亮色) | Slate-50 |
-| Card | `#FFFFFF` | `--bg-card` (亮色) | 纯白卡片 |
-| Dark Card | `#111A0E` | `--bg-card` (暗色) | 暗色表面 |
-| Accent Secondary | `#849b70` | `--accent-secondary` | 分隔线, 弱化强调色 |
-| Dark Accent | `#4ADE80` | `--accent` (暗色) | 暗色模式 vibrant green |
+### 15.1 设计令牌 (CSS 自定义属性)
 
-### 15.2 设计令牌
+| Token | Light | Dark | 用途 |
+|-------|-------|------|------|
+| `--bg` | `#F8F9FA` | `#0A1108` | 页面背景 |
+| `--bg-card` | `#FFFFFF` | `#111A0E` | 卡片表面 |
+| `--bg-subtle` | `#F3F4F6` | `#1A2617` | 输入框, hover 背景 |
+| `--border` | `#E5E7EB` | `#1F2F1B` | 标准边框 |
+| `--text-primary` | `#111827` | `#F9FAFB` | 主文本 |
+| `--text-secondary` | `#374151` | `#D1D5DB` | 次要文本 |
+| `--text-muted` | `#6B7280` | `#9CA3AF` | 辅助文本, 标签 |
+| `--accent` | `#166534` | `#4ADE80` | CTA, 激活态 |
+| `--accent-subtle` | `#F0FDF4` | `#052E16` | 微绿背景 |
+| `--accent-text` | `#166534` | `#86EFAC` | 绿色文本 |
 
-`packages/ui-tokens` — Tailwind CSS (web) 和 React Native (mobile) 的单一真实来源。
+### 15.2 组件规范
+
+- **卡片**: `rounded-md border border-[var(--border)]` — 无 glass, 无 backdrop, 无发光阴影
+- **按钮**: `rounded-md transition-colors` — 无 `active:scale`, 无 `shadow`, 无 `ring`
+- **Badge**: `rounded px-1.5 py-0.5` — 无 `rounded-full`, 无 border gloss
+- **数字**: 全部 `tabular-nums` — 防止数字跳动
+- **Hover**: 只改 `bg`, 不改 `shadow` / `scale` / `translate-y`
+
+### 15.3 已淘汰
+
+- `.glass-card`, `.glass`, `.liquid-glass` 全部删除
+- `backdrop-blur-*`, `shadow-xl/lg`, `rounded-2xl/3xl`, `animate-ping/bounce`
+- 装饰性渐变 (`bg-gradient-to-*` 用于卡片/侧栏)
+- 图标渐变背景容器
+- KPI "霓虹数字" 效果 (`bg-clip-text text-transparent`)
 
 ---
 

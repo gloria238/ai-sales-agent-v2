@@ -1,7 +1,9 @@
 # CLAUDE.md
 
 > **SalesAgent AI** — 企业销售团队 AI 中枢操作系统 → 未来演进方向 **CompanyOS**（sales 作为首个业务板块，架构预留了客服/HR/运营等横向扩展能力）。
-> 自研 RAG 检索管线（六阶段：查询改写→问题路由→混合检索→Reranker→置信度门控→语义缓存）、WebSocket 实时聊天、ReAct Agent 编排引擎、多租户 RBAC。TypeScript 全栈，~32,000 行，440+ 文件，21 个 Phase 持续迭代。
+> 自研 RAG 检索管线（六阶段：查询改写→问题路由→混合检索→Reranker→置信度门控→语义缓存）、WebSocket 实时聊天、ReAct Agent 编排引擎、多租户 RBAC。TypeScript 全栈，~34,000 行，~470 文件，22 个 Phase 持续迭代。
+>
+> **2026-07-08 Phase 22**: Inbox 全面加固（安全性 / 诚实性 / 性能 / HITL 审计 / 可观测性）+ 企业 UI 扁平化重构 + GitHub Actions CI/CD。
 >
 > **核心理念**：AI 辅助而非替代。Human-in-the-Loop 贯穿全流程——AI 起草但不发送，人类做最终决策。
 >
@@ -97,7 +99,7 @@ pnpm seed-verify-alice             # 将 alice@example.com 标记为 email-verif
 pnpm clean-org <org-slug>          # FK-safe 删除指定组织下所有对话+活动+线索
 
 # Testing
-pnpm --filter @salesagent/web test              # Unit tests (vitest, ~2s): 53 specs
+pnpm --filter @salesagent/web test              # Unit tests (vitest, ~3s): 54 specs
 pnpm --filter @salesagent/worker test            # Unit tests (vitest)
 pnpm --filter @salesagent/web test:integration  # API integration tests
 pnpm --filter @salesagent/web test:e2e          # Playwright E2E
@@ -152,7 +154,7 @@ packages/
 
 ### Key patterns
 
-- **Web**: Server Components for data fetching, client components for interactivity. TanStack Query for data hooks, zustand for inbox state, SSE for real-time conversation streaming.
+- **Web**: Server Components for data fetching, client components for interactivity. Inbox state: 7 useState + cursor-based pagination + channel filtering. Message loading via `?cursor=&limit=50` with scrollHeight preservation on "load earlier". `channel` field filters Email vs Chat messages — both streams isolated in one Message table.
 - **Auth**: Custom JWT (jose) + httpOnly cookies. Login issues JWT directly. Registration requires email verification link click (one-time). `lib/session.ts` extracts session server-side.
 - **Security**: JWT secret enforced (no fallback). Upstash Redis sliding-window rate limiting (100 req/min API, 10/min auth, falls back to in-memory with TTL). Auth-specific rate limits on login/register/verify (defense-in-depth). Fail-closed options via env vars. IP validation via TRUSTED_PROXY_RANGES. Bcrypt 12 rounds with auto re-hash on login. CSP/HSTS/X-Frame-Options security headers. CSP `unsafe-eval` removed. Login PII hashed in logs (SHA256). Cookie `secure: true` always. Password min 8 chars. Org enumeration prevented via generic error messages. API routes return 401 JSON (not 302 redirect). File upload 10MB cap + magic byte validation.
 - **Registration flow**: `alice@example.com` → owner + new org. All others → viewer in alice's existing org. Verification link must be clicked to complete registration.
@@ -161,7 +163,7 @@ packages/
 - **AI**: DeepSeek API client. 6 AI capabilities: compose-response (with RAG KB grounding), score-lead, summarize-conversation, generate-script, translate, detect-language. ReAct Agent executor (`agent-executor.ts`) with tool-calling loop. AI draft API searches knowledge base before composing replies. Feature flags via DB-backed system.
 - **Email**: Resend SDK. `apps/worker/src/email.ts` — template variable resolution (`{{lead.email}}`) + send. Worker composes AI responses and sends via Resend.
 - **DB**: PrismaClient singleton cached on `globalThis`. `experimental.serverComponentsExternalPackages: ["@prisma/client"]` in next.config for Vercel.
-- **Design system**: CSS custom properties in `globals.css` (RGB triplets for Tailwind opacity support). All colors registered in `tailwind.config.js` as `rgb(var(--x) / <alpha-value>)`. 11 UI components in `components/ui/` use design tokens exclusively — never hardcoded colors. Glass morphism via `.glass-card` utility class. Typography: Inter (Google Font, loaded via next/font). Corporate Green palette (green-800/700/400 + slate) — evolved from Luxury Nature for professional SaaS feel. Error boundaries on all 11 dashboard routes + root level.
+- **Design system**: Enterprise flat aesthetic (Linear / Stripe / Ramp). CSS custom properties in `globals.css` (RGB triplets). All colors registered in `tailwind.config.js` as `rgb(var(--x) / <alpha-value>)`. No glass morphism, no backdrops, no gradients, no glow shadows. Cards: `rounded-md border border-[var(--border)]`. Buttons: `rounded-md transition-colors` (no `active:scale`, no `shadow`). Badges: `rounded px-1.5 py-0.5` (no `rounded-full`, no border gloss). Typography: Inter (Google Font). 14 error boundaries on all dashboard routes + root.
 - **Error tracking**: @sentry/nextjs integration (graceful opt-in via SENTRY_DSN env var). Centralized `handleApiError()` with status code mapping + PII-safe logging. 14 `error.tsx` files (11 route-level + dashboard group + root app + global-error).
 - **Feature flags**: DB-backed system (6 active flags). Channel flags: `email_channel` (default off for China) + `wechat_channel` (default on). 4 AI flags. Per-org toggles, rollout%, rules targeting. Memory cache (60s TTL), env-var fallback.
 - **Channel abstraction**: Feature Flag controls email/wechat enablement per org. Worker checks flag before sending. Single codebase supports both overseas (email) and domestic (wechat) markets.
@@ -234,7 +236,13 @@ apps/web/components/leads/import-button.tsx      — CSV import dialog with file
 apps/web/components/identity/avatar.tsx          — Pravatar.cc real photo avatar + gradient fallback + presence dot
 apps/web/components/identity/identity-card.tsx   — Operational Identity Cell (compact list + expanded header)
 apps/web/components/inbox/AgentThinkingPanel.tsx — ReAct Agent reasoning chain UI (collapsible, Phase 19)
-apps/web/components/identity/presence.tsx        — Presence dot with pulse animation for AI states
+apps/web/components/chat/chat-window.tsx         — Reusable real-time chat (Portal + Dashboard), AI draft bubble with approve/discard/regenerate (Phase 21-22)
+apps/web/app/(dashboard)/analytics/ai-metrics.tsx — Four-layer AI metrics dashboard (system/quality/business/risk), Phase 22
+apps/web/app/api/orgs/[slug]/metrics/ai/route.ts  — AI metrics aggregation API: percentile_cont P50/P95, status distribution, handoff rate (Phase 22)
+apps/web/app/api/orgs/[slug]/conversations/[id]/messages/[messageId]/route.ts — PATCH reviewAction for HITL audit trail (Phase 22)
+apps/web/lib/use-socket.ts                      — Socket.IO React hook with Vercel detection + REST fallback (Phase 21)
+apps/web/socket-server.ts                       — Standalone Socket.IO chat server (port 3001), JWT auth, room-based (Phase 21)
+.github/workflows/ci.yml                        — GitHub Actions CI: unit tests + type check + RAG eval (Phase 22)
 apps/web/lib/time.ts                            — relativeTime(), presenceFromDate(), presenceLabel()
 apps/web/vitest.config.ts           — Unit test config (excludes integration/E2E files)
 apps/web/vitest.integration.config.ts — Integration test config (sequential file execution)
@@ -317,18 +325,20 @@ packages/rag-core/eval/knowledge-base/ — 6 启云科技 KB docs (product/prici
 - **Phase 15-17**: Security audit 165 findings→32 fixed, UI/UX overhaul (Corporate Green, Inter, Pravatar), Production hardening (auth rate limits, bcrypt 12, CSP, Sentry, Feature Flags, 14 error boundaries).
 - **Phase 18**: AICallMetric, Hybrid search (pgvector+tsvector→RRF), AI Health dashboard, prompt version registry, job idempotency, HITL formalization, distributed tracing, RAG eval.
 - **Phase 19**: Customer Portal, full Chinese i18n, ReAct Agent executor, Cohere Reranker, AI Draft RAG integration, Translation API, Boss Dashboard, 启云科技中文 Demo.
-- **Phase 20**: Unified RAG pipeline (`hybrid-retriever.ts`), Query Rewriter (LLM 3-variant), Query Router (6 categories), Confidence Gate, RAG Eval connected to real PgVector, 30-case SalesAgent Golden Dataset, KB API CRUD, Retriever native pgvector search.
+- **Phase 20**: Unified RAG pipeline (`hybrid-retriever.ts`), Query Rewriter (LLM 3-variant), Query Router (6 categories), Confidence Gate, RAG Eval connected to real PgVector, 30-case SalesAgent Golden Dataset, KB API CRUD.
 - **Phase 21**: Redis semantic cache (exact + cosine ≥0.95), SHA-256 incremental indexing, Socket.IO WebSocket real-time chat, ChatWindow with Email/Chat toggle + AI Draft, 12-document 3-layer knowledge base.
-- **~32,000 lines** across ~440 files. 50+ API routes. 52 unit tests. 16 models.
-- Web: ✅ Vercel (JWT, API versioning, Customer Portal, Full Chinese UI, RAG-grounded AI drafts, ReAct reasoning UI, Hybrid Search, AI Health + Boss dashboards, Translation API, WebSocket real-time chat).
-- Worker: ✅ Railway (4 BullMQ workers, idempotent, channel feature flags, ReAct agent campaign steps).
+- **Phase 22 (2026-07-08)**: **Inbox full-stack hardening** — safety (WebSocket content validation aligned with REST, `safe()` misuse corrected, ai-draft prompt injection remediation via `<user_data>` tags), honesty (fake delays removed, `Math.random()` BANT bars replaced with real `lead.score`), performance (messages cursor pagination + scrollHeight preservation, `Promise.all` parallel Server Component queries), HITL audit trail (`Message.reviewAction` approved/rejected field + PATCH endpoint + dual-path write), observability (four-layer AI metrics dashboard with `percentile_cont` P50/P95, `draftAdoptionRate` awaiting data accumulation). **Enterprise UI overhaul** — all glass morphism / gradients / glows / large radii / colored shadows removed, unified to Linear/Stripe flat aesthetic. **CI/CD** — GitHub Actions 3 parallel jobs (unit tests + type check + RAG eval). **Documentation** — 9-module interview deep-dive at `docs/interview/`.
+- **~34,000 lines** across ~470 files. 50+ API routes. 54 unit tests. 16 models.
+- Web: ✅ Vercel (JWT, API versioning, Customer Portal, Full Chinese UI, RAG-grounded AI drafts, ReAct reasoning UI, Hybrid Search, AI Health + Boss + AI Metrics dashboards, Translation API, WebSocket real-time chat, Enterprise flat UI).
+- Worker: ✅ Railway (4 BullMQ workers, idempotent, channel feature flags, ReAct agent campaign steps, job dedup).
 - Mobile: ✅ Expo 52 (7 pages). Club Concierge demo.
 - Email: ✅ Resend with per-org Feature Flag control.
 - RAG: ✅ 6-stage pipeline (Query Rewriting → Query Routing → Hybrid pgvector+tsvector→RRF → Cohere Reranker → Confidence Gate → Semantic Cache). 30-case Golden Dataset + eval.
 - Chat: ✅ Socket.IO WebSocket (Room-based, JWT auth, REST polling fallback), ChatWindow with AI Draft.
-- Observability: ✅ AICallMetric, AI Health dashboard (中文), Sentry, structured logging, distributed tracing.
-- Design: ✅ Corporate Green. Full Chinese UI. Inter typography. 14 error boundaries.
-- Security: Auth rate limiting, fail-closed, IP protection, bcrypt 12, CSP, file upload validation, prompt armor, customer role isolation.
+- Observability: ✅ AICallMetric, AI Health dashboard (P50/P95/cost/fallback), AI Metrics dashboard (4-layer: system/quality/business/risk), Sentry, structured logging, distributed tracing.
+- Design: ✅ Enterprise flat (Linear/Stripe/Ramp). No glass morphism. Full Chinese UI. Inter typography. 14 error boundaries.
+- Security: Auth rate limiting, fail-closed, IP protection, bcrypt 12, CSP, file upload validation, prompt armor (`<user_data>` tags), customer role isolation, WebSocket content validation, `safe()` only used in prompt contexts.
+- CI/CD: ✅ GitHub Actions (unit tests 54/54, type-check ai-core/rag-core/worker, RAG eval with EMBEDDING_API_KEY opt-in).
 
 ### Seed scripts reference
 
@@ -339,7 +349,7 @@ packages/rag-core/eval/knowledge-base/ — 6 启云科技 KB docs (product/prici
 | `pnpm seed-members <slug>` | RBAC test accounts with all 4 roles | Yes |
 | `pnpm seed-verify-alice` | Sets emailVerified=true for alice@example.com | Yes |
 | `pnpm seed-demo` | Acme Corp demo (15 leads, 3 agents, 10 conversations) | Drop first |
-| `pnpm seed-chinese-demo` | 启云科技中文 Demo (5 成员, 3 AI, 15 客户, 4 知识库文档) | Drop first |
+| `pnpm seed-chinese-demo` | 启云科技中文 Demo (5 成员, 3 AI, 15 客户, 10 对话, 4 KB, channel=chat) | Drop first |
 | `pnpm clean-org <slug>` | FK-safe delete of all conversations + campaigns + leads | Destructive |
 
 ### Vercel deployment gotchas (lessons learned)
@@ -370,6 +380,10 @@ packages/rag-core/eval/knowledge-base/ — 6 启云科技 KB docs (product/prici
 24. **connection_limit=1 forbids parallel writes**: `Promise.all([create1, create2, ...])` with `connection_limit=1` causes timeout P2024. Seeds must write sequentially: `for (const d of data) { await prisma.create(...) }`.
 25. **Leads → Organizations cascade**: Prisma marks `onDelete: Cascade` on Lead→Organization, but not on all relations. FK-safe cleanup must delete in dependency order: AICallMetric→Message→Conversation→LeadActivity→CampaignRun→Campaign→DocumentChunk→Document→Lead→ApiKey→FeatureFlag→AuditLog→Script→Agent→Membership→Organization.
 26. **keyword-search.ts uses snake_case in SQL**: The `keywordSearch()` function had raw SQL with `document_id`, `chunk_index`, `organization_id` — but Prisma columns without `@map` use camelCase (`"documentId"`, `"chunkIndex"`, `"organizationId"`). Vercel deployment hit `column "document_id" does not exist` (error 42703). Fixed in Phase 21. Always use quoted camelCase in raw SQL against Prisma-managed tables.
+27. **`safe()` is NOT a general-purpose sanitizer**: `safe()` only strips `\r\n` — it prevents prompt injection smuggling (newline escaping from `<user_data>` tags), not XSS or general input sanitization. Do NOT use it on chat messages or any content that doesn't enter a LLM prompt. It was mistakenly used in `chat-messages/route.ts` — removed in Phase 22. Correct usage: only in ai-draft/route.ts prompt construction, wrapped in `<user_data>` tags.
+28. **WebSocket auth skips JWT blacklist check**: `socket-server.ts` verifies JWT signature and expiry, but does NOT call `isTokenRevoked()`. A user logged-out via HTTP can still use an active WebSocket connection. Known gap, not yet fixed.
+29. **Inbox orphan file**: `inbox-detail-client.tsx` was orphaned (0 imports) after a refactor that switched to `inbox-client.tsx`. Wire it to `/inbox/[id]` page route for 3-column layout with AI intelligence panel — done in Phase 22.
+30. **CI needs dummy DATABASE_URL**: The `@salesagent/db` singleton throws on import if `DATABASE_URL` is unset. GitHub Actions needs `DATABASE_URL: postgresql://ci:dummy@localhost:5432/ci?connection_limit=1` in the `env:` block of each job — the connection is never actually made, it just passes the env-var guard.
 
 ### Railway deployment (worker)
 

@@ -631,6 +631,120 @@ apps/web/package.json                             — socket.io, socket.io-clien
 
 ---
 
+## Phase 22 — Inbox 全面加固 + 企业 UI 重构 + 可观测性闭环 ✅
+
+> Completed: 2026-07-08
+
+### L1 — Safety
+
+- **WebSocket 内容校验对齐**: socket-server.ts 加 5000 字符上限 + `emit("error")` 替代 throw
+- **`safe()` 误用清理**: chat-messages/route.ts 移除 `safe()` — 聊天消息不进 LLM prompt, 不需要防注入。`safe()` 只在 ai-draft 的 prompt 构建时使用
+- **ai-draft prompt injection 补全**: history / latestInbound / lastOutbound 全部包裹 `<user_data>` 标签 — 发现这些是唯一没包裹的用户输入
+- **score-lead → 入队化**: 删除同步 DeepSeek 调用, 改为 `scoringQueue.add()`。Worker 已有 retry + PROMPT_ARMOR + AICallMetric
+
+### L2 — Honesty
+
+- **删除假延迟**: inbox-client.tsx + inbox-detail-client.tsx 删除 `setTimeout(Math.random())` 假延迟。替换为 AbortController 30s 超时 + toast。`clearTimeout` 放 `finally`
+- **删除 BANT 伪造数据**: inbox-detail-client.tsx 的 5 维 `Math.random()` BANT 条 → 单一 `lead.score` 条。null score → "评分数据待接入" placeholder
+- **inbox-detail-client.tsx 孤儿处置**: 路由 `/inbox/[id]` page.tsx 走 InboxDetailClient (三栏 + AI 智能分析面板), 不再用 inbox-client.tsx
+- **score-lead UI 诚实化**: 按钮改为 "评分中...", 500ms 后 `router.refresh()`, toast "已提交评分任务"
+
+### L3 — Performance
+
+- **消息 cursor 分页**: GET /messages 加 `?cursor=&limit=50`, `take: limit+1` 判 hasMore (防边界误判)
+- **前端加载更多**: inbox-client + inbox-detail-client 加 `loadMoreMessages()` + scrollHeight 位移保持滚动位置
+- **Server Component 并行化**: `/inbox/[id]` page.tsx `Promise.all` 并行查 list + detail (之前是串行 waterfall)
+- **SSR 消息量限制**: page.tsx 初始加载 `take: 50` — 防止 500 条消息的对话 TTFB 爆炸
+
+### L4 — HITL Audit Trail
+
+- **Message.reviewAction 字段** (Prisma schema + `db push`): "approved" | "rejected" | null
+- **sendMessageSchema 扩展**: `reviewAction` 可选 enum
+- **PATCH endpoint**: `messages/[messageId]/route.ts` — `checkPermission("manage_agents")`, Zod `{ reviewAction: enum }`
+- **双路径写入**: 客户端 AI 草稿 (POST body 带 reviewAction) + Worker 草稿 (PATCH 已有 message)
+- **前端审核按钮**: sendReply 写入 `reviewAction: "approved"`, 放弃/丢弃按钮非阻塞 PATCH `reviewAction: "rejected"`
+- **patchWorkerDraft()**: 从 messages 倒数找第一条 outbound 且无 reviewAction 的 Worker 草稿
+
+### L5 — Observability
+
+- **四层 AI 指标 API**: `GET /api/orgs/{slug}/metrics/ai?days=7` — percentile_cont P50/P95 (raw SQL), statusDistribution, handoffRate, timeouts
+- **AI 指标看板前端**: analytics page 第四个 Tab, `AIMetricsTab` 组件 — 4 层卡片 (系统/质量/业务/风险), null → "数据待接入"
+- **draftAdoptionRate 准备**: API 已返回 null, 前端已处理 null。等 reviewAction 数据积累一周后接上 (1 个 SQL 聚合即可)
+
+### L6 — Enterprise UI Overhaul
+
+- **globals.css**: 删除所有 glass morphism / liquid-glass CSS 类, 统一 RGB token (`--text-primary`, `--accent-subtle`, `--border`)
+- **tailwind.config.js**: 默认 border-radius → `0.375rem`, 删除 glass/surface/shadow-xl 自定义色, 旧 token alias 兼容
+- **60+ 文件批量对齐** (sed): 删除 `backdrop-blur-*`, `glass-card` → `rounded-md border border-border`, `rounded-2xl` → `rounded-lg`, `shadow-xl/lg` → `shadow-sm`
+- **UI 组件重写**: Badge (`rounded-full` → `rounded`), Button (`active:scale` 删除, `shadow-sm` 删除, `rounded-md`), Card (`hover:-translate-y` 删除), Input (`ring-2` → `ring-1`), Dialog (统一 radius)
+- **动画清理**: 删除 `animate-bounce`, `animate-ping`, `transition-all`, stream-cursor, 只保留 fade-in/slide-up/scale-in/skeleton
+- **Sidebar**: 纯色背景, 激活态 `bg-accent-subtle text-accent-text`, icon `size-4`. 删除 `backdrop-blur`, `border-lp-border/30`
+
+### L7 — CI/CD
+
+- **`.github/workflows/ci.yml`**: 3 并行 job — unit tests (54/54) + type check (ai-core/rag-core/worker) + RAG eval (EMBEDDING_API_KEY opt-in)
+- **DATABASE_URL dummy**: CI 需要 `postgresql://ci:dummy@localhost:5432/ci?connection_limit=1` — 只过 env-var guard, 无真连接
+
+### L8 — Seed Data
+
+- **seed-chinese-demo.ts**: 全部 51 处 `channel: "email"` → `"chat"` — 中国客户用 chat
+- **seed-demo.ts**: 删除 `Math.random()` 假 confidence, 固定 0.88
+
+### Modified Files (15 core + 60+ UI bulk)
+```
+apps/web/socket-server.ts                  — 5000-char limit + content validation
+apps/web/lib/validation.ts                 — sendMessageSchema +reviewAction
+apps/web/lib/__tests__/permissions.test.ts  — ROLES: 4→5 (customer Phase 19), +customer role tests
+apps/web/app/api/orgs/[slug]/ai/score-lead/route.ts       — sync DeepSeek → scoringQueue
+apps/web/app/api/orgs/[slug]/conversations/[id]/ai-draft/route.ts — <user_data> tags
+apps/web/app/api/orgs/[slug]/conversations/[id]/chat-messages/route.ts — remove safe()
+apps/web/app/api/orgs/[slug]/conversations/[id]/messages/route.ts — cursor pagination + reviewAction
+apps/web/app/api/orgs/[slug]/conversations/[id]/messages/[messageId]/route.ts — NEW (PATCH)
+apps/web/app/api/orgs/[slug]/metrics/ai/route.ts — NEW (four-layer aggregation)
+apps/web/app/(dashboard)/inbox/inbox-client.tsx — fake delay removal + AbortController + loadMore + reviewAction
+apps/web/app/(dashboard)/inbox/[id]/inbox-detail-client.tsx — same + BANT fix + scoring state
+apps/web/app/(dashboard)/inbox/[id]/page.tsx — Promise.all + InboxDetailClient
+apps/web/app/(dashboard)/analytics/page.tsx — 4th tab "AI 指标"
+apps/web/app/(dashboard)/analytics/ai-metrics.tsx — NEW (four-layer dashboard)
+apps/web/components/chat/chat-window.tsx — AI draft bubble alignment with email pattern
+.github/workflows/ci.yml — NEW
+packages/db/prisma/schema.prisma — Message.reviewAction
+packages/db/seed-chinese-demo.ts — channel: email → chat
+packages/db/seed-demo.ts — Math.random() → 0.88
+```
+
+### New Files (6)
+```
+apps/web/app/api/orgs/[slug]/metrics/ai/route.ts
+apps/web/app/api/orgs/[slug]/conversations/[id]/messages/[messageId]/route.ts
+apps/web/app/(dashboard)/analytics/ai-metrics.tsx
+.github/workflows/ci.yml
+docs/interview/ (10 files, ~25,000 字)
+```
+
+### Stats
+- **15 core files**, +796 / −120 lines. 60+ UI bulk files. 6 new files. 10 interview docs.
+- Build: green (web + worker, 0 TS errors). Tests: 54/54.
+- CSS: −451 lines of glass morphism/liquid-glass/blur utilities. ~50 files aligned to enterprise flat tokens.
+- AI metrics dashboard: 4-layer with null-placeholder pattern for missing data fields.
+
+### Resolved from Previous TODOs
+| Issue | Resolution |
+|-------|------------|
+| ~~Math.random() fake data~~ | BANT bars → real lead.score; confidence → fixed 0.88 |
+| ~~Fake AI draft delays~~ | Removed; AbortController 30s timeout instead |
+| ~~AI draft prompt injection gap~~ | `<user_data>` tags on history/latestInbound/lastOutbound |
+| ~~`safe()` misuse on chat messages~~ | Removed from chat-messages route; only used in prompt context now |
+| ~~Orphan inbox-detail-client.tsx~~ | Wired to `/inbox/[id]` route |
+| ~~Messages no pagination~~ | Cursor-based `?cursor=&limit=50` API + frontend load-more |
+| ~~score-lead sync DeepSeek~~ | Enqueued to scoringQueue (retry, PROMPT_ARMOR, metrics) |
+| ~~No CI~~ | GitHub Actions 3 parallel jobs |
+| ~~No reviewAction audit trail~~ | Message.reviewAction column + PATCH endpoint + dual-path write |
+| ~~Glass morphism AI aesthetic~~ | 60+ files cleaned; enterprise flat design tokens |
+| ~~No AI metrics dashboard~~ | Four-layer dashboard at /analytics?tab=metrics |
+
+---
+
 ## Known Issues / TODOs
 
 1. **CI/CD** — No GitHub Actions workflow. Tests run locally only.
