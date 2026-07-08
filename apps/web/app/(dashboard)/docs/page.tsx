@@ -85,7 +85,7 @@ export default async function DocsPage() {
         {sections.map((section) => (
           <div key={section}>
             <h2 className="text-lg font-semibold text-text mb-3">{section}</h2>
-            <div className="rounded-xl border border-lp-border/30 overflow-hidden">
+            <div className="rounded-xl border border-border overflow-hidden">
               <table className="w-full text-sm">
                 <thead className="bg-bg-subtle">
                   <tr>

@@ -69,8 +69,8 @@ export function SelectTrigger({ placeholder, className }: { placeholder?: string
       onClick={() => { setOpen(!open); setActiveIndex(-1); }}
       onKeyDown={handleKeyDown}
       className={cn(
-        "w-full flex items-center justify-between rounded-xl border border-lp-border/30 bg-lp-card/60 backdrop-blur-sm px-3.5 py-2.5 text-sm text-text",
-        "hover:bg-white/[0.04] transition-colors duration-150",
+        "w-full flex items-center justify-between rounded-xl border border-border bg-lp-card/60 px-3.5 py-2.5 text-sm text-text",
+        "hover:bg-bg-subtle transition-colors duration-150",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30",
         className,
       )}
@@ -99,7 +99,7 @@ export function SelectContent({ children }: { children: React.ReactNode }) {
     <div
       ref={ref}
       role="listbox"
-      className="absolute z-50 mt-1 w-full rounded-xl border border-lp-border/30 glass-card shadow-xl py-1 max-h-60 overflow-auto animate-scale-in origin-top"
+      className="absolute z-50 mt-1 w-full rounded-xl border border-border rounded-md border border-border bg-bg-card shadow-sm py-1 max-h-60 overflow-auto animate-scale-in origin-top"
     >
       {children}
     </div>
@@ -123,7 +123,7 @@ export function SelectItem({ value, children }: { value: string; children: React
       aria-selected={isSelected}
       className={cn(
         "px-3 py-2 text-sm cursor-pointer transition-colors duration-100",
-        isSelected ? "bg-accent/10 text-accent" : isActive ? "bg-white/[0.06] text-text" : "text-text hover:bg-white/[0.04]",
+        isSelected ? "bg-accent/10 text-accent" : isActive ? "bg-white/[0.06] text-text" : "text-text hover:bg-bg-subtle",
       )}
       onClick={() => { onValueChange(value); setOpen(false); }}
     >

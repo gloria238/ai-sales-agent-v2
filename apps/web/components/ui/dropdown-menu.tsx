@@ -121,7 +121,7 @@ export function DropdownMenuContent({ children, align = "start" }: { children: R
       ref={ref}
       role="menu"
       className={cn(
-        "absolute z-50 min-w-[8rem] rounded-xl border border-lp-border/30 glass-card shadow-xl py-1 mt-1 animate-scale-in origin-top",
+        "absolute z-50 min-w-[8rem] rounded-xl border border-border rounded-md border border-border bg-bg-card shadow-sm py-1 mt-1 animate-scale-in origin-top",
         align === "end" ? "right-0 origin-top-right" : "left-0 origin-top-left",
       )}
     >
@@ -155,7 +155,7 @@ export function DropdownMenuItem({ children, onClick }: { children: React.ReactN
       tabIndex={-1}
       className={cn(
         "px-3 py-2 text-sm transition-colors duration-100 cursor-pointer",
-        isActive ? "bg-white/[0.06] text-text" : "text-text hover:bg-white/[0.04]",
+        isActive ? "bg-white/[0.06] text-text" : "text-text hover:bg-bg-subtle",
       )}
       onMouseEnter={() => setActiveIndex(myIndex)}
       onClick={() => { onClick?.(); setOpen(false); }}

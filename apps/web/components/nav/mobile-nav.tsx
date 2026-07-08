@@ -23,7 +23,7 @@ export function MobileNav() {
   return (
     <>
       <button
-        className="lg:hidden p-2 rounded-lg hover:bg-white/[0.04] transition-colors"
+        className="lg:hidden p-2 rounded-lg hover:bg-bg-subtle transition-colors"
         onClick={() => setOpen(true)}
         aria-label="打开菜单"
       >
@@ -32,14 +32,14 @@ export function MobileNav() {
 
       {open && (
         <div className="fixed inset-0 z-50 lg:hidden">
-          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setOpen(false)} />
-          <div className="absolute left-0 top-0 bottom-0 w-64 bg-lp-background/95 backdrop-blur-xl shadow-xl border-r border-lp-border/30 p-4 flex flex-col">
+          <div className="absolute inset-0 bg-black/50 " onClick={() => setOpen(false)} />
+          <div className="absolute left-0 top-0 bottom-0 w-64 bg-lp-background/95 shadow-sm border-r border-border p-4 flex flex-col">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-2">
                 <div className="size-7 rounded-md bg-accent flex items-center justify-center text-white text-xs font-bold">S</div>
                 <span className="font-semibold text-sm text-text">SalesAgent</span>
               </div>
-              <button onClick={() => setOpen(false)} className="p-1 rounded hover:bg-white/[0.04] transition-colors">
+              <button onClick={() => setOpen(false)} className="p-1 rounded hover:bg-bg-subtle transition-colors">
                 <X className="size-5 text-text-muted" />
               </button>
             </div>
@@ -53,7 +53,7 @@ export function MobileNav() {
                       "flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-all",
                       active
                         ? "bg-accent/10 text-accent"
-                        : "text-text-muted hover:text-text hover:bg-white/[0.04]",
+                        : "text-text-muted hover:text-text hover:bg-bg-subtle",
                     )}
                   >
                     <Icon className="size-4 shrink-0" /> {item.label}
@@ -61,7 +61,7 @@ export function MobileNav() {
                 );
               })}
             </nav>
-            <div className="border-t border-lp-border/30 pt-3 flex justify-center">
+            <div className="border-t border-border pt-3 flex justify-center">
               <ThemeToggle />
             </div>
           </div>

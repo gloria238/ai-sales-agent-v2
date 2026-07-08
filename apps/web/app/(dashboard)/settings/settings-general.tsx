@@ -48,7 +48,7 @@ export function SettingsGeneralForm({ initialName, initialSlug, orgSlug, canMana
           value={name}
           onChange={(e) => setName(e.target.value)}
           disabled={!canManage}
-          className="mt-1 w-full rounded-xl border border-lp-border/30 bg-lp-card/60 backdrop-blur-sm px-3.5 py-2.5 text-sm text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent disabled:opacity-40 transition-colors duration-150"
+          className="mt-1 w-full rounded-xl border border-border bg-lp-card/60 px-3.5 py-2.5 text-sm text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent disabled:opacity-40 transition-colors duration-150"
         />
       </div>
       <div>
@@ -57,7 +57,7 @@ export function SettingsGeneralForm({ initialName, initialSlug, orgSlug, canMana
           value={slug}
           onChange={(e) => setSlug(e.target.value)}
           disabled={!canManage}
-          className="mt-1 w-full rounded-xl border border-lp-border/30 bg-lp-card/60 backdrop-blur-sm px-3.5 py-2.5 text-sm text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent disabled:opacity-40 transition-colors duration-150"
+          className="mt-1 w-full rounded-xl border border-border bg-lp-card/60 px-3.5 py-2.5 text-sm text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent disabled:opacity-40 transition-colors duration-150"
         />
       </div>
 
@@ -65,7 +65,7 @@ export function SettingsGeneralForm({ initialName, initialSlug, orgSlug, canMana
         <button
           onClick={handleSave}
           disabled={saving || !changed}
-          className="rounded-xl bg-accent text-white text-sm font-semibold px-5 py-2.5 hover:bg-accent-hover disabled:opacity-40 transition-all duration-150 shadow-sm shadow-accent/20 active:scale-[0.97]"
+          className="rounded-xl bg-accent text-white text-sm font-semibold px-5 py-2.5 hover:bg-accent-hover disabled:opacity-40 transition-all duration-150 shadow-sm active:scale-[0.97]"
         >
           {saving ? "Saving..." : "Save"}
         </button>

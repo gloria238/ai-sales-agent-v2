@@ -55,7 +55,7 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
       {/* Lead header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center gap-4">
-          <div className="size-12 rounded-2xl bg-accent/10 flex items-center justify-center text-accent font-bold text-lg shrink-0">
+          <div className="size-12 rounded-lg bg-accent/10 flex items-center justify-center text-accent font-bold text-lg shrink-0">
             {lead.name.charAt(0)}
           </div>
           <div>
@@ -88,7 +88,7 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
         <div className="lg:col-span-2 space-y-6">
           {/* Info cards */}
           <div className="grid grid-cols-3 gap-3">
-            <Card className="p-4 glass-card">
+            <Card className="p-4 rounded-md border border-border bg-bg-card">
               <p className="text-[10px] font-semibold text-text-muted uppercase tracking-wide mb-1">Stage</p>
               {canManage ? (
                 <StageSelector currentStage={lead.stage || "new"} leadId={lead.id} orgSlug={session.orgSlug} />
@@ -96,11 +96,11 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
                 <Badge variant="default" className="text-xs">{lead.stage || "new"}</Badge>
               )}
             </Card>
-            <Card className="p-4 glass-card">
+            <Card className="p-4 rounded-md border border-border bg-bg-card">
               <p className="text-[10px] font-semibold text-text-muted uppercase tracking-wide mb-1">Source</p>
               <p className="text-sm font-medium text-text">{lead.source || "Unknown"}</p>
             </Card>
-            <Card className="p-4 glass-card">
+            <Card className="p-4 rounded-md border border-border bg-bg-card">
               <p className="text-[10px] font-semibold text-text-muted uppercase tracking-wide mb-1">Conversations</p>
               <p className="text-sm font-medium text-text">{lead.conversations.length}</p>
             </Card>
@@ -108,7 +108,7 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
 
           {/* Conversations */}
           {lead.conversations.length > 0 && (
-            <Card className="glass-card">
+            <Card className="rounded-md border border-border bg-bg-card">
               <CardHeader><p className="font-medium text-text text-sm">Linked Conversations</p></CardHeader>
               <CardContent className="space-y-2">
                 {lead.conversations.map((c) => (
@@ -125,7 +125,7 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
         )}
 
         {/* Activity feed */}
-        <Card className="glass-card">
+        <Card className="rounded-md border border-border bg-bg-card">
           <CardHeader><p className="font-medium text-text text-sm">Activity</p></CardHeader>
           <CardContent>
             {canManage && (
@@ -172,7 +172,7 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
 
       {/* AI Intelligence sidebar */}
       <div className="space-y-4">
-        <Card className="glass-card border-accent/10">
+        <Card className="rounded-md border border-border bg-bg-card border-accent/10">
           <CardHeader>
             <p className="font-medium text-text text-sm flex items-center gap-2">
               <Sparkles className="size-4 text-accent" /> AI Intelligence
@@ -183,7 +183,7 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
             <div>
               <p className="text-[10px] font-semibold text-text-muted uppercase tracking-wide mb-2">Qualification Score</p>
               <div className="flex items-center gap-3 mb-3">
-                <div className={cn("size-14 rounded-2xl flex items-center justify-center text-lg font-bold", scoreColor)}>
+                <div className={cn("size-14 rounded-lg flex items-center justify-center text-lg font-bold", scoreColor)}>
                   {lead.score ?? "—"}
                 </div>
                 <div>
@@ -244,7 +244,7 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
             {/* Recommendation */}
             <div className="border-t border-border pt-4">
               <p className="text-[10px] font-semibold text-text-muted uppercase tracking-wide mb-2">AI Recommendation</p>
-              <div className="glass-card p-3 rounded-xl border border-accent/10">
+              <div className="rounded-md border border-border bg-bg-card p-3 rounded-xl border border-accent/10">
                 <p className="text-xs text-text-secondary leading-relaxed">
                   {lead.stage === "new"
                     ? "Send a personalized welcome email. Introduce your product and ask a qualifying question about their needs."

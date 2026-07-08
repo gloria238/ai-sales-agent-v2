@@ -42,7 +42,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Mobile only: top bar */}
-        <div className="lg:hidden h-12 border-b border-lp-border/30 bg-lp-card/80 backdrop-blur-xl flex items-center px-4 shrink-0">
+        <div className="lg:hidden h-12 border-b border-border bg-lp-card/80 flex items-center px-4 shrink-0">
           <MobileNav />
           <span className="ml-3 text-sm font-semibold text-text">SalesAgent</span>
         </div>

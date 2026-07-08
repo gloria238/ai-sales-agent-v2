@@ -50,7 +50,7 @@ export function CampaignCreateClient({ agents, scripts, orgSlug }: { agents: Arr
         <ArrowLeft className="w-4 h-4" /> 返回活动列表
       </button>
       <h1 className="text-2xl font-bold text-text mb-6">创建外呼活动</h1>
-      <Card className="p-6 glass-card">
+      <Card className="p-6 rounded-md border border-border bg-bg-card">
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
             <label className="block text-sm font-medium text-text mb-1.5">活动名称</label>

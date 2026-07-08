@@ -28,7 +28,7 @@ function AITypingIndicator() {
       <div className="size-7 rounded-full bg-accent/10 flex items-center justify-center shrink-0">
         <Sparkles className="size-3.5 text-accent" />
       </div>
-      <div className="rounded-2xl rounded-tr-sm px-4 py-3 border border-accent/10 bg-bg-card">
+      <div className="rounded-lg rounded-tr-sm px-4 py-3 border border-accent/10 bg-bg-card">
         <div className="flex items-center gap-1.5">
           <span className="text-xs text-accent font-medium">AI 起草中…</span>
           <span className="flex gap-0.5">
@@ -57,7 +57,7 @@ function LeadPopover({ lead }: { lead: any }) {
       {show && (
         <>
           <div className="fixed inset-0 z-10" onClick={() => setShow(false)} />
-          <div className="absolute left-full top-0 ml-2 z-20 w-72 bg-bg-card border border-border rounded-xl shadow-xl p-4 animate-scale-in">
+          <div className="absolute left-full top-0 ml-2 z-20 w-72 bg-bg-card border border-border rounded-xl shadow-sm p-4 animate-scale-in">
             <div className="flex items-center gap-3 mb-3">
               <Avatar name={lead.name} size="md" seed={lead.email || lead.name} />
               <div className="min-w-0">
@@ -328,7 +328,7 @@ export function InboxClient({ conversations, orgSlug, selectedId: initialSelecte
 
       {/* ── Left panel ─────────────────────────────────── */}
       <div className={cn(
-        "border-r border-border flex flex-col bg-bg-card/50 backdrop-blur-sm shrink-0",
+        "border-r border-border flex flex-col bg-bg-card/50 shrink-0",
         LEFT_WIDTH, selectedId ? "hidden md:flex" : "flex",
       )}>
         <div className="p-4 border-b border-border space-y-3 shrink-0">
@@ -416,7 +416,7 @@ export function InboxClient({ conversations, orgSlug, selectedId: initialSelecte
         <div className="flex-1 flex flex-col min-w-0 bg-bg overflow-hidden">
 
           {/* Header */}
-          <div className="shrink-0 border-b border-border bg-bg-card/50 backdrop-blur-sm">
+          <div className="shrink-0 border-b border-border bg-bg-card">
             <div className="md:hidden px-3 pt-2 pb-1">
               <Button variant="ghost" size="sm" onClick={handleBack} className="text-text-secondary -ml-2">
                 <ChevronLeft className="size-4 mr-0.5" /> Inbox
@@ -491,7 +491,7 @@ export function InboxClient({ conversations, orgSlug, selectedId: initialSelecte
                       }
                     </div>
                     <div className={cn(
-                      "max-w-[70%] rounded-2xl px-4 py-2.5",
+                      "max-w-[70%] rounded-lg px-4 py-2.5",
                       msg.direction === "inbound" ? "bg-bg-card border border-border rounded-tl-sm" : "bg-accent text-white rounded-tr-sm",
                     )}>
                       <p className="text-sm whitespace-pre-wrap leading-relaxed">{msg.content}</p>
@@ -517,7 +517,7 @@ export function InboxClient({ conversations, orgSlug, selectedId: initialSelecte
                     <div className="size-7 rounded-full bg-accent/10 flex items-center justify-center shrink-0">
                       <Sparkles className="size-3.5 text-accent" />
                     </div>
-                    <div className="max-w-[70%] rounded-2xl rounded-tr-sm px-4 py-2.5 bg-accent/5 border border-accent/20 border-dashed">
+                    <div className="max-w-[70%] rounded-lg rounded-tr-sm px-4 py-2.5 bg-accent/5 border border-accent/20 border-dashed">
                       <p className="text-xs text-accent font-medium mb-1">AI 草稿 — 发送前请审核</p>
                       <p className="text-sm text-text-secondary whitespace-pre-wrap leading-relaxed">{aiDraft.body}</p>
                       <div className="flex gap-2 mt-2">
@@ -535,7 +535,7 @@ export function InboxClient({ conversations, orgSlug, selectedId: initialSelecte
           </div>
 
           {/* Compose — wider */}
-          <div className="shrink-0 border-t border-border p-4 bg-bg-card/50 backdrop-blur-sm">
+          <div className="shrink-0 border-t border-border p-4 bg-bg-card">
             <div className="flex flex-col gap-3">
               <Textarea
                 value={replyDraft}

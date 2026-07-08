@@ -4,97 +4,80 @@
 
 @layer base {
   :root {
-    /* ── Surface — Corporate Green ────────── */
-    --bg: 248 249 250;              /* cool off-white (slate-50) */
-    --bg-card: 255 255 255;         /* pure white cards */
-    --bg-sage: 232 240 234;         /* cool sage (badges/highlights) */
-    --bg-subtle: 241 245 249;       /* slate-100 */
-    --bg-secondary: 71 85 64;       /* refined olive — sidebar surfaces */
-    --bg-muted: 241 243 238;
+    /* ── Surface ──────────────────────────── */
+    --bg: 248 249 250;              /* #F8F9FA — page background */
+    --bg-card: 255 255 255;         /* #FFFFFF — card surfaces */
+    --bg-subtle: 243 244 246;       /* #F3F4F6 — inputs, hover states */
+    --bg-muted: 229 231 235;        /* #E5E7EB — subtle dividers */
 
     /* ── Border ───────────────────────────── */
-    --border: 203 213 225;          /* slate-300 */
-    --border-light: 226 232 240;    /* slate-200 */
+    --border: 229 231 235;          /* #E5E7EB — standard */
+    --border-strong: 209 213 219;   /* #D1D5DB — emphasis */
 
     /* ── Text ─────────────────────────────── */
-    --text: 15 23 42;               /* slate-900 — crisp, high contrast */
-    --text-secondary: 71 85 105;    /* slate-600 */
-    --text-muted: 148 163 184;      /* slate-400 */
+    --text-primary: 17 24 39;       /* #111827 — headings */
+    --text-secondary: 55 65 81;     /* #374151 — body */
+    --text-muted: 107 114 128;      /* #6B7280 — labels, secondary */
+    --text-disabled: 156 163 175;   /* #9CA3AF — disabled, placeholders */
 
     /* ── Accent — Corporate Green ─────────── */
-    --accent: 22 101 52;            /* green-800 — authoritative */
-    --accent-hover: 21 128 61;      /* green-700 */
-    --accent-secondary: 132 155 112;/* sage accent */
-    --accent-soft: 236 253 243;     /* green-50 */
-    --accent-muted: 220 252 231;    /* green-100 */
+    --accent: 22 101 52;            /* #166534 */
+    --accent-hover: 21 128 61;      /* #15803D */
+    --accent-subtle: 240 253 244;   /* #F0FDF4 — subtle green bg */
+    --accent-text: 22 101 52;       /* #166534 — green text */
+    --accent-secondary: 132 155 112;/* #849b70 — sage, charts */
 
     /* ── Semantic ─────────────────────────── */
-    --success: 22 101 52;
-    --success-soft: 236 253 243;
-    --warning: 180 150 60;
-    --warning-soft: 254 252 232;
-    --danger: 185 45 40;
-    --danger-soft: 254 242 242;
-
-    /* ── Glass — Professional (more opaque) ─ */
-    --glass-bg: rgba(255, 255, 255, 0.82);
-    --glass-border: rgba(203, 213, 225, 0.7);
-    --glass-shadow: 0 0 0 1px rgba(0, 0, 0, 0.03), 0 1px 3px rgba(0, 0, 0, 0.04);
-    --glass-shadow-hover: 0 0 0 1px rgba(0, 0, 0, 0.05), 0 4px 16px -4px rgba(0, 0, 0, 0.08);
+    --destructive: 220 38 38;       /* #DC2626 */
+    --warning: 217 119 6;           /* #D97706 */
+    --warning-subtle: 255 251 235;  /* #FFFBEB */
 
     /* ── Sidebar ──────────────────────────── */
-    --sidebar-bg: rgba(248, 249, 250, 0.94);
-    --sidebar-border: rgba(0, 0, 0, 0.05);
-    --sidebar-w: 220px;
+    --sidebar-bg: 249 250 251;      /* #F9FAFB */
+    --sidebar-w: 224px;
   }
 
   .dark {
-    /* ── APEX Liquid-Glass Dark Palette ───── */
-    --bg: 260 87% 3%;               /* near-black with purple undertone */
-    --bg-card: 240 6% 9%;            /* very dark card surface */
-    --bg-sage: 240 4% 10%;
-    --bg-subtle: 240 4% 12%;         /* subtle hover/active */
-    --bg-secondary: 240 4% 16%;
-    --bg-muted: 240 4% 14%;
-    --border: 240 4% 20%;
-    --border-light: 240 4% 16%;
-    --text: 40 6% 95%;               /* warm off-white — crisp light */
-    --text-secondary: 240 5% 65%;
-    --text-muted: 240 4% 45%;
-    --accent: 121 95% 76%;           /* vivid green — accent only */
-    --accent-hover: 121 95% 82%;
-    --accent-secondary: 121 60% 60%;
-    --accent-soft: 121 30% 8%;
-    --accent-muted: 121 20% 6%;
-    --success: 121 95% 76%;
-    --success-soft: 121 30% 8%;
-    --warning: 48 96% 60%;
-    --warning-soft: 48 30% 10%;
-    --danger: 0 84% 65%;
-    --danger-soft: 0 30% 10%;
-    /* ── Glass (dark liquid-glass) ────────── */
-    --glass-bg: rgba(255, 255, 255, 0.01);
-    --glass-border: rgba(255, 255, 255, 0.06);
-    --glass-shadow: inset 0 1px 1px rgba(255,255,255,0.08), 0 2px 8px -2px rgba(0,0,0,0.3);
-    --glass-shadow-hover: inset 0 1px 1px rgba(255,255,255,0.12), 0 8px 24px -4px rgba(0,0,0,0.5);
-    --sidebar-bg: rgba(18, 4, 30, 0.94);
-    --sidebar-border: rgba(255, 255, 255, 0.05);
+    --bg: 10 17 8;                  /* #0A1108 */
+    --bg-card: 17 26 14;            /* #111A0E */
+    --bg-subtle: 26 38 23;          /* #1A2617 */
+    --bg-muted: 31 47 27;           /* #1F2F1B */
+
+    --border: 31 47 27;             /* #1F2F1B */
+    --border-strong: 45 68 40;      /* #2D4428 */
+
+    --text-primary: 249 250 251;    /* #F9FAFB */
+    --text-secondary: 209 213 219;  /* #D1D5DB */
+    --text-muted: 156 163 175;      /* #9CA3AF */
+    --text-disabled: 107 114 128;   /* #6B7280 */
+
+    --accent: 74 222 128;           /* #4ADE80 */
+    --accent-hover: 34 197 94;      /* #22C55E */
+    --accent-subtle: 5 46 22;       /* #052E16 */
+    --accent-text: 134 239 172;     /* #86EFAC */
+    --accent-secondary: 132 155 112;
+
+    --destructive: 239 68 68;       /* #EF4444 */
+    --warning: 251 191 36;          /* #FBBF24 */
+    --warning-subtle: 45 35 5;
+
+    --sidebar-bg: 10 17 8;
   }
 
-  /* ── APEX Landing Page Design Tokens (HSL) ── */
+  /* ── Landing Page Design Tokens ─────────── */
   :root {
-    --lp-background: 260 87% 3%;
-    --lp-foreground: 40 6% 95%;
-    --lp-primary: 121 95% 76%;
-    --lp-primary-foreground: 0 0% 5%;
-    --lp-secondary: 240 4% 16%;
-    --lp-border: 240 4% 20%;
-    --lp-card: 240 6% 9%;
-    --lp-muted: 240 4% 16%;
-    --lp-muted-foreground: 240 5% 65%;
-    --lp-hero-heading: 40 10% 96%;
-    --lp-hero-sub: 40 6% 82%;
-    --lp-radius: 0.75rem;
+    --lp-background: 10 17 8;
+    --lp-foreground: 249 250 251;
+    --lp-primary: 74 222 128;
+    --lp-primary-foreground: 0 0 0;
+    --lp-secondary: 26 38 23;
+    --lp-border: 31 47 27;
+    --lp-card: 17 26 14;
+    --lp-muted: 26 38 23;
+    --lp-muted-foreground: 209 213 219;
+    --lp-hero-heading: 249 250 251;
+    --lp-hero-sub: 209 213 219;
+    --lp-radius: 0.5rem;
   }
 }
 
@@ -147,70 +130,17 @@
   }
 }
 
-/* ── Glass utility classes (liquid-glass aesthetic) ──────────────── */
+/* ── Skeleton loader ───────────────────────────────────── */
 @layer components {
-  .glass {
-    background: var(--glass-bg);
-    background-blend-mode: luminosity;
-    backdrop-filter: blur(12px) saturate(180%);
-    -webkit-backdrop-filter: blur(12px) saturate(180%);
-    border: none;
-    box-shadow: var(--glass-shadow);
-  }
-  .glass-hover:hover {
-    box-shadow: var(--glass-shadow-hover);
-  }
-
-  .glass-card {
-    background: var(--glass-bg);
-    background-blend-mode: luminosity;
-    backdrop-filter: blur(8px) saturate(150%);
-    -webkit-backdrop-filter: blur(8px) saturate(150%);
-    border: 1px solid rgb(var(--border));
-    border-radius: 0.75rem;
-    transition: all 200ms ease-out;
-  }
-  .glass-card:hover {
-    border-color: rgb(var(--accent));
-    box-shadow: var(--glass-shadow-hover);
-  }
-
   .skeleton {
     background: linear-gradient(90deg, rgb(var(--bg-muted)) 25%, rgb(var(--bg-subtle)) 50%, rgb(var(--bg-muted)) 75%);
     background-size: 200% 100%;
     animation: skeleton 2s ease-in-out infinite;
-    border-radius: 0.5rem;
-  }
-
-  /* ── APEX Liquid Glass ──────────────────── */
-  .liquid-glass {
-    background: rgba(255, 255, 255, 0.01);
-    background-blend-mode: luminosity;
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
-    border: none;
-    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.1);
-    position: relative;
-    overflow: hidden;
-  }
-  .liquid-glass::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    padding: 1.4px;
-    background: linear-gradient(180deg,
-      rgba(255,255,255,0.45) 0%, rgba(255,255,255,0.15) 20%,
-      rgba(255,255,255,0) 40%, rgba(255,255,255,0) 60%,
-      rgba(255,255,255,0.15) 80%, rgba(255,255,255,0.45) 100%);
-    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-    -webkit-mask-composite: xor;
-    mask-composite: exclude;
-    pointer-events: none;
+    border-radius: 0.375rem;
   }
 }
 
-/* ── Animations ─────────────────────────────────────────────── */
+/* ── Animations ───────────────────────────────────────── */
 @layer utilities {
   @keyframes skeleton {
     0% { background-position: 200% 0; }
@@ -223,44 +153,16 @@
   }
 
   @keyframes slide-up {
-    from { opacity: 0; transform: translateY(12px); }
+    from { opacity: 0; transform: translateY(8px); }
     to { opacity: 1; transform: translateY(0); }
   }
 
   @keyframes scale-in {
-    from { opacity: 0; transform: scale(0.96); }
+    from { opacity: 0; transform: scale(0.97); }
     to { opacity: 1; transform: scale(1); }
   }
 
-  @keyframes ai-typing-dot {
-    0%, 60%, 100% { opacity: 0.2; transform: translateY(0); }
-    30% { opacity: 1; transform: translateY(-3px); }
-  }
-
-  @keyframes ai-pulse {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(22, 101, 52, 0.4); }
-    50% { box-shadow: 0 0 0 8px rgba(22, 101, 52, 0); }
-  }
-
-  @keyframes stream-cursor {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0; }
-  }
-
-  .animate-fade-in { animation: fade-in 300ms ease-out both; }
-  .animate-slide-up { animation: slide-up 400ms ease-out both; }
-  .animate-scale-in { animation: scale-in 200ms ease-out both; }
-
-  .typing-dot-1 { animation: ai-typing-dot 1.4s infinite; }
-  .typing-dot-2 { animation: ai-typing-dot 1.4s 0.2s infinite; }
-  .typing-dot-3 { animation: ai-typing-dot 1.4s 0.4s infinite; }
-
-  .agent-active { animation: ai-pulse 2s infinite; }
-
-  .stream-cursor::after {
-    content: '▊';
-    animation: stream-cursor 1s infinite;
-    color: rgb(var(--accent));
-  }
-
+  .animate-fade-in { animation: fade-in 150ms ease-out both; }
+  .animate-slide-up { animation: slide-up 200ms ease-out both; }
+  .animate-scale-in { animation: scale-in 150ms ease-out both; }
 }

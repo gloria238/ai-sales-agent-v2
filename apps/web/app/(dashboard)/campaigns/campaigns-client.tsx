@@ -47,7 +47,7 @@ export function CampaignListClient({ campaigns, orgSlug }: { campaigns: Campaign
         <Button onClick={() => router.push("/campaigns/new")}><Plus className="w-4 h-4 mr-2" />新建活动</Button>
       </div>
       {campaigns.length === 0 ? (
-        <Card className="p-12 text-center glass-card">
+        <Card className="p-12 text-center rounded-md border border-border bg-bg-card">
           <Send className="w-12 h-12 mx-auto mb-3 text-text-muted opacity-50" />
           <h3 className="text-lg font-medium text-text mb-1">暂无外呼活动</h3>
           <p className="text-sm text-text-muted mb-4">创建第一个 AI 个性化外呼活动，让 AI 自动跟进客户。</p>
@@ -56,7 +56,7 @@ export function CampaignListClient({ campaigns, orgSlug }: { campaigns: Campaign
       ) : (
         <div className="space-y-3">
           {campaigns.map((c) => (
-            <Card key={c.id} className="p-5 glass-card hover:shadow-panel-md transition-all cursor-pointer" onClick={() => router.push(`/campaigns/${c.id}`)}>
+            <Card key={c.id} className="p-5 rounded-md border border-border bg-bg-card hover:shadow-panel-md transition-all cursor-pointer" onClick={() => router.push(`/campaigns/${c.id}`)}>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center"><Send className="w-5 h-5 text-accent" /></div>

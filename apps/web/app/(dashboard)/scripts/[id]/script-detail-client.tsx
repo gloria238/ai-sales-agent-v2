@@ -32,7 +32,7 @@ export function ScriptDetailClient({ script, orgSlug }: { script: Script; orgSlu
       </button>
       <div className="flex items-start justify-between mb-8">
         <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-2xl bg-accent/10 flex items-center justify-center">
+          <div className="w-14 h-14 rounded-lg bg-accent/10 flex items-center justify-center">
             <FileText className="w-7 h-7 text-accent" />
           </div>
           <div>
@@ -48,7 +48,7 @@ export function ScriptDetailClient({ script, orgSlug }: { script: Script; orgSlu
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
-          <Card className="p-5 glass-card mb-6">
+          <Card className="p-5 rounded-md border border-border bg-bg-card mb-6">
             <h2 className="font-semibold text-text mb-3">Sequence Steps</h2>
             {steps.length === 0 ? <p className="text-sm text-text-muted">No steps defined</p> : (
               <div className="space-y-3">
@@ -74,12 +74,12 @@ export function ScriptDetailClient({ script, orgSlug }: { script: Script; orgSlu
         </div>
 
         <div className="space-y-6">
-          <Card className="p-5 glass-card">
+          <Card className="p-5 rounded-md border border-border bg-bg-card">
             <h2 className="font-semibold text-text mb-2">Description</h2>
             <p className="text-sm text-text-muted">{script.description || "No description"}</p>
           </Card>
           {script.campaigns.length > 0 && (
-            <Card className="p-5 glass-card">
+            <Card className="p-5 rounded-md border border-border bg-bg-card">
               <h2 className="font-semibold text-text mb-3">Used in Campaigns</h2>
               <div className="space-y-2">
                 {script.campaigns.map((c) => (

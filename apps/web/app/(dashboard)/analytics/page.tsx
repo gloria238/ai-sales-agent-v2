@@ -155,7 +155,7 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: { 
 
         {/* KPI cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="glass-card p-5">
+          <div className="rounded-md border border-border bg-bg-card p-5">
             <div className="size-10 rounded-xl bg-accent/10 flex items-center justify-center mb-3">
               <Users className="size-5 text-accent" />
             </div>
@@ -166,7 +166,7 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: { 
             </p>
           </div>
 
-          <div className="glass-card p-5">
+          <div className="rounded-md border border-border bg-bg-card p-5">
             <div className="size-10 rounded-xl bg-warning-soft flex items-center justify-center mb-3">
               <AlertCircle className="size-5 text-warning" />
             </div>
@@ -177,7 +177,7 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: { 
             </p>
           </div>
 
-          <div className="glass-card p-5">
+          <div className="rounded-md border border-border bg-bg-card p-5">
             <div className="size-10 rounded-xl bg-accent-soft flex items-center justify-center mb-3">
               <DollarSign className="size-5 text-accent-hover" />
             </div>
@@ -186,7 +186,7 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: { 
             <p className="text-xs text-text-muted mt-1">{totalAiCalls.toLocaleString()} 次调用</p>
           </div>
 
-          <div className="glass-card p-5">
+          <div className="rounded-md border border-border bg-bg-card p-5">
             <div className="size-10 rounded-xl bg-success-soft flex items-center justify-center mb-3">
               <ShieldCheck className="size-5 text-success" />
             </div>
@@ -201,7 +201,7 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: { 
         {/* Two-column: Cost trend + Agent performance */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Daily AI Cost */}
-          <div className="glass-card p-6">
+          <div className="rounded-md border border-border bg-bg-card p-6">
             <h3 className="text-sm font-semibold text-text mb-4 flex items-center gap-2">
               <TrendingUp className="size-4 text-text-muted" /> AI 每日成本（近30天）
             </h3>
@@ -222,7 +222,7 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: { 
           </div>
 
           {/* Agent Performance */}
-          <div className="glass-card p-6">
+          <div className="rounded-md border border-border bg-bg-card p-6">
             <h3 className="text-sm font-semibold text-text mb-4 flex items-center gap-2">
               <Bot className="size-4 text-text-muted" /> 助理表现
             </h3>
@@ -247,7 +247,7 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: { 
           </div>
 
           {/* Funnel */}
-          <div className="glass-card p-6">
+          <div className="rounded-md border border-border bg-bg-card p-6">
             <h3 className="text-sm font-semibold text-text mb-4 flex items-center gap-2">
               <BarChart3 className="size-4 text-text-muted" /> 客户漏斗
             </h3>
@@ -270,7 +270,7 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: { 
           </div>
 
           {/* Activity Pulse */}
-          <div className="glass-card p-6">
+          <div className="rounded-md border border-border bg-bg-card p-6">
             <h3 className="text-sm font-semibold text-text mb-4 flex items-center gap-2">
               <Activity className="size-4 text-text-muted" /> 7 天活跃度
             </h3>
@@ -364,7 +364,7 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: { 
 
       {/* KPI cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="glass-card p-5">
+        <div className="rounded-md border border-border bg-bg-card p-5">
           <div className="size-10 rounded-xl bg-accent/10 flex items-center justify-center mb-3">
             <DollarSign className="size-5 text-accent" />
           </div>
@@ -373,7 +373,7 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: { 
           <p className="text-xs text-text-muted mt-1">{pipelineCount} 个商机{pipelineValue === 0 && pipelineCount > 0 ? " · 请填写商机金额" : ""}</p>
         </div>
 
-        <div className="glass-card p-5">
+        <div className="rounded-md border border-border bg-bg-card p-5">
           <div className="size-10 rounded-xl bg-accent-secondary/10 flex items-center justify-center mb-3">
             <CalendarCheck className="size-5 text-accent-secondary" />
           </div>
@@ -384,7 +384,7 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: { 
           </p>
         </div>
 
-        <div className="glass-card p-5">
+        <div className="rounded-md border border-border bg-bg-card p-5">
           <div className="size-10 rounded-xl bg-warning-soft flex items-center justify-center mb-3">
             <Target className="size-5 text-warning" />
           </div>
@@ -393,7 +393,7 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: { 
           <p className="text-xs text-text-muted mt-1">客户到成交</p>
         </div>
 
-        <div className="glass-card p-5">
+        <div className="rounded-md border border-border bg-bg-card p-5">
           <div className="size-10 rounded-xl bg-accent-soft flex items-center justify-center mb-3">
             <Bot className="size-5 text-accent-hover" />
           </div>
@@ -406,7 +406,7 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: { 
       {/* Pipeline chart + Campaign performance */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Pipeline */}
-        <div className="glass-card p-6">
+        <div className="rounded-md border border-border bg-bg-card p-6">
           <h3 className="text-sm font-semibold text-text mb-4 flex items-center gap-2">
             <TrendingUp className="size-4 text-text-muted" /> 漏斗分布
           </h3>
@@ -432,7 +432,7 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: { 
         </div>
 
         {/* Campaign Performance */}
-        <div className="glass-card p-6">
+        <div className="rounded-md border border-border bg-bg-card p-6">
           <h3 className="text-sm font-semibold text-text mb-4 flex items-center gap-2">
             <Send className="size-4 text-text-muted" /> 活动效果
           </h3>
@@ -478,7 +478,7 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: { 
 
       {/* Recent Campaign Runs */}
       {campaignRuns.length > 0 && (
-        <div className="glass-card p-6">
+        <div className="rounded-md border border-border bg-bg-card p-6">
           <h3 className="text-sm font-semibold text-text mb-4 flex items-center gap-2">
             <BarChart3 className="size-4 text-text-muted" /> 近期活动执行
           </h3>

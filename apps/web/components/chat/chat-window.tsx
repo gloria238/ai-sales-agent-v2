@@ -225,7 +225,7 @@ export function ChatWindow({
               )}
 
               <div
-                className={`max-w-[75%] rounded-2xl px-4 py-3 ${
+                className={`max-w-[75%] rounded-lg px-4 py-3 ${
                   isMine
                     ? "bg-accent text-white rounded-br-md"
                     : "bg-bg-card border border-border rounded-bl-md"
@@ -254,7 +254,7 @@ export function ChatWindow({
             <div className="size-8 rounded-lg bg-accent/10 flex items-center justify-center shrink-0">
               <Bot className="size-4 text-accent" />
             </div>
-            <div className="bg-bg-card border border-border rounded-2xl rounded-bl-md px-4 py-3">
+            <div className="bg-bg-card border border-border rounded-lg rounded-bl-md px-4 py-3">
               <div className="flex gap-1">
                 <span className="size-2 rounded-full bg-text-muted animate-bounce" style={{ animationDelay: "0ms" }} />
                 <span className="size-2 rounded-full bg-text-muted animate-bounce" style={{ animationDelay: "150ms" }} />
@@ -267,7 +267,7 @@ export function ChatWindow({
         {/* AI Draft bubble — matches email inbox pattern */}
         {aiDraft && isAgent && (
           <div className="flex gap-3 justify-end px-4 py-1 animate-slide-up">
-            <div className="max-w-[75%] rounded-2xl rounded-br-md px-4 py-3 bg-accent/5 border border-accent/20 border-dashed">
+            <div className="max-w-[75%] rounded-lg rounded-br-md px-4 py-3 bg-accent/5 border border-accent/20 border-dashed">
               <p className="text-xs text-accent font-medium mb-1 flex items-center gap-1.5">
                 <Sparkles className="size-3" />
                 AI 草稿 — 审核后发送

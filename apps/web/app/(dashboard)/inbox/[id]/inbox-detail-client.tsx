@@ -38,7 +38,7 @@ function AITypingIndicator() {
       <div className="size-7 rounded-full bg-accent/10 flex items-center justify-center shrink-0">
         <Sparkles className="size-3.5 text-accent" />
       </div>
-      <div className="glass-card rounded-2xl rounded-tr-sm px-4 py-3 border border-accent/10">
+      <div className="rounded-md border border-border rounded-md border border-border bg-bg-card rounded-tr-sm px-4 py-3 border border-accent/10">
         <div className="flex items-center gap-1.5">
           <span className="text-xs text-accent font-medium">AI 正在撰写回复</span>
           <span className="flex gap-0.5">
@@ -59,8 +59,8 @@ const STAGE_LABELS: Record<string, string> = {
 };
 function StageBadge({ stage }: { stage: string | null }) {
   const map: Record<string, string> = {
-    new: "bg-bg-subtle text-text-muted", contacted: "bg-white/[0.04] text-lp-hero-sub",
-    qualified: "bg-white/[0.04] text-lp-hero-sub", proposal: "bg-warning-soft text-warning",
+    new: "bg-bg-subtle text-text-muted", contacted: "bg-bg-subtle text-lp-hero-sub",
+    qualified: "bg-bg-subtle text-lp-hero-sub", proposal: "bg-warning-soft text-warning",
     negotiation: "bg-warning-soft text-warning", closed_won: "bg-accent-soft text-accent",
     closed_lost: "bg-danger-soft text-danger",
   };
@@ -255,7 +255,7 @@ export function InboxDetailClient({ conversation, conversations, orgSlug }: Prop
   return (
     <div className="flex h-full overflow-hidden">
       {/* ── Left: conversation list with Identity Cells ──── */}
-      <div className="hidden md:flex w-72 shrink-0 border-r border-border flex-col bg-bg-card/30 backdrop-blur-sm">
+      <div className="hidden md:flex w-72 shrink-0 border-r border-border flex-col bg-bg-card">
         <div className="flex-1 overflow-y-auto py-1">
           {conversations.map((c, i) => (
             <IdentityCard
@@ -275,7 +275,7 @@ export function InboxDetailClient({ conversation, conversations, orgSlug }: Prop
       {/* ── Center: message thread ───────────────────────── */}
       <div className="flex-1 flex flex-col min-w-0 bg-bg">
         {/* Header — Identity Card expanded */}
-        <div className="shrink-0 border-b border-border bg-bg-card/50 backdrop-blur-sm">
+        <div className="shrink-0 border-b border-border bg-bg-card">
           <div className="md:hidden px-3 pt-2 pb-1">
             <Button variant="ghost" size="sm" onClick={() => router.push("/inbox")} className="text-text-secondary -ml-2">
               <ChevronLeft className="size-4 mr-0.5" /> Inbox
@@ -348,7 +348,7 @@ export function InboxDetailClient({ conversation, conversations, orgSlug }: Prop
                 }
               </div>
               <div className={cn(
-                "max-w-[70%] rounded-2xl px-4 py-2.5",
+                "max-w-[70%] rounded-lg px-4 py-2.5",
                 msg.direction === "inbound"
                   ? "bg-bg-card border border-border rounded-tl-sm"
                   : "bg-accent text-white rounded-tr-sm",
@@ -387,7 +387,7 @@ export function InboxDetailClient({ conversation, conversations, orgSlug }: Prop
               <div className="size-7 rounded-full bg-accent/10 flex items-center justify-center shrink-0">
                 <Sparkles className="size-3.5 text-accent" />
               </div>
-              <div className="max-w-[70%] rounded-2xl rounded-tr-sm px-4 py-2.5 bg-accent/5 border border-accent/20 border-dashed">
+              <div className="max-w-[70%] rounded-lg rounded-tr-sm px-4 py-2.5 bg-accent/5 border border-accent/20 border-dashed">
                 <p className="text-xs text-accent font-medium mb-1">AI 草稿 — 审核后发送</p>
                 <p className="text-sm text-text-secondary whitespace-pre-wrap leading-relaxed line-clamp-4">{aiDraft.body}</p>
                 <div className="flex gap-2 mt-2">
@@ -420,7 +420,7 @@ export function InboxDetailClient({ conversation, conversations, orgSlug }: Prop
             />
           </div>
         ) : (
-          <div className="shrink-0 border-t border-border p-4 bg-bg-card/50 backdrop-blur-sm">
+          <div className="shrink-0 border-t border-border p-4 bg-bg-card">
           {/* Translation preview */}
           {translated && (
             <div className="mb-3 rounded-xl border border-accent/30 bg-accent/5 p-3 animate-slide-up">
@@ -498,7 +498,7 @@ export function InboxDetailClient({ conversation, conversations, orgSlug }: Prop
       </div>
 
       {/* ── Right: Lead Intelligence panel ───────────────── */}
-      <div className="hidden xl:flex w-80 shrink-0 border-l border-border flex-col bg-bg-card/30 backdrop-blur-sm overflow-y-auto">
+      <div className="hidden xl:flex w-80 shrink-0 border-l border-border flex-col bg-bg-card/30 overflow-y-auto">
         <div className="p-4 border-b border-border">
           <h3 className="text-sm font-semibold text-text flex items-center gap-2">
             <Sparkles className="size-3.5 text-accent" /> AI 智能分析
@@ -510,7 +510,7 @@ export function InboxDetailClient({ conversation, conversations, orgSlug }: Prop
           <p className="text-[10px] font-semibold text-text-muted uppercase tracking-wide mb-2">客户评级</p>
           <div className="flex items-center gap-3 mb-3">
             <div className={cn(
-              "size-14 rounded-2xl flex items-center justify-center text-lg font-bold",
+              "size-14 rounded-lg flex items-center justify-center text-lg font-bold",
               scoreLabel === "Hot" ? "bg-accent-soft text-accent" :
               scoreLabel === "Warm" ? "bg-warning-soft text-warning" :
               "bg-bg-subtle text-text-muted",
@@ -604,7 +604,7 @@ export function InboxDetailClient({ conversation, conversations, orgSlug }: Prop
         {/* Recommended Actions */}
         <div className="p-4">
           <p className="text-[10px] font-semibold text-text-muted uppercase tracking-wide mb-2">AI 建议</p>
-          <div className="glass-card p-3 rounded-xl border border-accent/10">
+          <div className="rounded-md border border-border bg-bg-card p-3 rounded-xl border border-accent/10">
             <div className="flex items-center gap-2 mb-2">
               <Sparkles className="size-3.5 text-accent" />
               <span className="text-xs font-medium text-accent">下一步行动</span>

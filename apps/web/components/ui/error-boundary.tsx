@@ -11,7 +11,7 @@ interface ErrorBoundaryProps {
 export function ErrorBoundary({ error, reset, title = "Something went wrong" }: ErrorBoundaryProps) {
   return (
     <div className="flex flex-col items-center justify-center min-h-[50vh] px-6 text-center animate-fade-in">
-      <div className="glass-card p-8 max-w-md w-full space-y-4">
+      <div className="rounded-md border border-border bg-bg-card p-8 max-w-md w-full space-y-4">
         <div className="size-12 rounded-full bg-danger/10 flex items-center justify-center mx-auto">
           <span className="text-danger text-xl font-bold">!</span>
         </div>

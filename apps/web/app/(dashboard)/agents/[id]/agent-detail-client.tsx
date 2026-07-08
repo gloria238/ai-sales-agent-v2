@@ -61,7 +61,7 @@ export function AgentDetailClient({ agent, orgSlug }: { agent: Agent; orgSlug: s
 
       <div className="flex items-start justify-between mb-8">
         <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-2xl bg-accent/10 flex items-center justify-center">
+          <div className="w-14 h-14 rounded-lg bg-accent/10 flex items-center justify-center">
             <Bot className="w-7 h-7 text-accent" />
           </div>
           <div>
@@ -90,7 +90,7 @@ export function AgentDetailClient({ agent, orgSlug }: { agent: Agent; orgSlug: s
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
-          <Card className="p-5 glass-card">
+          <Card className="p-5 rounded-md border border-border bg-bg-card">
             <h2 className="font-semibold text-text mb-3">Personality</h2>
             {editing ? (
               <Textarea value={personality} onChange={(e) => setPersonality(e.target.value)} rows={4} />
@@ -99,7 +99,7 @@ export function AgentDetailClient({ agent, orgSlug }: { agent: Agent; orgSlug: s
             )}
           </Card>
 
-          <Card className="p-5 glass-card">
+          <Card className="p-5 rounded-md border border-border bg-bg-card">
             <h2 className="font-semibold text-text mb-3">Description</h2>
             {editing ? (
               <Input value={description} onChange={(e) => setDescription(e.target.value)} />
@@ -108,7 +108,7 @@ export function AgentDetailClient({ agent, orgSlug }: { agent: Agent; orgSlug: s
             )}
           </Card>
 
-          <Card className="p-5 glass-card">
+          <Card className="p-5 rounded-md border border-border bg-bg-card">
             <h2 className="font-semibold text-text mb-3">Goals ({goals.length})</h2>
             {goals.length === 0 ? (
               <p className="text-sm text-text-muted">No goals configured</p>
@@ -126,7 +126,7 @@ export function AgentDetailClient({ agent, orgSlug }: { agent: Agent; orgSlug: s
         </div>
 
         <div className="space-y-6">
-          <Card className="p-5 glass-card">
+          <Card className="p-5 rounded-md border border-border bg-bg-card">
             <h2 className="font-semibold text-text mb-3">Knowledge Base</h2>
             {Object.keys(kb).length === 0 ? (
               <p className="text-sm text-text-muted">No knowledge base configured</p>
@@ -142,7 +142,7 @@ export function AgentDetailClient({ agent, orgSlug }: { agent: Agent; orgSlug: s
             )}
           </Card>
 
-          <Card className="p-5 glass-card">
+          <Card className="p-5 rounded-md border border-border bg-bg-card">
             <h2 className="font-semibold text-text mb-3">Recent Conversations</h2>
             {agent.conversations.length === 0 ? (
               <p className="text-sm text-text-muted">No conversations yet</p>
@@ -160,7 +160,7 @@ export function AgentDetailClient({ agent, orgSlug }: { agent: Agent; orgSlug: s
             )}
           </Card>
 
-          <Card className="p-5 glass-card">
+          <Card className="p-5 rounded-md border border-border bg-bg-card">
             <h2 className="font-semibold text-text mb-3">Linked Campaigns</h2>
             {agent.campaigns.length === 0 ? (
               <p className="text-sm text-text-muted">No campaigns linked</p>

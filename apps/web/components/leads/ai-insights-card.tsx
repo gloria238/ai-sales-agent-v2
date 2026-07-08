@@ -52,7 +52,7 @@ export function AIInsightsCard({ leadId, orgSlug }: Props) {
     ? "bg-warning-soft text-warning" : "bg-bg-subtle text-text-muted";
 
   return (
-    <div className="rounded-xl glass-card p-4">
+    <div className="rounded-xl rounded-md border border-border bg-bg-card p-4">
       <div className="flex items-center justify-between mb-3">
         <p className="text-sm text-text-muted">AI Insights</p>
         {!loading && (

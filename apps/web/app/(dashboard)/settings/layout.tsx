@@ -14,7 +14,7 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
   return (
     <div className="p-4 lg:p-6">
       <h2 className="text-2xl font-bold mb-6 text-text">设置</h2>
-      <div className="flex gap-4 mb-6 border-b border-lp-border/30">
+      <div className="flex gap-4 mb-6 border-b border-border">
         {tabs.map((tab) => {
           const active = pathname === tab.href;
           return (
@@ -24,7 +24,7 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
               className={`pb-3 text-sm font-medium transition-colors border-b-2 ${
                 active
                   ? "text-accent border-accent"
-                  : "text-text-muted hover:text-text border-transparent hover:border-lp-border/30"
+                  : "text-text-muted hover:text-text border-transparent hover:border-border"
               }`}
             >
               {tab.label}

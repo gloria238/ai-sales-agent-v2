@@ -67,7 +67,7 @@ export default function AIMetricsTab({ orgSlug }: { orgSlug: string }) {
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {Array.from({ length: 8 }).map((_, i) => (
-          <div key={i} className="glass-card p-5 animate-pulse">
+          <div key={i} className="rounded-md border border-border bg-bg-card p-5 animate-pulse">
             <div className="size-10 rounded-xl bg-bg-subtle mb-3" />
             <div className="h-3 bg-bg-subtle rounded w-20 mb-2" />
             <div className="h-6 bg-bg-subtle rounded w-16" />
@@ -79,7 +79,7 @@ export default function AIMetricsTab({ orgSlug }: { orgSlug: string }) {
 
   if (error || !data) {
     return (
-      <div className="glass-card p-8 text-center">
+      <div className="rounded-md border border-border bg-bg-card p-8 text-center">
         <AlertTriangle className="size-8 text-warning mx-auto mb-3" />
         <p className="text-sm text-text-muted">{error || "暂无 AI 指标数据"}</p>
       </div>
@@ -117,28 +117,28 @@ export default function AIMetricsTab({ orgSlug }: { orgSlug: string }) {
           <Activity className="size-3.5" /> 系统层
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="glass-card p-4">
+          <div className="rounded-md border border-border bg-bg-card p-4">
             <div className="size-9 rounded-lg bg-accent/10 flex items-center justify-center mb-2">
               <Timer className="size-4 text-accent" />
             </div>
             <p className="text-xs text-text-muted">P50 响应时长</p>
             <p className="text-xl font-bold text-text">{formatMs(data.system.p50)}</p>
           </div>
-          <div className="glass-card p-4">
+          <div className="rounded-md border border-border bg-bg-card p-4">
             <div className="size-9 rounded-lg bg-accent-secondary/10 flex items-center justify-center mb-2">
               <Timer className="size-4 text-accent-secondary" />
             </div>
             <p className="text-xs text-text-muted">P95 响应时长</p>
             <p className="text-xl font-bold text-text">{formatMs(data.system.p95)}</p>
           </div>
-          <div className="glass-card p-4">
+          <div className="rounded-md border border-border bg-bg-card p-4">
             <div className="size-9 rounded-lg bg-accent/10 flex items-center justify-center mb-2">
               <Zap className="size-4 text-accent" />
             </div>
             <p className="text-xs text-text-muted">AI 回复总量</p>
             <p className="text-xl font-bold text-text">{data.system.totalCalls}</p>
           </div>
-          <div className="glass-card p-4">
+          <div className="rounded-md border border-border bg-bg-card p-4">
             <div className="size-9 rounded-lg bg-accent-secondary/10 flex items-center justify-center mb-2">
               <Layers className="size-4 text-accent-secondary" />
             </div>
@@ -157,7 +157,7 @@ export default function AIMetricsTab({ orgSlug }: { orgSlug: string }) {
         </h3>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Daily call trend */}
-          <div className="glass-card p-5">
+          <div className="rounded-md border border-border bg-bg-card p-5">
             <p className="text-sm font-medium text-text mb-4">每日 AI 调用量</p>
             <div className="h-40 flex items-end gap-1">
               {data.quality.dailyCalls.length > 0 ? (
@@ -176,7 +176,7 @@ export default function AIMetricsTab({ orgSlug }: { orgSlug: string }) {
             </div>
           </div>
           {/* KB hit placeholder */}
-          <div className="glass-card p-5">
+          <div className="rounded-md border border-border bg-bg-card p-5">
             <p className="text-sm font-medium text-text mb-4">每日 KB 命中率</p>
             <p className="text-xs text-text-muted py-8 text-center">
               数据待接入 — 需要 AICallMetric.kbChunksUsed 字段
@@ -192,7 +192,7 @@ export default function AIMetricsTab({ orgSlug }: { orgSlug: string }) {
         </h3>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Status distribution */}
-          <div className="glass-card p-5">
+          <div className="rounded-md border border-border bg-bg-card p-5">
             <p className="text-sm font-medium text-text mb-4">对话状态分布</p>
             {totalConvCount > 0 ? (
               <div className="space-y-2">
@@ -218,14 +218,14 @@ export default function AIMetricsTab({ orgSlug }: { orgSlug: string }) {
           </div>
           {/* Handoff + Draft adoption */}
           <div className="space-y-4">
-            <div className="glass-card p-5">
+            <div className="rounded-md border border-border bg-bg-card p-5">
               <p className="text-sm font-medium text-text mb-2">AI 参与率</p>
               <p className="text-2xl font-bold text-text">
                 {data.business.handoffRate !== null ? `${(data.business.handoffRate * 100).toFixed(0)}%` : "—"}
               </p>
               <p className="text-xs text-text-muted mt-1">有 AI 参与回复的对话占比（近似）</p>
             </div>
-            <div className="glass-card p-5">
+            <div className="rounded-md border border-border bg-bg-card p-5">
               <p className="text-sm font-medium text-text mb-2">草稿采纳率</p>
               <p className={`text-2xl font-bold ${data.business.draftAdoptionRate === null ? "text-text-muted text-base" : "text-text"}`}>
                 {nullPlaceholder(data.business.draftAdoptionRate)}
@@ -244,14 +244,14 @@ export default function AIMetricsTab({ orgSlug }: { orgSlug: string }) {
           <AlertTriangle className="size-3.5" /> 风险指标
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className={`glass-card p-5 ${data.risk.timeouts > 0 ? "ring-1 ring-red-500/30" : ""}`}>
+          <div className={`rounded-md border border-border bg-bg-card p-5 ${data.risk.timeouts > 0 ? "ring-1 ring-red-500/30" : ""}`}>
             <p className="text-sm font-medium text-text mb-2">超时中断</p>
             <p className={`text-2xl font-bold ${data.risk.timeouts > 0 ? "text-red-400" : "text-text"}`}>
               {data.risk.timeouts}
             </p>
             <p className="text-xs text-text-muted mt-1">errorType 包含 "timeout" 的调用次数</p>
           </div>
-          <div className="glass-card p-5">
+          <div className="rounded-md border border-border bg-bg-card p-5">
             <p className="text-sm font-medium text-text mb-2">置信度门控触发</p>
             <p className={`text-2xl font-bold ${data.risk.confidenceGateFired === null ? "text-text-muted text-base" : "text-text"}`}>
               {nullPlaceholder(data.risk.confidenceGateFired)}

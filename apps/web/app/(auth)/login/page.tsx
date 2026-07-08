@@ -40,9 +40,9 @@ export default function LoginPage() {
   return (
     <div className="w-full max-w-sm mx-auto animate-slide-up">
       {/* Glass card */}
-      <div className="glass-card p-8 sm:p-10 rounded-2xl">
+      <div className="rounded-md border border-border bg-bg-card p-8 sm:p-10 rounded-lg">
         <div className="text-center mb-8">
-          <Link href="/" className="inline-flex size-11 rounded-2xl bg-accent items-center justify-center text-white font-bold text-lg shadow-sm shadow-accent/25 mb-5 hover:shadow-md hover:shadow-accent/30 transition-shadow duration-300">
+          <Link href="/" className="inline-flex size-11 rounded-lg bg-accent items-center justify-center text-white font-bold text-lg shadow-sm shadow-accent/25 mb-5 hover:shadow-md hover:shadow-accent/30 transition-shadow duration-300">
             S
           </Link>
           <h1 className="text-xl font-bold tracking-tight text-text">欢迎回来</h1>

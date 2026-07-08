@@ -77,7 +77,7 @@ export function PlaygroundClient({ orgSlug }: { orgSlug: string }) {
           <button
             onClick={handleAsk}
             disabled={loading || !question.trim()}
-            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-accent text-white hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm shadow-accent/20"
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-accent text-white hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
           >
             {loading ? (
               <Loader2 className="size-4 animate-spin" />
@@ -145,7 +145,7 @@ export function PlaygroundClient({ orgSlug }: { orgSlug: string }) {
       {/* Empty state */}
       {!answer && !loading && (
         <div className="flex flex-col items-center justify-center py-20 text-center">
-          <div className="size-16 rounded-2xl bg-bg-sage flex items-center justify-center mb-5">
+          <div className="size-16 rounded-lg bg-bg-sage flex items-center justify-center mb-5">
             <Search className="size-7 text-accent" />
           </div>
           <h3 className="text-base font-semibold text-text mb-1">Ask a question</h3>

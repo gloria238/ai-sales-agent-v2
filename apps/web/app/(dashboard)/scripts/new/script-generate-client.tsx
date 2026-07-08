@@ -62,7 +62,7 @@ export function ScriptGenerateClient({ orgSlug }: { orgSlug: string }) {
         <ArrowLeft className="w-4 h-4" /> Back to Scripts
       </button>
       <h1 className="text-2xl font-bold text-text mb-6">AI Script Generator</h1>
-      <Card className="p-6 glass-card">
+      <Card className="p-6 rounded-md border border-border bg-bg-card">
         <div className="space-y-4">
           <div>
             <p className="text-sm text-text-muted mb-4">
@@ -82,7 +82,7 @@ export function ScriptGenerateClient({ orgSlug }: { orgSlug: string }) {
       </Card>
 
       {result && (
-        <Card className="p-6 glass-card mt-6">
+        <Card className="p-6 rounded-md border border-border bg-bg-card mt-6">
           <div className="flex items-center gap-3 mb-4">
             <FileText className="w-6 h-6 text-accent" />
             <div>

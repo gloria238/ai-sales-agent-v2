@@ -84,7 +84,7 @@ export function AgentListClient({ agents, orgSlug }: { agents: Agent[]; orgSlug:
       </div>
 
       {agents.length === 0 ? (
-        <Card className="p-12 text-center glass-card">
+        <Card className="p-12 text-center rounded-md border border-border bg-bg-card">
           <Bot className="w-12 h-12 mx-auto mb-3 text-text-muted opacity-50" />
           <h3 className="text-lg font-medium text-text mb-1">No agents yet</h3>
           <p className="text-sm text-text-muted mb-4">Create your first AI SDR agent to start handling conversations.</p>
@@ -101,7 +101,7 @@ export function AgentListClient({ agents, orgSlug }: { agents: Agent[]; orgSlug:
               onClick={() => router.push(`/agents/${agent.id}`)}
               className="text-left"
             >
-              <Card className="p-5 glass-card hover:shadow-panel-md transition-all duration-200 hover:-translate-y-0.5 cursor-pointer h-full">
+              <Card className="p-5 rounded-md border border-border bg-bg-card hover:shadow-panel-md transition-all duration-200 hover:-translate-y-0.5 cursor-pointer h-full">
                 <div className="flex items-start justify-between mb-3">
                   <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
                     <Bot className="w-5 h-5 text-accent" />

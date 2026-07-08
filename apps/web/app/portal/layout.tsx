@@ -13,10 +13,10 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
       </div>
 
       {/* Portal header — minimal branding bar */}
-      <header className="relative z-10 border-b border-border bg-bg-card/70 backdrop-blur-sm">
+      <header className="relative z-10 border-b border-border bg-bg-card/70 ">
         <div className="max-w-4xl mx-auto flex items-center justify-between px-4 h-14">
           <a href="/portal/conversations" className="flex items-center gap-2.5 font-semibold text-text">
-            <span className="size-7 rounded-lg bg-accent flex items-center justify-center text-white font-bold text-xs shadow-sm shadow-accent/20">
+            <span className="size-7 rounded-lg bg-accent flex items-center justify-center text-white font-bold text-xs shadow-sm">
               S
             </span>
             <span className="text-sm tracking-tight">客户门户</span>

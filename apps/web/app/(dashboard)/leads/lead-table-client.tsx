@@ -29,8 +29,8 @@ const PAGE_SIZE = 20;
 
 const STAGE_CONFIG: Record<string, { color: string; bg: string; dot: string }> = {
   new:          { color: "text-text-muted", bg: "bg-bg-subtle", dot: "bg-text-muted" },
-  contacted:    { color: "text-lp-hero-sub", bg: "bg-white/[0.04]", dot: "bg-lp-hero-sub" },
-  qualified:    { color: "text-lp-hero-sub", bg: "bg-white/[0.04]", dot: "bg-lp-hero-sub" },
+  contacted:    { color: "text-lp-hero-sub", bg: "bg-bg-subtle", dot: "bg-lp-hero-sub" },
+  qualified:    { color: "text-lp-hero-sub", bg: "bg-bg-subtle", dot: "bg-lp-hero-sub" },
   proposal:     { color: "text-warning", bg: "bg-warning-soft", dot: "bg-warning" },
   negotiation:  { color: "text-warning", bg: "bg-warning-soft", dot: "bg-warning" },
   closed_won:   { color: "text-accent", bg: "bg-accent-soft", dot: "bg-accent" },
@@ -259,7 +259,7 @@ export function LeadTableClient({ initialLeads, initialTotal, orgSlug, canManage
       <Link
         key={lead.id}
         href={`/leads/${lead.id}`}
-        className="glass-card group p-5 flex flex-col gap-3 hover:-translate-y-0.5 hover:shadow-lg hover:border-accent/20 transition-all duration-200 animate-slide-up"
+        className="rounded-md border border-border bg-bg-card group p-5 flex flex-col gap-3 hover:-translate-y-0.5 hover:shadow-sm hover:border-accent/20 transition-all duration-200 animate-slide-up"
         style={{ animationDelay: `${index * 40}ms` }}
       >
         {/* Header: Avatar + identity */}
@@ -532,7 +532,7 @@ export function LeadTableClient({ initialLeads, initialTotal, orgSlug, canManage
             /* Loading skeleton */
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="glass-card p-5 animate-pulse">
+                <div key={i} className="rounded-md border border-border bg-bg-card p-5 animate-pulse">
                   <div className="flex items-start gap-3">
                     <div className="size-11 rounded-full bg-bg-subtle" />
                     <div className="flex-1 space-y-2">
@@ -549,8 +549,8 @@ export function LeadTableClient({ initialLeads, initialTotal, orgSlug, canManage
             </div>
           ) : leads.length === 0 ? (
             /* Empty state */
-            <div className="glass-card p-16 text-center">
-              <div className="size-16 rounded-2xl bg-accent-soft flex items-center justify-center mx-auto mb-4">
+            <div className="rounded-md border border-border bg-bg-card p-16 text-center">
+              <div className="size-16 rounded-lg bg-accent-soft flex items-center justify-center mx-auto mb-4">
                 <User className="size-8 text-accent opacity-50" />
               </div>
               <h3 className="text-lg font-semibold text-text mb-2">

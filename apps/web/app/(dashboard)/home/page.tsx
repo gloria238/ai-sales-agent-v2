@@ -70,14 +70,14 @@ export default async function DashboardHomePage() {
         <div className="max-w-md w-full animate-fade-in">
           <OnboardingCard show={true} orgSlug={session.orgSlug} />
           <div className="mt-6 rounded-xl border border-border bg-bg-card p-8 text-center">
-            <div className="size-14 rounded-xl bg-gradient-to-br from-accent to-accent/40 flex items-center justify-center mx-auto mb-5 shadow-lg shadow-accent/20">
-              <Bot className="size-7 text-white" />
+            <div className="size-10 rounded-md bg-accent-subtle flex items-center justify-center mx-auto mb-5">
+              <Bot className="size-5 text-accent" />
             </div>
             <h3 className="text-lg font-bold text-text mb-2">部署你的 AI 销售团队</h3>
             <p className="text-sm text-text-secondary mb-6 max-w-xs mx-auto leading-relaxed">创建 AI 助理，导入客户，启动外呼活动。AI 全天候自动筛选客户并预约会议。</p>
             <div className="flex items-center justify-center gap-3">
-              <Link href="/agents" className="rounded-lg bg-accent text-white text-sm font-medium px-5 py-2.5 hover:bg-accent-hover transition-all shadow-sm shadow-accent/20 hover:shadow-md hover:shadow-accent/25">创建助理</Link>
-              <Link href="/leads" className="rounded-lg border border-border text-text-secondary text-sm font-medium px-5 py-2.5 hover:bg-bg-subtle hover:border-accent/30 transition-all">导入客户</Link>
+              <Link href="/agents" className="rounded-md bg-accent text-white text-sm font-medium px-3.5 py-2 hover:bg-accent-hover transition-colors">创建助理</Link>
+              <Link href="/leads" className="rounded-md border border-border text-text-secondary text-sm font-medium px-3.5 py-2 hover:bg-bg-subtle transition-colors">导入客户</Link>
             </div>
           </div>
         </div>
@@ -98,7 +98,7 @@ export default async function DashboardHomePage() {
           </h1>
         </div>
         <div className="flex items-center gap-2.5">
-          <Link href="/agents" className="inline-flex items-center gap-2 rounded-xl bg-accent text-white text-sm font-semibold px-4 py-2.5 hover:bg-accent-hover transition-all shadow-sm shadow-accent/20 hover:shadow-md hover:shadow-accent/25">
+          <Link href="/agents" className="inline-flex items-center gap-2 rounded-xl bg-accent text-white text-sm font-semibold px-4 py-2.5 hover:bg-accent-hover transition-all shadow-sm hover:shadow-md hover:shadow-accent/25">
             <Plus className="size-4" /> 新建助理
           </Link>
           <Link href="/campaigns/new" className="inline-flex items-center gap-2 rounded-xl border border-border bg-bg-card text-text-secondary text-sm font-medium px-4 py-2.5 hover:bg-bg-subtle hover:border-accent/30 transition-all">
@@ -120,7 +120,7 @@ export default async function DashboardHomePage() {
         ].map((card, i) => (
           <div
             key={card.label}
-            className="animate-fade-in rounded-2xl border border-border bg-bg-card/80 backdrop-blur-sm px-5 py-4 hover:border-accent/30 hover:shadow-lg transition-all duration-300 group"
+            className="animate-fade-in rounded-lg border border-border bg-bg-card/80 px-5 py-4 hover:border-accent/30 hover:shadow-sm transition-all duration-300 group"
             style={{ animationDelay: `${i * 80}ms` }}
           >
             <div className="flex items-center gap-3.5">
@@ -141,7 +141,7 @@ export default async function DashboardHomePage() {
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-4 min-h-0">
 
         {/* ── Left: Activity ─────────────── */}
-        <div className="rounded-2xl border border-border bg-bg-card/80 backdrop-blur-sm shadow-sm flex flex-col min-h-0 overflow-hidden">
+        <div className="rounded-lg border border-border bg-bg-card/80 shadow-sm flex flex-col min-h-0 overflow-hidden">
           <div className="flex items-center gap-2.5 px-5 py-3 border-b border-border shrink-0">
             <span className="relative flex size-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75" />
@@ -158,7 +158,7 @@ export default async function DashboardHomePage() {
         {/* ── Right: Charts (2 cols) ─────── */}
         <div className="lg:col-span-2 grid grid-cols-2 gap-4 min-h-0">
           {/* Lead Quality */}
-          <div className="rounded-2xl border border-border bg-bg-card/80 backdrop-blur-sm shadow-sm p-5 flex flex-col justify-center">
+          <div className="rounded-lg border border-border bg-bg-card/80 shadow-sm p-5 flex flex-col justify-center">
             <h3 className="text-sm font-semibold text-text mb-1">客户质量</h3>
             <p className="text-xs text-text-muted mb-4">共 {leadCount} 条客户</p>
             {scoreDonut.length > 0 ? (
@@ -185,7 +185,7 @@ export default async function DashboardHomePage() {
           </div>
 
           {/* Pipeline */}
-          <div className="rounded-2xl border border-border bg-bg-card/80 backdrop-blur-sm shadow-sm p-5 flex flex-col justify-center">
+          <div className="rounded-lg border border-border bg-bg-card/80 shadow-sm p-5 flex flex-col justify-center">
             <h3 className="text-sm font-semibold text-text mb-1">销售漏斗</h3>
             <p className="text-xs text-text-muted mb-4">共 {leadCount} 条客户 · 本月成交 {wonThisMonth}</p>
             {pipelineDonut.length > 0 ? (
@@ -212,7 +212,7 @@ export default async function DashboardHomePage() {
           </div>
 
           {/* Campaign reach + Quick stats */}
-          <div className="rounded-2xl border border-border bg-bg-card/80 backdrop-blur-sm shadow-sm p-5 col-span-2">
+          <div className="rounded-lg border border-border bg-bg-card/80 shadow-sm p-5 col-span-2">
             <div className="flex items-center justify-between mb-1">
               <h3 className="text-sm font-semibold text-text">活动效果</h3>
               {totalSent > 0 && (

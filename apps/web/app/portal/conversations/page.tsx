@@ -54,7 +54,7 @@ export default function PortalConversationsPage() {
       </div>
 
       {conversations.length === 0 ? (
-        <div className="glass-card p-12 text-center">
+        <div className="rounded-md border border-border bg-bg-card p-12 text-center">
           <MessageSquare className="size-10 text-text-muted mx-auto mb-3 opacity-30" />
           <p className="text-sm text-text-muted">No conversations yet.</p>
           <p className="text-xs text-text-muted mt-1">Start a conversation from our website or contact page.</p>
@@ -65,7 +65,7 @@ export default function PortalConversationsPage() {
             <Link
               key={conv.id}
               href={`/portal/conversations/${conv.id}`}
-              className="block glass-card p-4 sm:p-5 hover:border-accent/30 hover:shadow-md transition-all duration-200 group"
+              className="block rounded-md border border-border bg-bg-card p-4 sm:p-5 hover:border-accent/30 hover:shadow-md transition-all duration-200 group"
             >
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0 flex-1">
@@ -101,7 +101,7 @@ export default function PortalConversationsPage() {
           ].map((r) => (
             <div
               key={r.label}
-              className="glass-card p-4 hover:border-accent/30 transition-all duration-200 cursor-pointer group"
+              className="rounded-md border border-border bg-bg-card p-4 hover:border-accent/30 transition-all duration-200 cursor-pointer group"
             >
               <h3 className="text-sm font-medium text-text group-hover:text-accent transition-colors">{r.label}</h3>
               <p className="text-xs text-text-muted mt-1">{r.desc}</p>

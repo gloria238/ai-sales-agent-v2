@@ -26,8 +26,8 @@ export default function PortalLoginPage() {
     return (
       <div className="min-h-[80vh] flex items-center justify-center px-4">
         <div className="w-full max-w-sm text-center animate-slide-up">
-          <div className="glass-card p-8 sm:p-10 rounded-2xl">
-            <div className="size-14 rounded-2xl bg-accent/10 flex items-center justify-center mx-auto mb-5">
+          <div className="rounded-md border border-border bg-bg-card p-8 sm:p-10 rounded-lg">
+            <div className="size-14 rounded-lg bg-accent/10 flex items-center justify-center mx-auto mb-5">
               <svg className="size-7 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
               </svg>
@@ -52,9 +52,9 @@ export default function PortalLoginPage() {
   return (
     <div className="min-h-[80vh] flex items-center justify-center px-4">
       <div className="w-full max-w-sm animate-slide-up">
-        <div className="glass-card p-8 sm:p-10 rounded-2xl">
+        <div className="rounded-md border border-border bg-bg-card p-8 sm:p-10 rounded-lg">
           <div className="text-center mb-8">
-            <span className="inline-flex size-11 rounded-2xl bg-accent items-center justify-center text-white font-bold text-lg shadow-sm shadow-accent/25 mb-5">
+            <span className="inline-flex size-11 rounded-lg bg-accent items-center justify-center text-white font-bold text-lg shadow-sm shadow-accent/25 mb-5">
               S
             </span>
             <h1 className="text-xl font-bold tracking-tight text-text">Customer Portal</h1>

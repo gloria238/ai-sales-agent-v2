@@ -80,16 +80,16 @@ export function DialogContent({ children, title }: { children: React.ReactNode; 
       role="dialog"
       aria-modal="true"
       aria-label={title || "Dialog"}
-      className={`fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm transition-opacity duration-200 ${closing ? "opacity-0" : "opacity-100 animate-fade-in"}`}
+      className={`fixed inset-0 z-50 flex items-center justify-center bg-black/40 transition-opacity duration-150 ${closing ? "opacity-0" : "opacity-100"}`}
       onMouseDown={(e) => { if (e.target === overlayRef.current) setOpen(false); }}
     >
-      <div className={`glass-card rounded-xl shadow-xl w-full max-w-md mx-4 overflow-visible transition-all duration-200 ${closing ? "opacity-0 scale-95" : "opacity-100 animate-scale-in"}`}>
+      <div className={`rounded-lg border border-border bg-bg-card shadow-sm w-full max-w-md mx-4 overflow-visible transition-all duration-150 ${closing ? "opacity-0 scale-95" : "opacity-100 animate-scale-in"}`}>
         {title && (
-          <div className="flex items-center justify-between px-5 py-3.5 border-b border-lp-border/30">
+          <div className="flex items-center justify-between px-5 py-3.5 border-b border-border">
             <h3 className="font-semibold text-text">{title}</h3>
             <button
               onClick={() => setOpen(false)}
-              className="text-text-muted hover:text-text text-lg leading-none transition-colors p-1 rounded hover:bg-white/[0.04]"
+              className="text-text-muted hover:text-text text-lg leading-none transition-colors p-1 rounded hover:bg-bg-subtle"
               aria-label="Close dialog"
             >&times;</button>
           </div>

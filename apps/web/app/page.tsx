@@ -99,7 +99,7 @@ function CrosshairIcon({ className }: { className?: string }) {
 
 function StatCard({ title, desc, stat, label, icon }: { title: string; desc: string; stat: string; label: string; icon: React.ReactNode }) {
   return (
-    <div className="liquid-glass rounded-3xl p-8 flex flex-col justify-between hover:bg-white/[0.03] transition-colors duration-300">
+    <div className="liquid-glass rounded-xl p-8 flex flex-col justify-between hover:bg-white/[0.03] transition-colors duration-300">
       <div>
         <div className="flex items-center gap-3 mb-3">
           <div className="text-lp-primary">{icon}</div>
@@ -136,7 +136,7 @@ export default function LandingPage() {
         }} />
 
         <header className="relative z-20 flex justify-center pt-6 px-4">
-          <nav className="liquid-glass rounded-3xl w-full max-w-[850px] flex items-center justify-between px-5 py-3">
+          <nav className="liquid-glass rounded-xl w-full max-w-[850px] flex items-center justify-between px-5 py-3">
             <div className="flex items-center gap-2.5">
               <div className="w-7 h-7 rounded-lg bg-gradient-to-b from-green-700 to-green-500 flex items-center justify-center">
                 <CrosshairIcon className="size-4 text-green-300" />
@@ -231,7 +231,7 @@ export default function LandingPage() {
       {/* ═══════════ RAG PIPELINE (Chess-style split layout) ════════════ */}
       <section id="architecture" className="py-32 px-4">
         <div className="max-w-6xl mx-auto grid lg:grid-cols-2 gap-20 items-center">
-          <div className="liquid-glass rounded-3xl aspect-[4/3] overflow-hidden order-1">
+          <div className="liquid-glass rounded-xl aspect-[4/3] overflow-hidden order-1">
             <HlsBackground src={CHESS_HLS}><div className="aspect-[4/3]" /></HlsBackground>
           </div>
           <div className="order-2">
@@ -285,7 +285,7 @@ export default function LandingPage() {
                 从基础设施到 AI 管线，从评测框架到实时聊天——每条链路经过工程化打磨。
               </p>
             </div>
-            <div className="liquid-glass rounded-3xl p-12 grid md:grid-cols-2 max-w-3xl mx-auto">
+            <div className="liquid-glass rounded-xl p-12 grid md:grid-cols-2 max-w-3xl mx-auto">
               <div className="text-center md:border-r border-lp-border/50 md:pr-12">
                 <p className="text-5xl sm:text-6xl font-semibold text-lp-hero-heading tracking-tight">
                   ~32,000
@@ -312,7 +312,7 @@ export default function LandingPage() {
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {CAPABILITIES.map((c) => (
-              <div key={c.title} className="liquid-glass rounded-2xl p-6 hover:bg-white/[0.03] transition-colors">
+              <div key={c.title} className="liquid-glass rounded-lg p-6 hover:bg-white/[0.03] transition-colors">
                 <div className="text-lp-primary mb-3">{c.icon}</div>
                 <h3 className="text-lp-foreground font-semibold text-sm mb-1.5">{c.title}</h3>
                 <p className="text-lp-muted-foreground text-xs leading-relaxed">{c.desc}</p>
@@ -331,7 +331,7 @@ export default function LandingPage() {
           </div>
           <div className="grid md:grid-cols-3 gap-6 items-start">
             {TESTIMONIALS.map((t, i) => (
-              <div key={t.name} className={`liquid-glass rounded-3xl p-8 ${i === 1 ? "md:-translate-y-6" : ""}`}>
+              <div key={t.name} className={`liquid-glass rounded-xl p-8 ${i === 1 ? "md:-translate-y-6" : ""}`}>
                 <blockquote className="text-lp-hero-sub text-sm leading-relaxed">&ldquo;{t.quote}&rdquo;</blockquote>
                 <div className="mt-6 pt-5 border-t border-lp-border/50 flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-green-800 flex items-center justify-center text-sm font-semibold text-green-300">{t.initials}</div>
@@ -366,7 +366,7 @@ export default function LandingPage() {
             </div>
           </div>
 
-          <footer className="relative z-10 border-t border-lp-border/30 pt-16 pb-8 px-4">
+          <footer className="relative z-10 border-t border-border pt-16 pb-8 px-4">
             <div className="max-w-6xl mx-auto">
               <div className="grid grid-cols-2 md:grid-cols-5 gap-8 mb-16">
                 <div className="col-span-2">
@@ -391,7 +391,7 @@ export default function LandingPage() {
                   </div>
                 ))}
               </div>
-              <div className="border-t border-lp-border/30 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-lp-muted-foreground">
+              <div className="border-t border-border pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-lp-muted-foreground">
                 <span>&copy; 2026 SalesAgent AI. Open source project.</span>
                 <div className="flex items-center gap-6">
                   <a href="#" className="hover:text-lp-foreground transition-colors">Privacy</a>

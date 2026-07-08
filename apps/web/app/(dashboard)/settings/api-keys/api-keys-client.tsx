@@ -90,7 +90,7 @@ export function ApiKeysClient({ orgSlug, isOwner }: Props) {
       ) : (
         <div className="space-y-3">
           {keys.map((key) => (
-            <div key={key.id} className="rounded-lg border border-lp-border/30 p-4">
+            <div key={key.id} className="rounded-lg border border-border p-4">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="font-medium text-text text-sm">{key.name}</p>

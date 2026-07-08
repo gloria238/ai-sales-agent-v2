@@ -17,7 +17,7 @@ export default function DashboardHomeLoading() {
       {/* KPI cards */}
       <div className="grid grid-cols-4 gap-4 shrink-0 mb-5">
         {[1, 2, 3, 4].map((i) => (
-          <div key={i} className="rounded-2xl border border-border bg-bg-card/80 px-5 py-4">
+          <div key={i} className="rounded-lg border border-border bg-bg-card/80 px-5 py-4">
             <div className="flex items-center gap-3.5">
               <div className="size-11 rounded-xl bg-bg-subtle animate-pulse shrink-0" />
               <div className="space-y-2 flex-1">
@@ -33,7 +33,7 @@ export default function DashboardHomeLoading() {
       {/* Main body */}
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-4 min-h-0">
         {/* Activity */}
-        <div className="rounded-2xl border border-border bg-bg-card/80 p-5">
+        <div className="rounded-lg border border-border bg-bg-card/80 p-5">
           <div className="h-5 w-24 bg-bg-subtle rounded-md mb-4 animate-pulse" />
           {[1, 2, 3, 4, 5, 6, 7].map((i) => (
             <div key={i} className="flex items-center gap-3 py-2.5">
@@ -49,7 +49,7 @@ export default function DashboardHomeLoading() {
         {/* Charts */}
         <div className="lg:col-span-2 grid grid-cols-2 gap-4">
           {[1, 2].map((i) => (
-            <div key={i} className="rounded-2xl border border-border bg-bg-card/80 p-5 flex flex-col justify-center">
+            <div key={i} className="rounded-lg border border-border bg-bg-card/80 p-5 flex flex-col justify-center">
               <div className="h-5 w-24 bg-bg-subtle rounded-md mb-1 animate-pulse" />
               <div className="h-3 w-20 bg-bg-subtle rounded-md mb-4 animate-pulse" />
               <div className="flex items-center gap-5">
@@ -67,7 +67,7 @@ export default function DashboardHomeLoading() {
             </div>
           ))}
           {/* Campaign reach */}
-          <div className="rounded-2xl border border-border bg-bg-card/80 p-5 col-span-2">
+          <div className="rounded-lg border border-border bg-bg-card/80 p-5 col-span-2">
             <div className="h-5 w-32 bg-bg-subtle rounded-md mb-1 animate-pulse" />
             <div className="h-3 w-48 bg-bg-subtle rounded-md mb-4 animate-pulse" />
             <div className="grid grid-cols-3 gap-5 mb-5">

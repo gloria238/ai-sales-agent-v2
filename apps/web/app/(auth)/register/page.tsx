@@ -34,9 +34,9 @@ export default function RegisterPage() {
 
   return (
     <div className="w-full max-w-sm mx-auto animate-slide-up">
-      <div className="glass-card p-8 sm:p-10 rounded-2xl">
+      <div className="rounded-md border border-border bg-bg-card p-8 sm:p-10 rounded-lg">
         <div className="text-center mb-8">
-          <Link href="/" className="inline-flex size-11 rounded-2xl bg-accent items-center justify-center text-white font-bold text-lg shadow-sm shadow-accent/25 mb-5 hover:shadow-md hover:shadow-accent/30 transition-shadow duration-300">
+          <Link href="/" className="inline-flex size-11 rounded-lg bg-accent items-center justify-center text-white font-bold text-lg shadow-sm shadow-accent/25 mb-5 hover:shadow-md hover:shadow-accent/30 transition-shadow duration-300">
             S
           </Link>
           <h1 className="text-xl font-bold tracking-tight text-text">Create an account</h1>
@@ -45,7 +45,7 @@ export default function RegisterPage() {
 
         {verifyUrl ? (
           <div className="space-y-4 animate-scale-in">
-            <div className="rounded-2xl bg-success-soft border border-success/20 p-6 text-center">
+            <div className="rounded-lg bg-success-soft border border-success/20 p-6 text-center">
               <div className="size-12 rounded-full bg-success flex items-center justify-center mx-auto mb-3">
                 <svg className="size-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />

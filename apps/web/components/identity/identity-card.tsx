@@ -214,7 +214,7 @@ export function IdentityCard({
     <Tag
       onClick={onClick}
       className={cn(
-        "w-full text-left p-4 rounded-2xl transition-all duration-150",
+        "w-full text-left p-4 rounded-lg transition-all duration-150",
         isClickable && "cursor-pointer hover:bg-bg-subtle/50",
         className,
       )}

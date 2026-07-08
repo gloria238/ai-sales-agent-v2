@@ -129,7 +129,7 @@ export function KbClient({ orgSlug, initialDocs }: { orgSlug: string; initialDoc
             transition-colors
             ${uploading
               ? "bg-bg-muted text-text-muted cursor-not-allowed"
-              : "bg-accent text-white hover:bg-accent-hover shadow-sm shadow-accent/20"
+              : "bg-accent text-white hover:bg-accent-hover shadow-sm"
             }
           `}>
             {uploading ? (
@@ -242,7 +242,7 @@ export function KbClient({ orgSlug, initialDocs }: { orgSlug: string; initialDoc
       {/* Document List */}
       {docs.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-24 text-center">
-          <div className="size-16 rounded-2xl bg-bg-subtle flex items-center justify-center mb-5">
+          <div className="size-16 rounded-lg bg-bg-subtle flex items-center justify-center mb-5">
             <BookOpen className="size-7 text-text-muted" />
           </div>
           <h3 className="text-base font-semibold text-text mb-1">暂无文档</h3>

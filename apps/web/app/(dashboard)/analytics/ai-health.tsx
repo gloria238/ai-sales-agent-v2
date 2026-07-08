@@ -75,7 +75,7 @@ export default function AIHealthTab() {
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="glass-card p-5 animate-pulse">
+          <div key={i} className="rounded-md border border-border bg-bg-card p-5 animate-pulse">
             <div className="size-10 rounded-xl bg-bg-subtle mb-3" />
             <div className="h-3 bg-bg-subtle rounded w-20 mb-2" />
             <div className="h-6 bg-bg-subtle rounded w-16" />
@@ -87,7 +87,7 @@ export default function AIHealthTab() {
 
   if (error || !data) {
     return (
-      <div className="glass-card p-8 text-center">
+      <div className="rounded-md border border-border bg-bg-card p-8 text-center">
         <AlertTriangle className="size-8 text-warning mx-auto mb-3" />
         <p className="text-sm text-text-muted">{error || "暂无 AI 调用数据，触发 AI 操作后自动填充。"}</p>
       </div>
@@ -123,7 +123,7 @@ export default function AIHealthTab() {
 
       {/* KPI cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-        <div className="glass-card p-4">
+        <div className="rounded-md border border-border bg-bg-card p-4">
           <div className="size-9 rounded-lg bg-accent/10 flex items-center justify-center mb-2">
             <Zap className="size-4 text-accent" />
           </div>
@@ -131,7 +131,7 @@ export default function AIHealthTab() {
           <p className="text-xl font-bold text-text">{data.summary.totalCalls}</p>
         </div>
 
-        <div className="glass-card p-4">
+        <div className="rounded-md border border-border bg-bg-card p-4">
           <div className="size-9 rounded-lg bg-accent-secondary/10 flex items-center justify-center mb-2">
             <Timer className="size-4 text-accent-secondary" />
           </div>
@@ -141,7 +141,7 @@ export default function AIHealthTab() {
           </p>
         </div>
 
-        <div className="glass-card p-4">
+        <div className="rounded-md border border-border bg-bg-card p-4">
           <div className="size-9 rounded-lg bg-accent/10 flex items-center justify-center mb-2">
             <DollarSign className="size-4 text-accent" />
           </div>
@@ -149,7 +149,7 @@ export default function AIHealthTab() {
           <p className="text-xl font-bold text-text">{formatCost(data.summary.totalCost)}</p>
         </div>
 
-        <div className="glass-card p-4">
+        <div className="rounded-md border border-border bg-bg-card p-4">
           <div className="size-9 rounded-lg bg-accent-secondary/10 flex items-center justify-center mb-2">
             <TrendingUp className="size-4 text-accent-secondary" />
           </div>
@@ -157,7 +157,7 @@ export default function AIHealthTab() {
           <p className="text-xl font-bold text-text">{data.summary.successRate}%</p>
         </div>
 
-        <div className={`glass-card p-4 ${data.summary.fallbackRate > 0.1 ? "ring-1 ring-red-500/30" : ""}`}>
+        <div className={`rounded-md border border-border bg-bg-card p-4 ${data.summary.fallbackRate > 0.1 ? "ring-1 ring-red-500/30" : ""}`}>
           <div className="size-9 rounded-lg bg-warning/10 flex items-center justify-center mb-2">
             <TrendingDown className="size-4 text-warning" />
           </div>
@@ -188,7 +188,7 @@ export default function AIHealthTab() {
       {/* Two-column detail panels */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Calls by job type */}
-        <div className="glass-card p-5">
+        <div className="rounded-md border border-border bg-bg-card p-5">
           <p className="text-sm font-medium text-text mb-4">按任务类型</p>
           <div className="space-y-3">
             {data.byJobType.map((j) => (
@@ -215,7 +215,7 @@ export default function AIHealthTab() {
         </div>
 
         {/* Daily token usage */}
-        <div className="glass-card p-5">
+        <div className="rounded-md border border-border bg-bg-card p-5">
           <p className="text-sm font-medium text-text mb-4">每日 Token 用量（近30天）</p>
           <div className="space-y-1 max-h-64 overflow-y-auto">
             {data.dailyTokens.map((d) => {

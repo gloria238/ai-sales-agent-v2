@@ -106,17 +106,17 @@ export function MembersClient({ orgSlug, canManage }: Props) {
       {error && <div className="text-danger text-sm bg-danger-soft rounded-lg px-3 py-2">{error}</div>}
 
       {canManage && (
-        <div className="flex items-center gap-3 p-4 glass-card rounded-lg">
+        <div className="flex items-center gap-3 p-4 rounded-md border border-border rounded-md border border-border bg-bg-card">
           <input
             value={addEmail}
             onChange={(e) => setAddEmail(e.target.value)}
             placeholder="Email address"
-            className="flex-1 rounded-lg border border-lp-border/30 bg-lp-card/60 text-sm px-3 py-2 text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-accent/30"
+            className="flex-1 rounded-lg border border-border bg-lp-card/60 text-sm px-3 py-2 text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-accent/30"
           />
           <select
             value={addRole}
             onChange={(e) => setAddRole(e.target.value)}
-            className="rounded-lg border border-lp-border/30 bg-lp-card/60 text-sm px-3 py-2 text-text"
+            className="rounded-lg border border-border bg-lp-card/60 text-sm px-3 py-2 text-text"
           >
             {ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
           </select>
@@ -132,7 +132,7 @@ export function MembersClient({ orgSlug, canManage }: Props) {
 
       <div className="space-y-2">
         {members.map((m) => (
-          <div key={m.id} className="flex items-center justify-between rounded-lg border border-lp-border/30 glass-card p-3">
+          <div key={m.id} className="flex items-center justify-between rounded-lg border border-border rounded-md border border-border bg-bg-card p-3">
             <div>
               <p className="text-sm font-medium text-text">{m.name || "Unnamed"}</p>
               <p className="text-xs text-text-muted">{m.email}</p>
@@ -142,7 +142,7 @@ export function MembersClient({ orgSlug, canManage }: Props) {
                 <select
                   value={m.role}
                   onChange={(e) => handleRoleChange(m.id, e.target.value)}
-                  className="rounded border border-lp-border/30 bg-bg-subtle px-2 py-1 text-xs text-text"
+                  className="rounded border border-border bg-bg-subtle px-2 py-1 text-xs text-text"
                 >
                   {ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
                 </select>

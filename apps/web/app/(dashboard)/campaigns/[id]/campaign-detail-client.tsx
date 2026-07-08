@@ -84,11 +84,11 @@ export function CampaignDetailClient({ campaign, orgSlug }: { campaign: Campaign
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
           { icon: Send, label: "已发送", val: total.toLocaleString(), sub: "已投递", color: "text-accent", bg: "bg-accent-soft" },
-          { icon: MousePointerClick, label: "打开率", val: `${openRate}%`, sub: `打开 ${opened} / 发送 ${total}`, color: "text-lp-hero-sub", bg: "bg-white/[0.04]" },
+          { icon: MousePointerClick, label: "打开率", val: `${openRate}%`, sub: `打开 ${opened} / 发送 ${total}`, color: "text-lp-hero-sub", bg: "bg-bg-subtle" },
           { icon: Reply, label: "回复率", val: `${replyRate}%`, sub: `${replied} 条回复`, color: "text-accent", bg: "bg-accent-soft" },
           { icon: Calendar, label: "预约会议", val: String(booked), sub: `占回复 ${bookRate}%`, color: "text-warning", bg: "bg-warning-soft" },
         ].map((m) => (
-          <Card key={m.label} className="p-4 glass-card">
+          <Card key={m.label} className="p-4 rounded-md border border-border bg-bg-card">
             <div className="flex items-center gap-3">
               <div className={`size-10 rounded-xl ${m.bg} flex items-center justify-center shrink-0`}>
                 <m.icon className={`size-5 ${m.color}`} />
@@ -104,7 +104,7 @@ export function CampaignDetailClient({ campaign, orgSlug }: { campaign: Campaign
       </div>
 
       {/* Funnel visualization */}
-      <Card className="p-6 glass-card">
+      <Card className="p-6 rounded-md border border-border bg-bg-card">
         <h3 className="text-sm font-semibold text-text mb-4 flex items-center gap-2"><BarChart3 className="size-4 text-accent" /> 转化漏斗</h3>
         <div className="space-y-3">
           {[
@@ -133,7 +133,7 @@ export function CampaignDetailClient({ campaign, orgSlug }: { campaign: Campaign
           <h3 className="text-sm font-semibold text-text mb-3">序列步骤</h3>
           <div className="space-y-2">
             {(campaign.script?.steps as any[] || []).map((step: any, i: number) => (
-              <Card key={i} className="p-4 glass-card flex items-start gap-3">
+              <Card key={i} className="p-4 rounded-md border border-border bg-bg-card flex items-start gap-3">
                 <div className="size-7 rounded-full bg-accent/10 flex items-center justify-center text-xs font-bold text-accent shrink-0 mt-0.5">{step.order}</div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
@@ -152,11 +152,11 @@ export function CampaignDetailClient({ campaign, orgSlug }: { campaign: Campaign
         <div className="lg:col-span-2">
           <h3 className="text-sm font-semibold text-text mb-3">执行记录</h3>
           {campaign.runs.length === 0 ? (
-            <Card className="p-6 glass-card text-center text-sm text-text-muted">暂无执行记录</Card>
+            <Card className="p-6 rounded-md border border-border bg-bg-card text-center text-sm text-text-muted">暂无执行记录</Card>
           ) : (
             <div className="space-y-2">
               {campaign.runs.map((run) => (
-                <Card key={run.id} className="p-3 glass-card">
+                <Card key={run.id} className="p-3 rounded-md border border-border bg-bg-card">
                   <div className="flex items-center justify-between">
                     <div>
                       <Badge className={cn("text-[10px]", {

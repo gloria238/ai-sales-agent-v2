@@ -52,7 +52,7 @@ export function ScriptListClient({ scripts, orgSlug }: { scripts: any[]; orgSlug
         {TEMPLATES.map((t) => {
           const installed = installedSlugs.has(t.slug);
           return (
-            <Card key={t.slug} className="p-5 glass-card">
+            <Card key={t.slug} className="p-5 rounded-md border border-border bg-bg-card">
               <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center mb-3"><FileText className="w-5 h-5 text-accent" /></div>
               <h3 className="font-semibold text-text text-sm mb-1">{t.name}</h3>
               <p className="text-xs text-text-muted mb-4">{t.desc}</p>
@@ -68,7 +68,7 @@ export function ScriptListClient({ scripts, orgSlug }: { scripts: any[]; orgSlug
           <h2 className="text-sm font-semibold text-text-muted uppercase tracking-wide mb-3">Installed Scripts</h2>
           <div className="space-y-2">
             {scripts.map((s) => (
-              <Card key={s.id} className="p-4 glass-card hover:shadow-panel-md transition-all cursor-pointer" onClick={() => router.push(`/scripts/${s.id}`)}>
+              <Card key={s.id} className="p-4 rounded-md border border-border bg-bg-card hover:shadow-panel-md transition-all cursor-pointer" onClick={() => router.push(`/scripts/${s.id}`)}>
                 <div className="flex items-center gap-3">
                   <FileText className="w-5 h-5 text-accent" />
                   <div>

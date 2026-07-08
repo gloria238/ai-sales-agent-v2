@@ -50,17 +50,17 @@ export function Sidebar({ currentOrg, orgs, user, SidebarHeader }: Props) {
 
   return (
     <aside className={cn(
-      "hidden lg:flex flex-col border-r border-lp-border/30 bg-sidebar-bg/95 backdrop-blur-xl shrink-0 transition-all duration-200",
+      "hidden lg:flex flex-col border-r border-border bg-bg shrink-0 transition-all duration-200",
       sidebarWidth,
     )}>
       {/* Logo + collapse button */}
       <div className={cn(
-        "flex items-center border-b border-lp-border/30 shrink-0 transition-all duration-200",
+        "flex items-center border-b border-border shrink-0 transition-all duration-200",
         collapsed ? "px-3 py-4 justify-center" : "px-4 py-4 justify-between",
       )}>
         {!collapsed && (
           <Link href="/home" className="flex items-center gap-2.5 group">
-            <div className="size-7 rounded-lg bg-accent flex items-center justify-center text-white text-xs font-bold shadow-sm shadow-accent/20">
+            <div className="size-7 rounded-md bg-accent flex items-center justify-center text-white text-xs font-bold">
               S
             </div>
             <span className="font-bold text-sm text-text tracking-tight">SalesAgent</span>
@@ -69,7 +69,7 @@ export function Sidebar({ currentOrg, orgs, user, SidebarHeader }: Props) {
         {/* Collapsed: logo doubles as expand button */}
         {collapsed && (
           <div className="relative group/logo">
-            <Link href="/home" className="size-8 rounded-lg bg-accent flex items-center justify-center text-white text-xs font-bold shadow-sm shadow-accent/20 group-hover/logo:opacity-0 transition-opacity block">
+            <Link href="/home" className="size-8 rounded-lg bg-accent flex items-center justify-center text-white text-xs font-bold shadow-sm group-hover/logo:opacity-0 transition-opacity block">
               S
             </Link>
             <button
@@ -84,7 +84,7 @@ export function Sidebar({ currentOrg, orgs, user, SidebarHeader }: Props) {
         {!collapsed && (
           <button
             onClick={() => setCollapsed(true)}
-            className="p-1.5 rounded-lg hover:bg-white/[0.04] text-text-muted hover:text-text transition-colors"
+            className="p-1.5 rounded-lg hover:bg-bg-subtle text-text-muted hover:text-text transition-colors"
             title="收起侧边栏"
           >
             <PanelLeftClose className="size-3.5" />
@@ -115,7 +115,7 @@ export function Sidebar({ currentOrg, orgs, user, SidebarHeader }: Props) {
                   "text-[13px] font-medium",
                   isActive
                     ? "bg-accent/10 text-accent"
-                    : "text-text-secondary hover:text-text hover:bg-white/[0.04]",
+                    : "text-text-secondary hover:text-text hover:bg-bg-subtle",
                 )}
                 title={collapsed ? item.label : undefined}
               >
@@ -130,7 +130,7 @@ export function Sidebar({ currentOrg, orgs, user, SidebarHeader }: Props) {
           })}
         </div>
 
-        <div className={cn("my-3 border-t border-lp-border/30", collapsed ? "mx-1" : "mx-2")} />
+        <div className={cn("my-3 border-t border-border", collapsed ? "mx-1" : "mx-2")} />
 
         <div className="space-y-0.5">
           {secondaryItems.map((item) => {
@@ -146,7 +146,7 @@ export function Sidebar({ currentOrg, orgs, user, SidebarHeader }: Props) {
                   "text-[13px] font-medium",
                   isActive
                     ? "bg-accent/10 text-accent"
-                    : "text-text-muted hover:text-text-secondary hover:bg-white/[0.04]",
+                    : "text-text-muted hover:text-text-secondary hover:bg-bg-subtle",
                 )}
                 title={collapsed ? item.label : undefined}
               >
@@ -163,7 +163,7 @@ export function Sidebar({ currentOrg, orgs, user, SidebarHeader }: Props) {
 
       {/* Footer: User + Theme */}
       <div className={cn(
-        "border-t border-lp-border/30",
+        "border-t border-border",
         collapsed ? "px-2 py-3" : "px-3 py-2",
       )}>
         {/* Theme toggle */}
@@ -186,7 +186,7 @@ export function Sidebar({ currentOrg, orgs, user, SidebarHeader }: Props) {
           <button
             onClick={() => setUserOpen(!userOpen)}
             className={cn(
-              "w-full flex items-center rounded-lg hover:bg-white/[0.04] transition-colors",
+              "w-full flex items-center rounded-lg hover:bg-bg-subtle transition-colors",
               collapsed ? "justify-center p-1.5" : "gap-2.5 px-2 py-1.5",
             )}
           >
@@ -207,7 +207,7 @@ export function Sidebar({ currentOrg, orgs, user, SidebarHeader }: Props) {
             <>
               <div className="fixed inset-0 z-10" onClick={() => setUserOpen(false)} />
               <div className={cn(
-                "absolute bottom-full left-0 mb-1 z-20 bg-bg-card border border-border rounded-xl shadow-xl py-1 min-w-[180px]",
+                "absolute bottom-full left-0 mb-1 z-20 bg-bg-card border border-border rounded-xl shadow-sm py-1 min-w-[180px]",
                 collapsed && "left-full -translate-x-1/2 ml-3 mb-0 bottom-0",
               )}>
                 <div className="px-3 py-2 text-xs text-text-muted border-b border-border">
@@ -216,13 +216,13 @@ export function Sidebar({ currentOrg, orgs, user, SidebarHeader }: Props) {
                 </div>
                 <button
                   onClick={() => { router.push("/settings"); setUserOpen(false); }}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-xs text-text-secondary hover:bg-white/[0.04] transition-colors"
+                  className="w-full flex items-center gap-2 px-3 py-2 text-xs text-text-secondary hover:bg-bg-subtle transition-colors"
                 >
                   <Settings className="size-3.5 text-text-muted" /> 设置
                 </button>
                 <button
                   onClick={handleLogout}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-xs text-text-secondary hover:bg-white/[0.04] transition-colors"
+                  className="w-full flex items-center gap-2 px-3 py-2 text-xs text-text-secondary hover:bg-bg-subtle transition-colors"
                 >
                   <LogOut className="size-3.5" /> 退出登录
                 </button>
