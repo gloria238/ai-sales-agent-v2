@@ -61,6 +61,7 @@ export const sendMessageSchema = z.object({
   conversationId: z.string().uuid().optional(),
   content: z.string().min(1, "Message is required").max(10000, "Message too long"),
   channel: z.enum(["email", "chat"]).default("email"),
+  reviewAction: z.enum(["approved", "rejected"]).optional(), // HITL — set when sending an AI draft
 });
 
 export const generateAiDraftSchema = z.object({

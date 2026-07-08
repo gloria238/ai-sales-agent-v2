@@ -62,7 +62,7 @@ export async function POST(
   const history = allMessages
     .map((m) => {
       const who = m.direction === "inbound" ? "客户" : "我方";
-      return `[${who}]: ${m.content.slice(0, 600)}`;
+      return `[${who}]: <user_data>${safe(m.content.slice(0, 600))}</user_data>`;
     })
     .join("\n\n");
 
@@ -97,8 +97,8 @@ ${kbContext ? `【知识库参考内容】\n${kbContext}\n` : "【知识库】�
 【完整对话历史】
 ${history || "（新对话，无历史消息）"}
 
-${latestInbound ? `【客户最新消息】${safe(latestInbound.content.slice(0, 1000))}` : "客户尚未发消息。"}
-${lastOutbound ? `【我方最后回复】${safe(lastOutbound.content.slice(0, 300))}` : ""}
+${latestInbound ? `【客户最新消息】<user_data>${safe(latestInbound.content.slice(0, 1000))}</user_data>` : "客户尚未发消息。"}
+${lastOutbound ? `【我方最后回复】<user_data>${safe(lastOutbound.content.slice(0, 300))}</user_data>` : ""}
 
 请基于知识库参考内容和完整对话历史撰写回复。如果知识库有相关信息，一定要引用。不要重复对话中已经说过的内容。`;
 

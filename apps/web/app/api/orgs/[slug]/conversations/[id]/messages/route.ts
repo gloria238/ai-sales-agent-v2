@@ -15,12 +15,43 @@ export async function GET(req: NextRequest, { params }: { params: { slug: string
   if (!membership) return NextResponse.json({ error: "Not found" }, { status: 404 });
   const _perm = checkPermission(membership.role, "view_agents"); if (_perm) return _perm;
 
+  const url = new URL(req.url);
+  const cursor = url.searchParams.get("cursor");
+  const limit = Math.min(parseInt(url.searchParams.get("limit") || "50", 10), 100);
+
+  const where: Record<string, unknown> = {
+    conversationId: params.id,
+    conversation: { organizationId: membership.organizationId },
+  };
+
+  // Cursor-based: load messages older than the cursor message
+  if (cursor) {
+    const cursorMsg = await prisma.message.findUnique({
+      where: { id: cursor },
+      select: { createdAt: true },
+    });
+    if (cursorMsg) {
+      where.createdAt = { lt: cursorMsg.createdAt };
+    }
+  }
+
+  // Fetch limit+1 to determine hasMore (avoid off-by-one on exact pages)
   const messages = await prisma.message.findMany({
-    where: { conversationId: params.id, conversation: { organizationId: membership.organizationId } },
-    orderBy: { createdAt: "asc" },
+    where,
+    orderBy: { createdAt: "desc" },
+    take: limit + 1,
   });
 
-  return NextResponse.json({ messages });
+  const hasMore = messages.length > limit;
+  if (hasMore) messages.pop();
+
+  // Reverse to asc order for display
+  messages.reverse();
+
+  // nextCursor points to the oldest message in this batch (for loading earlier history)
+  const nextCursor = hasMore ? messages[0]?.id ?? null : null;
+
+  return NextResponse.json({ messages, nextCursor, hasMore });
 }
 
 export async function POST(req: NextRequest, { params }: { params: { slug: string; id: string } }) {
@@ -48,6 +79,7 @@ export async function POST(req: NextRequest, { params }: { params: { slug: strin
       direction: "outbound",
       content: parsed.data.content,
       channel: parsed.data.channel,
+      reviewAction: parsed.data.reviewAction ?? null,
     },
   });
 

@@ -19,11 +19,11 @@ import { ChatWindow } from "@/components/chat/chat-window";
 
 type Message = {
   id: string; direction: string; content: string; channel: string;
-  aiMetadata?: any; createdAt: string;
+  aiMetadata?: any; reviewAction?: string | null; createdAt: string | Date;
 };
 
 type Conversation = {
-  id: string; channel: string; subject: string | null; status: string; updatedAt: string;
+  id: string; channel: string; subject: string | null; status: string; updatedAt: string | Date;
   lead: { id: string; name: string; email: string | null; company: string | null; stage: string | null; score: number | null; phone?: string | null; source?: string | null };
   agent?: { id: string; name: string; personality?: string | null } | null;
   messages: Message[];
@@ -89,13 +89,18 @@ function toCustomer(conv: Conversation): Customer {
     agentName: conv.agent?.name ?? null,
     agentId: conv.agent?.id ?? null,
     aiConfidence: conv.lead.score != null ? conv.lead.score : null,
-    lastSeenAt: conv.updatedAt,
+    lastSeenAt: conv.updatedAt instanceof Date ? conv.updatedAt.toISOString() : conv.updatedAt,
   };
 }
 
 export function InboxDetailClient({ conversation, conversations, orgSlug }: Props) {
   const router = useRouter();
   const [messages, setMessages] = useState<Message[]>(conversation.messages);
+  const [nextCursor, setNextCursor] = useState<string | null>(
+    conversation.messages.length >= 50 ? conversation.messages[0]?.id ?? null : null
+  );
+  const [hasMore, setHasMore] = useState(conversation.messages.length >= 50);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [replyDraft, setReplyDraft] = useState("");
   const [aiDraft, setAiDraft] = useState<{ subject: string; body: string } | null>(null);
   const [aiTyping, setAiTyping] = useState(false);
@@ -103,8 +108,10 @@ export function InboxDetailClient({ conversation, conversations, orgSlug }: Prop
   const [generating, setGenerating] = useState(false);
   const [translating, setTranslating] = useState(false);
   const [translated, setTranslated] = useState("");
+  const [scoring, setScoring] = useState(false);
   const [chatMode, setChatMode] = useState(false); // Toggle: email compose vs real-time chat
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
 
   // Filter messages by channel
   const channelMessages = useMemo(() => {
@@ -146,9 +153,18 @@ export function InboxDetailClient({ conversation, conversations, orgSlug }: Prop
   async function generateAiDraft() {
     setGenerating(true);
     setAiTyping(true);
-    await new Promise((r) => setTimeout(r, 1800 + Math.random() * 1200));
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => {
+      controller.abort();
+      toast.error("AI 响应超时，请稍后重试");
+    }, 30_000);
+
     try {
-      const res = await fetch(`/api/orgs/${orgSlug}/conversations/${conversation.id}/ai-draft`, { method: "POST" });
+      const res = await fetch(`/api/orgs/${orgSlug}/conversations/${conversation.id}/ai-draft`, {
+        method: "POST",
+        signal: controller.signal,
+      });
       if (res.ok) {
         const data = await res.json();
         setAiDraft(data.draft);
@@ -156,18 +172,53 @@ export function InboxDetailClient({ conversation, conversations, orgSlug }: Prop
       } else {
         toast.error("AI draft failed");
       }
-    } catch { toast.error("Network error"); }
-    setAiTyping(false);
-    setGenerating(false);
+    } catch (err) {
+      if (!(err instanceof DOMException && err.name === "AbortError")) {
+        toast.error("Network error");
+      }
+    } finally {
+      clearTimeout(timeout);
+      setAiTyping(false);
+      setGenerating(false);
+    }
+  }
+
+  async function loadMoreMessages() {
+    if (!nextCursor || loadingMore) return;
+    setLoadingMore(true);
+    const container = messagesContainerRef.current;
+    const oldScrollHeight = container?.scrollHeight ?? 0;
+
+    try {
+      const res = await fetch(`/api/orgs/${orgSlug}/conversations/${conversation.id}/messages?cursor=${nextCursor}&limit=50`);
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      setMessages((prev) => [...(data.messages || []), ...prev]);
+      setNextCursor(data.nextCursor ?? null);
+      setHasMore(data.hasMore ?? false);
+
+      requestAnimationFrame(() => {
+        if (container) {
+          const newScrollHeight = container.scrollHeight;
+          container.scrollTop += (newScrollHeight - oldScrollHeight);
+        }
+      });
+    } catch {
+      toast.error("加载历史消息失败");
+    } finally {
+      setLoadingMore(false);
+    }
   }
 
   async function sendReply() {
     if (!replyDraft.trim()) return;
     setSending(true);
     try {
+      const body: Record<string, unknown> = { content: replyDraft, channel: "email" };
+      if (aiDraft) body.reviewAction = "approved";
       const res = await fetch(`/api/orgs/${orgSlug}/conversations/${conversation.id}/messages`, {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content: replyDraft, channel: "email" }),
+        body: JSON.stringify(body),
       });
       if (res.ok) {
         const data = await res.json();
@@ -175,9 +226,27 @@ export function InboxDetailClient({ conversation, conversations, orgSlug }: Prop
         setReplyDraft("");
         setAiDraft(null);
         toast.success("Reply sent");
+        patchWorkerDraft("approved");
       } else { toast.error("Failed to send"); }
     } catch { toast.error("Network error"); }
     setSending(false);
+  }
+
+  /** Patch Worker-generated draft message with reviewAction (HITL audit trail). */
+  async function patchWorkerDraft(action: "approved" | "rejected") {
+    const workerDraft = [...messages].reverse().find(
+      (m) => m.direction === "outbound" && !m.reviewAction
+    );
+    if (!workerDraft) return;
+    try {
+      await fetch(
+        `/api/orgs/${orgSlug}/conversations/${conversation.id}/messages/${workerDraft.id}`,
+        { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ reviewAction: action }) },
+      );
+      setMessages((prev) => prev.map((m) =>
+        m.id === workerDraft.id ? { ...m, reviewAction: action } : m
+      ));
+    } catch { /* non-blocking */ }
   }
 
   const lead = conversation.lead;
@@ -249,7 +318,24 @@ export function InboxDetailClient({ conversation, conversations, orgSlug }: Prop
 
         {/* Messages — hidden in chat mode (ChatWindow has its own) */}
         {!chatMode && (
-        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
+        <div ref={messagesContainerRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
+          {/* Load earlier messages */}
+          {hasMore && (
+            <div className="flex justify-center pb-2">
+              <button
+                onClick={loadMoreMessages}
+                disabled={loadingMore}
+                className="text-xs text-text-muted hover:text-accent transition-colors px-3 py-1 rounded-md hover:bg-bg-subtle"
+              >
+                {loadingMore ? "加载中..." : "加载更早的消息"}
+              </button>
+            </div>
+          )}
+          {!hasMore && messages.length >= 50 && (
+            <div className="flex justify-center pb-2">
+              <span className="text-[10px] text-text-muted">已显示全部消息</span>
+            </div>
+          )}
           {channelMessages.map((msg) => (
             <div key={msg.id} className={cn("flex items-start gap-3", msg.direction === "outbound" ? "flex-row-reverse" : "")}>
               <div className={cn(
@@ -306,7 +392,7 @@ export function InboxDetailClient({ conversation, conversations, orgSlug }: Prop
                 <p className="text-sm text-text-secondary whitespace-pre-wrap leading-relaxed line-clamp-4">{aiDraft.body}</p>
                 <div className="flex gap-2 mt-2">
                   <Button size="sm" variant="default" loading={sending} onClick={sendReply}><Send className="size-3 mr-1" /> 发送</Button>
-                  <Button size="sm" variant="outline" onClick={() => { setAiDraft(null); setReplyDraft(""); }}>丢弃</Button>
+                  <Button size="sm" variant="outline" onClick={() => { setAiDraft(null); setReplyDraft(""); patchWorkerDraft("rejected"); }}>丢弃</Button>
                   <Button size="sm" variant="ghost" onClick={generateAiDraft} loading={generating}><RefreshCw className="size-3 mr-1" /> 重新生成</Button>
                 </div>
               </div>
@@ -328,7 +414,7 @@ export function InboxDetailClient({ conversation, conversations, orgSlug }: Prop
                 id: m.id,
                 direction: m.direction as "inbound" | "outbound",
                 content: m.content,
-                createdAt: m.createdAt,
+                createdAt: m.createdAt instanceof Date ? m.createdAt.toISOString() : m.createdAt,
               }))}
               otherPartyName={lead.name}
             />
@@ -436,35 +522,37 @@ export function InboxDetailClient({ conversation, conversations, orgSlug }: Prop
               <p className="text-xs text-text-muted">客户评分</p>
             </div>
           </div>
-          {lead.score && (
+          {lead.score != null ? (
             <div className="space-y-1.5">
-              {[
-                { label: "Intent", val: Math.min(100, lead.score + (Math.random() * 20 - 10)) },
-                { label: "Budget", val: Math.min(100, lead.score + (Math.random() * 20 - 15)) },
-                { label: "Authority", val: Math.min(100, lead.score + (Math.random() * 20 - 5)) },
-                { label: "Need", val: Math.min(100, lead.score + (Math.random() * 20 - 10)) },
-                { label: "Timeline", val: Math.min(100, lead.score + (Math.random() * 20 - 20)) },
-              ].map((d) => (
-                <div key={d.label} className="flex items-center gap-2">
-                  <span className="text-[10px] text-text-muted w-14">{d.label}</span>
-                  <div className="flex-1 h-1.5 bg-bg-subtle rounded-full overflow-hidden">
-                    <div className={cn(
-                      "h-full rounded-full transition-all",
-                      d.val >= 70 ? "bg-accent" : d.val >= 40 ? "bg-warning" : "bg-bg-muted",
-                    )} style={{ width: `${d.val}%` }} />
-                  </div>
-                  <span className="text-[10px] text-text-muted w-6 text-right">{Math.round(d.val)}</span>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] text-text-muted w-14">综合评分</span>
+                <div className="flex-1 h-1.5 bg-bg-subtle rounded-full overflow-hidden">
+                  <div className={cn(
+                    "h-full rounded-full transition-all",
+                    lead.score >= 70 ? "bg-accent" : lead.score >= 40 ? "bg-warning" : "bg-bg-muted",
+                  )} style={{ width: `${lead.score}%` }} />
                 </div>
-              ))}
+                <span className="text-[10px] text-text-muted w-6 text-right">{lead.score}</span>
+              </div>
             </div>
+          ) : (
+            <p className="text-xs text-text-muted">评分数据待接入</p>
           )}
-          <Button size="sm" variant="outline" className="w-full mt-3" onClick={async () => {
+          <Button size="sm" variant="outline" className="w-full mt-3" loading={scoring} onClick={async () => {
+            setScoring(true);
             try {
               const res = await fetch(`/api/orgs/${orgSlug}/ai/score-lead`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ leadId: lead.id }) });
-              if (res.ok) { toast.success("重新评分完成"); router.refresh(); }
-            } catch { toast.error("评分失败"); }
+              if (res.ok) {
+                const data = await res.json();
+                if (data.queued) {
+                  toast.success("已提交评分任务");
+                  // Give Worker a moment before refreshing
+                  setTimeout(() => { router.refresh(); setScoring(false); }, 500);
+                }
+              } else { toast.error("提交失败"); setScoring(false); }
+            } catch { toast.error("评分失败"); setScoring(false); }
           }}>
-            <RefreshCw className="size-3 mr-1" /> 重新评分
+            <RefreshCw className="size-3 mr-1" /> {scoring ? "评分中..." : "重新评分"}
           </Button>
         </div>
 

@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@salesagent/db";
 import { getSession } from "@/lib/session";
-import { requirePermission, checkPermission } from "@/lib/permissions";
-import { callDeepSeekJSON, LEAD_SCORING_SYSTEM, buildLeadScoringPrompt } from "@salesagent/ai-core";
+import { checkPermission } from "@/lib/permissions";
 import { scoreLeadSchema } from "@/lib/validation";
 import { isEnabled } from "@/lib/feature-flags";
+import { getRequestContext } from "@/lib/logger";
 
 export async function POST(request: Request, { params }: { params: { slug: string } }) {
   const session = await getSession();
@@ -24,51 +24,23 @@ export async function POST(request: Request, { params }: { params: { slug: strin
   const parsed = scoreLeadSchema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: "leadId required" }, { status: 400 });
 
-  const dbLead = await prisma.lead.findFirst({
+  const lead = await prisma.lead.findFirst({
     where: { id: parsed.data.leadId, organizationId: membership.organizationId },
-    include: { activities: { orderBy: { createdAt: "desc" }, take: 10 } },
   });
-  if (!dbLead) return NextResponse.json({ error: "Lead not found" }, { status: 404 });
+  if (!lead) return NextResponse.json({ error: "Lead not found" }, { status: 404 });
 
-  const lead = {
-    name: dbLead.name,
-    email: dbLead.email,
-    company: dbLead.company,
-    stage: dbLead.stage,
-    source: dbLead.source,
-    tags: dbLead.tags,
-    createdAt: dbLead.createdAt.toISOString(),
-    recentActivity: dbLead.activities.map((a) => ({
-      type: a.type,
-      content: a.content,
-      createdAt: a.createdAt.toISOString(),
-    })),
-  };
-
+  // Enqueue scoring job via BullMQ — Worker handles the actual DeepSeek call
+  // with retry, concurrency control, PROMPT_ARMOR, and AICallMetric logging.
   try {
-    const prompt = buildLeadScoringPrompt(lead);
-    const { result: scoreData, usage: _scoreUsage } = await callDeepSeekJSON<{
-      score: number; label: string; breakdown: Record<string, number>;
-      signals: string[]; concerns: string[]; recommendedAction: string; recommendedAgentType: string;
-    }>(prompt, LEAD_SCORING_SYSTEM, { temperature: 0.3 });
-
-    const score = Math.max(0, Math.min(100, Math.round(scoreData.score ?? 0)));
-    const label = scoreData.label || (score >= 70 ? "hot" : score >= 40 ? "warm" : "cold");
-
-    // Persist score to lead
-    await prisma.lead.update({ where: { id: dbLead.id }, data: { score } });
-
-    return NextResponse.json({
-      score,
-      label,
-      breakdown: scoreData.breakdown || {},
-      signals: scoreData.signals || [],
-      concerns: scoreData.concerns || [],
-      recommendedAction: scoreData.recommendedAction || "Review lead",
-      recommendedAgentType: scoreData.recommendedAgentType || "inbound_qualifier",
+    const ctx = getRequestContext(request);
+    const { scoringQueue } = await import("@salesagent/worker/queue");
+    await scoringQueue.add("score-lead", {
+      leadId: lead.id,
+      context: { requestId: ctx.requestId, spanId: `http-score-${ctx.requestId.slice(0, 8)}` },
     });
-  } catch (err) {
-    console.error("Lead scoring error:", err instanceof Error ? err.message : "Unknown");
-    return NextResponse.json({ error: "Scoring failed" }, { status: 502 });
+    return NextResponse.json({ queued: true, leadId: lead.id });
+  } catch {
+    // Redis unavailable — return an error, caller can retry
+    return NextResponse.json({ error: "Scoring service unavailable, please retry" }, { status: 503 });
   }
 }

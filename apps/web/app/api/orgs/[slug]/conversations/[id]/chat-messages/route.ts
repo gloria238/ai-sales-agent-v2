@@ -9,7 +9,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@salesagent/db";
 import { getSession } from "@/lib/session";
 import { checkPermission } from "@/lib/permissions";
-import { safe } from "@salesagent/ai-core";
 
 export async function GET(
   req: NextRequest,
@@ -124,7 +123,7 @@ export async function POST(
   const message = await prisma.message.create({
     data: {
       conversationId: params.id,
-      content: safe(content),
+      content,
       direction,
       channel: "chat",
       aiMetadata: {

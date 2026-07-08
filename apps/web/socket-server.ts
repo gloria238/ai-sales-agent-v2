@@ -104,7 +104,14 @@ io.on("connection", (socket) => {
   // ── Send Message ─────────────────────────────────────────────────
   socket.on("message", async (data: { conversationId: string; content: string }) => {
     try {
-      if (!data.content?.trim() || !data.conversationId) return;
+      if (!data.content?.trim() || !data.conversationId) {
+        socket.emit("error", { message: "消息内容不能为空" });
+        return;
+      }
+      if (data.content.length > 5000) {
+        socket.emit("error", { message: "消息过长（最多 5000 字符）" });
+        return;
+      }
 
       // Verify user belongs to this conversation
       const conversation = await prisma.conversation.findUnique({

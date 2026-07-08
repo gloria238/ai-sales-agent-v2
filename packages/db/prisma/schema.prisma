@@ -173,6 +173,7 @@ model Message {
   content        String
   channel        String       @default("email")
   aiMetadata     Json?        // { sentiment, intent, confidence, suggested_action } — AI analysis
+  reviewAction   String?      // "approved" | "rejected" — HITL review decision
   conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   createdAt      DateTime     @default(now())
 

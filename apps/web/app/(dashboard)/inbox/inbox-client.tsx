@@ -17,7 +17,7 @@ import { ChatWindow } from "@/components/chat/chat-window";
 
 type Message = {
   id: string; direction: string; content: string; channel: string;
-  aiMetadata?: any; createdAt: string;
+  aiMetadata?: any; reviewAction?: string | null; createdAt: string;
 };
 
 type Props = { conversations: any[]; orgSlug: string; selectedId?: string };
@@ -151,6 +151,9 @@ export function InboxClient({ conversations, orgSlug, selectedId: initialSelecte
   const [selectedId, setSelectedId] = useState<string | null>(initialSelectedId || null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [msgsLoading, setMsgsLoading] = useState(false);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [hasMore, setHasMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [replyDraft, setReplyDraft] = useState("");
   const [aiDraft, setAiDraft] = useState<{ subject: string; body: string; tone?: string; suggestedAction?: string } | null>(null);
   const [aiTyping, setAiTyping] = useState(false);
@@ -165,6 +168,7 @@ export function InboxClient({ conversations, orgSlug, selectedId: initialSelecte
     return messages.filter((m: any) => !m.channel || m.channel === "email");
   }, [messages, chatMode]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
 
   const filtered = conversations.filter((c: any) => {
     if (filter === "all") return true;
@@ -196,16 +200,48 @@ export function InboxClient({ conversations, orgSlug, selectedId: initialSelecte
   }, [selectedId, conversations, messages]);
 
   useEffect(() => {
-    if (!selectedId) { setMessages([]); return; }
+    if (!selectedId) { setMessages([]); setNextCursor(null); setHasMore(false); return; }
     setMsgsLoading(true);
     setReplyDraft("");
     setAiDraft(null);
-    fetch(`/api/orgs/${orgSlug}/conversations/${selectedId}/messages`)
+    fetch(`/api/orgs/${orgSlug}/conversations/${selectedId}/messages?limit=50`)
       .then((res) => res.ok ? res.json() : Promise.reject())
-      .then((data) => { setMessages(data.messages || []); })
+      .then((data) => {
+        setMessages(data.messages || []);
+        setNextCursor(data.nextCursor ?? null);
+        setHasMore(data.hasMore ?? false);
+      })
       .catch(() => toast.error("加载消息失败"))
       .finally(() => setMsgsLoading(false));
   }, [selectedId, orgSlug]);
+
+  async function loadMoreMessages() {
+    if (!selectedId || !nextCursor || loadingMore) return;
+    setLoadingMore(true);
+    const container = messagesContainerRef.current;
+    const oldScrollHeight = container?.scrollHeight ?? 0;
+
+    try {
+      const res = await fetch(`/api/orgs/${orgSlug}/conversations/${selectedId}/messages?cursor=${nextCursor}&limit=50`);
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      setMessages((prev) => [...(data.messages || []), ...prev]);
+      setNextCursor(data.nextCursor ?? null);
+      setHasMore(data.hasMore ?? false);
+
+      // Preserve scroll position: offset by the newly added content height
+      requestAnimationFrame(() => {
+        if (container) {
+          const newScrollHeight = container.scrollHeight;
+          container.scrollTop += (newScrollHeight - oldScrollHeight);
+        }
+      });
+    } catch {
+      toast.error("加载历史消息失败");
+    } finally {
+      setLoadingMore(false);
+    }
+  }
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -214,35 +250,71 @@ export function InboxClient({ conversations, orgSlug, selectedId: initialSelecte
   async function generateAiDraft() {
     if (!selectedId) return;
     setGenerating(true); setAiTyping(true);
-    const minDelay = 800 + Math.random() * 600;
-    await new Promise((r) => setTimeout(r, minDelay));
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => {
+      controller.abort();
+      toast.error("AI 响应超时，请稍后重试");
+    }, 30_000);
+
     try {
-      const res = await fetch(`/api/orgs/${orgSlug}/conversations/${selectedId}/ai-draft`, { method: "POST" });
+      const res = await fetch(`/api/orgs/${orgSlug}/conversations/${selectedId}/ai-draft`, {
+        method: "POST",
+        signal: controller.signal,
+      });
       if (res.ok) {
         const data = await res.json();
         setAiDraft(data.draft);
         setReplyDraft(data.draft.body);
       } else { toast.error("AI 草稿生成失败"); }
-    } catch { toast.error("网络错误"); }
-    setAiTyping(false); setGenerating(false);
+    } catch (err) {
+      if (!(err instanceof DOMException && err.name === "AbortError")) {
+        toast.error("网络错误");
+      }
+    } finally {
+      clearTimeout(timeout);
+      setAiTyping(false);
+      setGenerating(false);
+    }
   }
 
   async function sendReply() {
     if (!replyDraft.trim() || !selectedId) return;
     setSending(true);
     try {
+      const body: Record<string, unknown> = { content: replyDraft, channel: "email" };
+      if (aiDraft) body.reviewAction = "approved"; // Was approved AI draft
       const res = await fetch(`/api/orgs/${orgSlug}/conversations/${selectedId}/messages`, {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content: replyDraft, channel: "email" }),
+        body: JSON.stringify(body),
       });
       if (res.ok) {
         const data = await res.json();
         setMessages((prev) => [...prev, data.message]);
         setReplyDraft(""); setAiDraft(null);
         toast.success("已发送");
+        // If this was a Worker draft approval, record it for HITL audit trail
+        patchWorkerDraft("approved");
       } else { toast.error("发送失败"); }
     } catch { toast.error("网络错误"); }
     setSending(false);
+  }
+
+  /** Patch Worker-generated draft message with reviewAction (HITL audit trail). */
+  async function patchWorkerDraft(action: "approved" | "rejected") {
+    const workerDraft = [...messages].reverse().find(
+      (m) => m.direction === "outbound" && !m.reviewAction
+    );
+    if (!workerDraft || !selectedId) return;
+    try {
+      await fetch(
+        `/api/orgs/${orgSlug}/conversations/${selectedId}/messages/${workerDraft.id}`,
+        { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ reviewAction: action }) },
+      );
+      setMessages((prev) => prev.map((m) =>
+        m.id === workerDraft.id ? { ...m, reviewAction: action } : m
+      ));
+    } catch { /* non-blocking — message send/reject already completed */ }
   }
 
   function handleBack() { setSelectedId(null); }
@@ -379,7 +451,7 @@ export function InboxClient({ conversations, orgSlug, selectedId: initialSelecte
           ) : (
           <>
           {/* Messages */}
-          <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
+          <div ref={messagesContainerRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
             {msgsLoading ? (
               <div className="flex items-center justify-center h-full">
                 <div className="flex items-center gap-2 text-text-muted">
@@ -390,6 +462,23 @@ export function InboxClient({ conversations, orgSlug, selectedId: initialSelecte
               </div>
             ) : (
               <>
+                {/* Load earlier messages */}
+                {hasMore && (
+                  <div className="flex justify-center pb-2">
+                    <button
+                      onClick={loadMoreMessages}
+                      disabled={loadingMore}
+                      className="text-xs text-text-muted hover:text-accent transition-colors px-3 py-1 rounded-md hover:bg-bg-subtle"
+                    >
+                      {loadingMore ? "加载中..." : "加载更早的消息"}
+                    </button>
+                  </div>
+                )}
+                {!hasMore && messages.length >= 50 && (
+                  <div className="flex justify-center pb-2">
+                    <span className="text-[10px] text-text-muted">已显示全部消息</span>
+                  </div>
+                )}
                 {channelMessages.map((msg) => (
                   <div key={msg.id} className={cn("flex items-start gap-3", msg.direction === "outbound" ? "flex-row-reverse" : "")}>
                     <div className={cn(
@@ -433,7 +522,7 @@ export function InboxClient({ conversations, orgSlug, selectedId: initialSelecte
                       <p className="text-sm text-text-secondary whitespace-pre-wrap leading-relaxed">{aiDraft.body}</p>
                       <div className="flex gap-2 mt-2">
                         <Button size="sm" variant="default" loading={sending} onClick={sendReply}><Send className="size-3 mr-1" /> 发送</Button>
-                        <Button size="sm" variant="outline" onClick={() => { setAiDraft(null); setReplyDraft(""); }}>放弃</Button>
+                        <Button size="sm" variant="outline" onClick={() => { setAiDraft(null); setReplyDraft(""); patchWorkerDraft("rejected"); }}>放弃</Button>
                         <Button size="sm" variant="ghost" onClick={generateAiDraft} loading={generating}><RefreshCw className="size-3 mr-1" /> 重新生成</Button>
                       </div>
                     </div>

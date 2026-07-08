@@ -81,9 +81,24 @@ describe("requirePermission", () => {
 });
 
 describe("ROLES constant", () => {
-  it("contains exactly 4 roles in correct order", () => {
-    expect(ROLES).toHaveLength(4);
-    expect(ROLES).toEqual(["owner", "admin", "operator", "viewer"]);
+  it("contains exactly 5 roles in correct order (including customer from Phase 19)", () => {
+    expect(ROLES).toHaveLength(5);
+    expect(ROLES).toEqual(["owner", "admin", "operator", "viewer", "customer"]);
+  });
+});
+
+describe("customer role (Phase 19)", () => {
+  it("customer has no dashboard permissions", () => {
+    for (const perm of Object.keys(PERMISSION_MAP) as Permission[]) {
+      expect(hasPermission("customer", perm)).toBe(false);
+    }
+  });
+
+  it("customer role exists in ROLES but has zero entries in PERMISSION_MAP", () => {
+    // Customer authorization is via Lead.userId scoping, not RBAC permissions
+    for (const roles of Object.values(PERMISSION_MAP)) {
+      expect(roles).not.toContain("customer");
+    }
   });
 });
 

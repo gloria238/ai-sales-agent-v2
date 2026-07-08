@@ -3,6 +3,7 @@ import { getSession } from "@/lib/session";
 import { redirect } from "next/navigation";
 import { TrendingUp, Send, BarChart3, Bot, DollarSign, Target, CalendarCheck, Users, AlertCircle, ShieldCheck, Activity } from "lucide-react";
 import AIHealthTab from "./ai-health";
+import AIMetricsTab from "./ai-metrics";
 
 export default async function AnalyticsPage({ searchParams }: { searchParams: { tab?: string } }) {
   const session = await getSession();
@@ -11,7 +12,7 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: { 
   const org = await prisma.organization.findUnique({ where: { id: session.orgId } });
   if (!org) redirect("/login");
 
-  const activeTab = searchParams.tab === "ai" ? "ai" : searchParams.tab === "boss" ? "boss" : "sales";
+  const activeTab = searchParams.tab === "ai" ? "ai" : searchParams.tab === "boss" ? "boss" : searchParams.tab === "metrics" ? "metrics" : "sales";
   const isBoss = ["owner", "admin"].includes(session.role);
 
   // ── Tab Navigation ──────────────────────────────────────────
@@ -32,6 +33,14 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: { 
         }`}
       >
         AI Health
+      </a>
+      <a
+        href="/analytics?tab=metrics"
+        className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
+          activeTab === "metrics" ? "bg-accent text-white" : "text-text-muted hover:text-text"
+        }`}
+      >
+        AI 指标
       </a>
       {isBoss && (
         <a
@@ -56,6 +65,20 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: { 
         </div>
         {TabNav}
         <AIHealthTab />
+      </div>
+    );
+  }
+
+  // ── AI Metrics Tab (four-layer quality dashboard) ────────────
+  if (activeTab === "metrics") {
+    return (
+      <div className="max-w-7xl mx-auto space-y-6 animate-slide-up p-4 lg:p-6">
+        <div>
+          <h1 className="text-xl font-bold tracking-tight text-text">数据分析</h1>
+          <p className="text-sm text-text-secondary mt-1">AI 四层指标：系统 · 质量 · 业务 · 风险</p>
+        </div>
+        {TabNav}
+        <AIMetricsTab orgSlug={org.slug} />
       </div>
     );
   }
