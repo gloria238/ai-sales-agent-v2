@@ -251,7 +251,7 @@ async function main() {
         "I'd love to show you! How about Thursday at 2pm ET? Here's a calendar link: [demo call]. Looking forward to it!",
       ];
       const outMsg = await prisma.message.create({
-        data: { conversationId: conv.id, direction: "outbound", content: outbound[i], channel: "email", aiMetadata: { generatedBy: "AI SDR Agent", confidence: 0.85 + Math.random() * 0.1 } },
+        data: { conversationId: conv.id, direction: "outbound", content: outbound[i], channel: "email", aiMetadata: { generatedBy: "AI SDR Agent", confidence: 0.88 } },
       });
       // Activity: email sent
       await prisma.leadActivity.create({

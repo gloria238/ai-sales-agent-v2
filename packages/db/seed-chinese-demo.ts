@@ -190,13 +190,13 @@ async function main() {
   const conv1 = await prisma.conversation.create({
     data: {
       organizationId: org.id, leadId: leads[0].id, agentId: agents[0].id,
-      channel: "email", subject: "启云科技企业版采购咨询",
+      channel: "chat", subject: "启云科技企业版采购咨询",
       status: "awaiting_approval",
       messages: {
         create: [
-          { direction: "inbound", content: "你好！我们在对比市面上的 AI 销售助手方案。你们和销售易的 AI 功能有什么本质区别？我们团队 80 人，主要做 B2B SaaS。", channel: "email" },
-          { direction: "outbound", content: "赵总您好！这是个很好的问题。核心区别在于：销售易是 CRM——帮您管客户数据、管销售阶段；启云是 AI 销售助手——帮销售主动跟进客户、自动回复、智能评分。\n\n打个比方：CRM 是您的「客户通讯录」，启云是帮您「给客户发消息」的 AI。我们的很多客户是两个系统一起用：销售易管流程，启云做执行。\n\n对于 80 人的 SaaS 团队，建议看看专业版（¥5,999/月，10 个 AI 坐席，全渠道接入）。您方便这周安排 30 分钟产品演示吗？", channel: "email", aiMetadata: { tone: "professional", suggestedAction: "send_now" } },
-          { direction: "inbound", content: "好的，这周五下午 3 点可以吗？另外能否先发一份产品介绍 PDF？我们 CTO 也想看一下技术架构。", channel: "email" },
+          { direction: "inbound", content: "你好！我们在对比市面上的 AI 销售助手方案。你们和销售易的 AI 功能有什么本质区别？我们团队 80 人，主要做 B2B SaaS。", channel: "chat" },
+          { direction: "outbound", content: "赵总您好！这是个很好的问题。核心区别在于：销售易是 CRM——帮您管客户数据、管销售阶段；启云是 AI 销售助手——帮销售主动跟进客户、自动回复、智能评分。\n\n打个比方：CRM 是您的「客户通讯录」，启云是帮您「给客户发消息」的 AI。我们的很多客户是两个系统一起用：销售易管流程，启云做执行。\n\n对于 80 人的 SaaS 团队，建议看看专业版（¥5,999/月，10 个 AI 坐席，全渠道接入）。您方便这周安排 30 分钟产品演示吗？", channel: "chat", aiMetadata: { tone: "professional", suggestedAction: "send_now" } },
+          { direction: "inbound", content: "好的，这周五下午 3 点可以吗？另外能否先发一份产品介绍 PDF？我们 CTO 也想看一下技术架构。", channel: "chat" },
         ],
       },
     },
@@ -206,12 +206,12 @@ async function main() {
   const conv2 = await prisma.conversation.create({
     data: {
       organizationId: org.id, leadId: leads[1].id, agentId: agents[0].id,
-      channel: "email", subject: "咨询产品功能与定价",
+      channel: "chat", subject: "咨询产品功能与定价",
       status: "active",
       messages: {
         create: [
-          { direction: "inbound", content: "我们是一家工业硬件公司，销售团队 20 人在全国 6 个城市。最大的问题是客户信息分散在各人微信上，总部看不到全貌。你们能解决吗？", channel: "email" },
-          { direction: "outbound", content: "陈总好，这正好是启云的核心价值之一。我们的多渠道统一收件箱可以把企微、邮件、网页咨询汇聚到一个后台，总部销售经理可以看到所有客户的沟通历史和 AI 处理状态。\n\n智联制造的场景，建议用专业版，搭 6 个区域坐席 + 2 个总部审核坐席。要不要我给您发一个同行业客户（某工业物联网公司）的使用案例？他们上线 3 个月后代理商跟进覆盖率从 61% 提升到 96%。", channel: "email", aiMetadata: { tone: "consultative", suggestedAction: "send_now" } },
+          { direction: "inbound", content: "我们是一家工业硬件公司，销售团队 20 人在全国 6 个城市。最大的问题是客户信息分散在各人微信上，总部看不到全貌。你们能解决吗？", channel: "chat" },
+          { direction: "outbound", content: "陈总好，这正好是启云的核心价值之一。我们的多渠道统一收件箱可以把企微、邮件、网页咨询汇聚到一个后台，总部销售经理可以看到所有客户的沟通历史和 AI 处理状态。\n\n智联制造的场景，建议用专业版，搭 6 个区域坐席 + 2 个总部审核坐席。要不要我给您发一个同行业客户（某工业物联网公司）的使用案例？他们上线 3 个月后代理商跟进覆盖率从 61% 提升到 96%。", channel: "chat", aiMetadata: { tone: "consultative", suggestedAction: "send_now" } },
         ],
       },
     },
@@ -221,12 +221,12 @@ async function main() {
   const conv3 = await prisma.conversation.create({
     data: {
       organizationId: org.id, leadId: leads[2].id, agentId: agents[0].id,
-      channel: "email", subject: "教育行业 AI 客服方案",
+      channel: "chat", subject: "教育行业 AI 客服方案",
       status: "active",
       messages: {
         create: [
-          { direction: "inbound", content: "我们是在线教育公司，课程顾问 45 人。寒暑假前咨询量暴增 3 倍，平时又用不了那么多人。你们能解决这个波峰波谷的问题吗？还有，家长信息必须保障隐私安全。", channel: "email" },
-          { direction: "outbound", content: "王校长您好！教育行业的季节性波动确实是典型痛点。我们的方案：\n\n1. 旺季时 AI 7×24 处理家长咨询（秒级响应），课程顾问只需审核 AI 的回复，人均处理量从 35 条/天提升到 89 条/天\n2. 淡季时保持基础 AI 坐席覆盖，不用担心人力浪费\n3. 安全方面：企业版支持完全私有化部署，所有家长数据在您自己的服务器上，我们还通过了等保二级认证\n\n思源教育这类场景，我们已有成功案例（某 K12 平台上线 6 个月后夜间咨询覆盖率从 0 到 100%，试听课转化率翻倍）。您看什么时候方便深度交流一下？", channel: "email", aiMetadata: { tone: "professional", suggestedAction: "send_now" } },
+          { direction: "inbound", content: "我们是在线教育公司，课程顾问 45 人。寒暑假前咨询量暴增 3 倍，平时又用不了那么多人。你们能解决这个波峰波谷的问题吗？还有，家长信息必须保障隐私安全。", channel: "chat" },
+          { direction: "outbound", content: "王校长您好！教育行业的季节性波动确实是典型痛点。我们的方案：\n\n1. 旺季时 AI 7×24 处理家长咨询（秒级响应），课程顾问只需审核 AI 的回复，人均处理量从 35 条/天提升到 89 条/天\n2. 淡季时保持基础 AI 坐席覆盖，不用担心人力浪费\n3. 安全方面：企业版支持完全私有化部署，所有家长数据在您自己的服务器上，我们还通过了等保二级认证\n\n思源教育这类场景，我们已有成功案例（某 K12 平台上线 6 个月后夜间咨询覆盖率从 0 到 100%，试听课转化率翻倍）。您看什么时候方便深度交流一下？", channel: "chat", aiMetadata: { tone: "professional", suggestedAction: "send_now" } },
         ],
       },
     },
@@ -236,12 +236,12 @@ async function main() {
   const conv4 = await prisma.conversation.create({
     data: {
       organizationId: org.id, leadId: leads[3].id, agentId: agents[1].id,
-      channel: "email", subject: "了解一下产品",
+      channel: "chat", subject: "了解一下产品",
       status: "active",
       messages: {
         create: [
-          { direction: "inbound", content: "在你们官网上看到这个产品，想了解一下基础版的价格和功能。我们是个 8 人的创业公司。", channel: "email" },
-          { direction: "outbound", content: "您好！基础版 ¥1,999/月，包含 3 个 AI 坐席和 10,000 条消息/月，完全够 8 人团队使用。14 天免费试用，零风险。我帮您开通试用账号？", channel: "email", aiMetadata: { tone: "friendly" } },
+          { direction: "inbound", content: "在你们官网上看到这个产品，想了解一下基础版的价格和功能。我们是个 8 人的创业公司。", channel: "chat" },
+          { direction: "outbound", content: "您好！基础版 ¥1,999/月，包含 3 个 AI 坐席和 10,000 条消息/月，完全够 8 人团队使用。14 天免费试用，零风险。我帮您开通试用账号？", channel: "chat", aiMetadata: { tone: "friendly" } },
         ],
       },
     },
@@ -250,12 +250,12 @@ async function main() {
   const conv5 = await prisma.conversation.create({
     data: {
       organizationId: org.id, leadId: leads[5].id, agentId: agents[0].id,
-      channel: "email", subject: "API 集成咨询",
+      channel: "chat", subject: "API 集成咨询",
       status: "active",
       messages: {
         create: [
-          { direction: "inbound", content: "我们有自己的 CRM 系统，需要把你们的 AI 能力通过 API 集成进来。你们支持什么认证方式？有没有 SDK？", channel: "email" },
-          { direction: "outbound", content: "您好！我们支持 API Key (Bearer Token) 和 Cookie Session 两种认证方式。提供了 Node.js 和 Python SDK。API 文档在 docs.qicloud.cn/api。专业版起就支持 API 接入。需要我发一份 API 集成指南吗？", channel: "email", aiMetadata: { tone: "professional" } },
+          { direction: "inbound", content: "我们有自己的 CRM 系统，需要把你们的 AI 能力通过 API 集成进来。你们支持什么认证方式？有没有 SDK？", channel: "chat" },
+          { direction: "outbound", content: "您好！我们支持 API Key (Bearer Token) 和 Cookie Session 两种认证方式。提供了 Node.js 和 Python SDK。API 文档在 docs.qicloud.cn/api。专业版起就支持 API 接入。需要我发一份 API 集成指南吗？", channel: "chat", aiMetadata: { tone: "professional" } },
         ],
       },
     },
@@ -264,14 +264,14 @@ async function main() {
   const conv6 = await prisma.conversation.create({
     data: {
       organizationId: org.id, leadId: leads[7].id, agentId: agents[2].id,
-      channel: "email", subject: "续约咨询",
+      channel: "chat", subject: "续约咨询",
       status: "closed",
       messages: {
         create: [
-          { direction: "inbound", content: "我们的年费下个月到期，想了解一下续约有什么优惠？另外我们想从专业版升级到企业版，因为需要私有化部署。", channel: "email" },
-          { direction: "outbound", content: "吴总好！续约客户享受 8 折年付优惠。从专业版升级到企业版的话，差价按天折算，另外企业版私有化部署一次性费用 ¥49,000。考虑到您是续约客户，我们可以在部署费上给到 9 折。需要我安排客户成功经理上门做升级评估吗？", channel: "email", aiMetadata: { tone: "friendly" } },
-          { direction: "inbound", content: "好的，安排吧。另外私有化部署大概需要多长时间？我们想在 Q3 之前完成切换。", channel: "email" },
-          { direction: "outbound", content: "私有化部署通常在 2-3 周内完成，包括环境安装、配置调优和运维培训。Q3 之前完全来得及。我让客户成功经理这周联系您确认具体时间。", channel: "email", aiMetadata: { tone: "professional" } },
+          { direction: "inbound", content: "我们的年费下个月到期，想了解一下续约有什么优惠？另外我们想从专业版升级到企业版，因为需要私有化部署。", channel: "chat" },
+          { direction: "outbound", content: "吴总好！续约客户享受 8 折年付优惠。从专业版升级到企业版的话，差价按天折算，另外企业版私有化部署一次性费用 ¥49,000。考虑到您是续约客户，我们可以在部署费上给到 9 折。需要我安排客户成功经理上门做升级评估吗？", channel: "chat", aiMetadata: { tone: "friendly" } },
+          { direction: "inbound", content: "好的，安排吧。另外私有化部署大概需要多长时间？我们想在 Q3 之前完成切换。", channel: "chat" },
+          { direction: "outbound", content: "私有化部署通常在 2-3 周内完成，包括环境安装、配置调优和运维培训。Q3 之前完全来得及。我让客户成功经理这周联系您确认具体时间。", channel: "chat", aiMetadata: { tone: "professional" } },
         ],
       },
     },
@@ -280,12 +280,12 @@ async function main() {
   const conv7 = await prisma.conversation.create({
     data: {
       organizationId: org.id, leadId: leads[10].id, agentId: agents[0].id,
-      channel: "email", subject: "数据安全咨询",
+      channel: "chat", subject: "数据安全咨询",
       status: "active",
       messages: {
         create: [
-          { direction: "inbound", content: "我们公司对数据合规要求很高。你们的数据加密和权限管理具体是什么方案？有没有安全认证？", channel: "email" },
-          { direction: "outbound", content: "您好！安全方面我们有完整方案：\n\n- 传输层：HTTPS + TLS 1.3\n- 存储层：AES-256 加密\n- 认证层：JWT + bcrypt 12 轮哈希 + httpOnly Cookie\n- 权限层：4 角色 × 13 权限矩阵\n- 认证：通过国家信息安全等级保护二级\n\n如果这些还不够满足要求，企业版支持完全私有化部署——所有数据在您自己服务器上。需要我发一份安全白皮书吗？", channel: "email", aiMetadata: { tone: "professional" } },
+          { direction: "inbound", content: "我们公司对数据合规要求很高。你们的数据加密和权限管理具体是什么方案？有没有安全认证？", channel: "chat" },
+          { direction: "outbound", content: "您好！安全方面我们有完整方案：\n\n- 传输层：HTTPS + TLS 1.3\n- 存储层：AES-256 加密\n- 认证层：JWT + bcrypt 12 轮哈希 + httpOnly Cookie\n- 权限层：4 角色 × 13 权限矩阵\n- 认证：通过国家信息安全等级保护二级\n\n如果这些还不够满足要求，企业版支持完全私有化部署——所有数据在您自己服务器上。需要我发一份安全白皮书吗？", channel: "chat", aiMetadata: { tone: "professional" } },
         ],
       },
     },
@@ -294,12 +294,12 @@ async function main() {
   const conv8 = await prisma.conversation.create({
     data: {
       organizationId: org.id, leadId: leads[14].id, agentId: agents[0].id,
-      channel: "email", subject: "企业版报价",
+      channel: "chat", subject: "企业版报价",
       status: "awaiting_approval",
       messages: {
         create: [
-          { direction: "inbound", content: "请发一份企业版的正式报价单。我们需要 20 个坐席，私有化部署，还要对接我们的飞书 SSO。", channel: "email" },
-          { direction: "outbound", content: "沈总您好！根据您的需求，报价如下：\n\n企业版年付：¥191,990/年（8折）\n私有化部署费：¥49,000（一次性）\n飞书 SSO 集成：已包含在企业版中，无额外费用\n\n合计首年：¥240,990，次年：¥191,990/年\n\n以上报价含增值税专用发票。需要我帮您出正式合同吗？", channel: "email", aiMetadata: { tone: "professional", suggestedAction: "review" } },
+          { direction: "inbound", content: "请发一份企业版的正式报价单。我们需要 20 个坐席，私有化部署，还要对接我们的飞书 SSO。", channel: "chat" },
+          { direction: "outbound", content: "沈总您好！根据您的需求，报价如下：\n\n企业版年付：¥191,990/年（8折）\n私有化部署费：¥49,000（一次性）\n飞书 SSO 集成：已包含在企业版中，无额外费用\n\n合计首年：¥240,990，次年：¥191,990/年\n\n以上报价含增值税专用发票。需要我帮您出正式合同吗？", channel: "chat", aiMetadata: { tone: "professional", suggestedAction: "review" } },
         ],
       },
     },
@@ -308,11 +308,11 @@ async function main() {
   const conv9 = await prisma.conversation.create({
     data: {
       organizationId: org.id, leadId: leads[4].id, agentId: agents[1].id,
-      channel: "email", subject: "外呼活动咨询",
+      channel: "chat", subject: "外呼活动咨询",
       status: "active",
       messages: {
         create: [
-          { direction: "outbound", content: "张薇总您好！我是启云科技的小启。注意到大海上个月在我们官网浏览了外呼活动引擎的产品页，想了解一下您现在是否有在考虑提升销售团队的外呼效率？我们最近有客户用外呼活动引擎把邮件打开率从 12% 提升到了 31%。要不要了解一下？", channel: "email", aiMetadata: { tone: "professional" } },
+          { direction: "outbound", content: "张薇总您好！我是启云科技的小启。注意到大海上个月在我们官网浏览了外呼活动引擎的产品页，想了解一下您现在是否有在考虑提升销售团队的外呼效率？我们最近有客户用外呼活动引擎把邮件打开率从 12% 提升到了 31%。要不要了解一下？", channel: "chat", aiMetadata: { tone: "professional" } },
         ],
       },
     },
@@ -321,12 +321,12 @@ async function main() {
   const conv10 = await prisma.conversation.create({
     data: {
       organizationId: org.id, leadId: leads[12].id, agentId: agents[0].id,
-      channel: "email", subject: "律所行业适用性咨询",
+      channel: "chat", subject: "律所行业适用性咨询",
       status: "active",
       messages: {
         create: [
-          { direction: "inbound", content: "我们是律师事务所，客户沟通内容涉及大量法律术语和保密信息。你们的 AI 能理解法律行业的语境吗？数据保密能不能保证？", channel: "email" },
-          { direction: "outbound", content: "许律师您好！两个问题分别说明：\n\n1. 行业适配：您可以把律所常用的法律文书、常见问题解答、服务介绍上传到知识库（我们支持 PDF/Word），AI 就能「学会」法律行业的语境。已有律所客户在使用，反馈只要知识库内容够详实（通常 30-50 篇文档），AI 可以覆盖 80% 以上的日常客户问题。\n\n2. 数据保密：企业版支持私有化部署，数据完全在您自己的服务器上。传输和存储全程加密。我们签保密协议也是标准流程。\n\n需要我安排一次针对律所场景的演示吗？", channel: "email", aiMetadata: { tone: "consultative" } },
+          { direction: "inbound", content: "我们是律师事务所，客户沟通内容涉及大量法律术语和保密信息。你们的 AI 能理解法律行业的语境吗？数据保密能不能保证？", channel: "chat" },
+          { direction: "outbound", content: "许律师您好！两个问题分别说明：\n\n1. 行业适配：您可以把律所常用的法律文书、常见问题解答、服务介绍上传到知识库（我们支持 PDF/Word），AI 就能「学会」法律行业的语境。已有律所客户在使用，反馈只要知识库内容够详实（通常 30-50 篇文档），AI 可以覆盖 80% 以上的日常客户问题。\n\n2. 数据保密：企业版支持私有化部署，数据完全在您自己的服务器上。传输和存储全程加密。我们签保密协议也是标准流程。\n\n需要我安排一次针对律所场景的演示吗？", channel: "chat", aiMetadata: { tone: "consultative" } },
         ],
       },
     },

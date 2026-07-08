@@ -12,7 +12,7 @@
  */
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Send, Bot, User, Wifi, WifiOff, Loader2, Sparkles } from "lucide-react";
+import { Send, Bot, User, Wifi, WifiOff, Loader2, Sparkles, RefreshCw } from "lucide-react";
 import { useSocket, type ChatMessage } from "@/lib/use-socket";
 
 interface ChatWindowProps {
@@ -43,7 +43,7 @@ export function ChatWindow({
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [generating, setGenerating] = useState(false);
-  const [aiDraftPreview, setAiDraftPreview] = useState<string | null>(null);
+  const [aiDraft, setAiDraft] = useState<{ subject: string; body: string; kbChunksUsed: number } | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
@@ -100,7 +100,7 @@ export function ChatWindow({
         }
       }
       setInput("");
-      setAiDraftPreview(null);
+      setAiDraft(null);
     } catch (err) {
       console.error("Failed to send message:", err);
     } finally {
@@ -117,7 +117,7 @@ export function ChatWindow({
 
   const handleTyping = (value: string) => {
     setInput(value);
-    setAiDraftPreview(null);
+    if (aiDraft) setAiDraft(null);
     if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
     setTyping(true);
     typingTimeoutRef.current = setTimeout(() => setTyping(false), 2000);
@@ -135,12 +135,7 @@ export function ChatWindow({
       if (res.ok) {
         const data = await res.json();
         if (data.draft?.body) {
-          setInput(data.draft.body);
-          setAiDraftPreview(
-            data.kbChunksUsed > 0
-              ? `AI 草稿 · 引用了 ${data.kbChunksUsed} 个知识库片段`
-              : "AI 草稿 · 基于对话历史生成"
-          );
+          setAiDraft({ ...data.draft, kbChunksUsed: data.kbChunksUsed ?? 0 });
         }
       } else {
         console.warn("[AI Draft] API call failed");
@@ -151,6 +146,36 @@ export function ChatWindow({
       setGenerating(false);
     }
   }, [orgSlug, conversationId, generating]);
+
+  // ── Send approved AI draft ──────────────────────────────────────
+  const handleSendDraft = useCallback(async () => {
+    if (!aiDraft?.body || sending) return;
+    setSending(true);
+    try {
+      if (isConnected) {
+        sendMessage(aiDraft.body);
+      } else if (orgSlug) {
+        await fetch(`/api/orgs/${orgSlug}/conversations/${conversationId}/chat-messages`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ content: aiDraft.body, reviewAction: "approved" }),
+        });
+      } else {
+        await fetch(`/api/chat/conversations/${conversationId}/messages`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ content: aiDraft.body, reviewAction: "approved" }),
+        });
+      }
+      setAiDraft(null);
+    } catch (err) {
+      console.error("Failed to send draft:", err);
+    } finally {
+      setSending(false);
+    }
+  }, [aiDraft, sending, isConnected, sendMessage, conversationId, orgSlug]);
 
   return (
     <div className="flex flex-col h-full">
@@ -238,25 +263,52 @@ export function ChatWindow({
             </div>
           </div>
         )}
-      </div>
 
-      {/* AI Draft preview banner */}
-      {aiDraftPreview && (
-        <div className="px-4 py-2 bg-accent/5 border-t border-accent/20">
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-accent font-medium flex items-center gap-1.5">
-              <Sparkles className="size-3" />
-              {aiDraftPreview}
-            </span>
-            <button
-              onClick={() => { setAiDraftPreview(null); setInput(""); }}
-              className="text-xs text-text-muted hover:text-text transition-colors"
-            >
-              清除
-            </button>
+        {/* AI Draft bubble — matches email inbox pattern */}
+        {aiDraft && isAgent && (
+          <div className="flex gap-3 justify-end px-4 py-1 animate-slide-up">
+            <div className="max-w-[75%] rounded-2xl rounded-br-md px-4 py-3 bg-accent/5 border border-accent/20 border-dashed">
+              <p className="text-xs text-accent font-medium mb-1 flex items-center gap-1.5">
+                <Sparkles className="size-3" />
+                AI 草稿 — 审核后发送
+                {aiDraft.kbChunksUsed > 0 && (
+                  <span className="text-[10px] text-text-muted font-normal">
+                    · 引用 {aiDraft.kbChunksUsed} 个知识库片段
+                  </span>
+                )}
+              </p>
+              <p className="text-sm text-text-secondary whitespace-pre-wrap leading-relaxed line-clamp-4 break-words">{aiDraft.body}</p>
+              <div className="flex gap-2 mt-2">
+                <button
+                  onClick={handleSendDraft}
+                  disabled={!aiDraft?.body || sending}
+                  className="rounded-lg bg-accent text-white text-xs font-medium px-3 py-1.5 hover:bg-accent-hover disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center gap-1"
+                >
+                  {sending ? <Loader2 className="size-3 animate-spin" /> : <Send className="size-3" />}
+                  发送
+                </button>
+                <button
+                  onClick={() => setAiDraft(null)}
+                  className="rounded-lg border border-border bg-bg-card text-text-secondary text-xs font-medium px-3 py-1.5 hover:bg-bg-subtle transition-colors"
+                >
+                  丢弃
+                </button>
+                <button
+                  onClick={handleAiDraft}
+                  disabled={generating}
+                  className="rounded-lg text-text-muted text-xs font-medium px-3 py-1.5 hover:text-accent hover:bg-accent/5 transition-colors flex items-center gap-1"
+                >
+                  {generating ? <Loader2 className="size-3 animate-spin" /> : <RefreshCw className="size-3" />}
+                  重新生成
+                </button>
+              </div>
+            </div>
+            <div className="size-8 rounded-lg bg-accent/10 flex items-center justify-center shrink-0 mt-1">
+              <Bot className="size-4 text-accent" />
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* Input */}
       <div className="border-t border-border p-3">
