@@ -63,14 +63,14 @@ export function CampaignCreateClient({ agents, scripts, orgSlug }: { agents: Arr
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-text mb-1.5">AI 坐席</label>
-              <select className="w-full h-10 rounded-lg border border-border bg-bg-card px-3 text-sm text-text focus:outline-none focus:ring-2 focus:ring-accent/50" value={form.agentId} onChange={(e) => setForm({ ...form, agentId: e.target.value })}>
+              <select className="w-full h-10 rounded-lg border border-border bg-bg-card px-3 text-sm text-text focus:outline-none focus:ring-2 focus:ring-primary/50" value={form.agentId} onChange={(e) => setForm({ ...form, agentId: e.target.value })}>
                 <option value="">无（纯手动）</option>
                 {agents.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
               </select>
             </div>
             <div>
               <label className="block text-sm font-medium text-text mb-1.5">话术脚本</label>
-              <select className="w-full h-10 rounded-lg border border-border bg-bg-card px-3 text-sm text-text focus:outline-none focus:ring-2 focus:ring-accent/50" value={form.scriptId} onChange={(e) => setForm({ ...form, scriptId: e.target.value })}>
+              <select className="w-full h-10 rounded-lg border border-border bg-bg-card px-3 text-sm text-text focus:outline-none focus:ring-2 focus:ring-primary/50" value={form.scriptId} onChange={(e) => setForm({ ...form, scriptId: e.target.value })}>
                 <option value="">无（AI 自动生成）</option>
                 {scripts.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
               </select>

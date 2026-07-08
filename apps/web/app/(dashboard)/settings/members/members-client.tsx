@@ -103,7 +103,7 @@ export function MembersClient({ orgSlug, canManage }: Props) {
 
   return (
     <div className="space-y-4">
-      {error && <div className="text-danger text-sm bg-danger-soft rounded-lg px-3 py-2">{error}</div>}
+      {error && <div className="text-danger text-sm bg-danger/10 rounded-lg px-3 py-2">{error}</div>}
 
       {canManage && (
         <div className="flex items-center gap-3 p-4 rounded-md border border-border rounded-md border border-border bg-bg-card">
@@ -111,7 +111,7 @@ export function MembersClient({ orgSlug, canManage }: Props) {
             value={addEmail}
             onChange={(e) => setAddEmail(e.target.value)}
             placeholder="Email address"
-            className="flex-1 rounded-lg border border-border bg-lp-card/60 text-sm px-3 py-2 text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-accent/30"
+            className="flex-1 rounded-lg border border-border bg-lp-card/60 text-sm px-3 py-2 text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/30"
           />
           <select
             value={addRole}
@@ -123,7 +123,7 @@ export function MembersClient({ orgSlug, canManage }: Props) {
           <button
             onClick={handleAdd}
             disabled={adding || !addEmail.trim()}
-            className="rounded-lg bg-accent text-white text-sm font-medium px-4 py-2 hover:bg-accent-hover disabled:opacity-50 transition-colors"
+            className="rounded-lg bg-primary text-white text-sm font-medium px-4 py-2 hover:bg-primary-hover disabled:opacity-50 transition-colors"
           >
             {adding ? "Adding..." : "Add Member"}
           </button>

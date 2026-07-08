@@ -70,13 +70,13 @@ export default async function DashboardHomePage() {
         <div className="max-w-md w-full animate-fade-in">
           <OnboardingCard show={true} orgSlug={session.orgSlug} />
           <div className="mt-6 rounded-xl border border-border bg-bg-card p-8 text-center">
-            <div className="size-10 rounded-md bg-accent-subtle flex items-center justify-center mx-auto mb-5">
-              <Bot className="size-5 text-accent" />
+            <div className="size-10 rounded-md bg-primary/10 flex items-center justify-center mx-auto mb-5">
+              <Bot className="size-5 text-primary" />
             </div>
             <h3 className="text-lg font-bold text-text mb-2">部署你的 AI 销售团队</h3>
             <p className="text-sm text-text-secondary mb-6 max-w-xs mx-auto leading-relaxed">创建 AI 助理，导入客户，启动外呼活动。AI 全天候自动筛选客户并预约会议。</p>
             <div className="flex items-center justify-center gap-3">
-              <Link href="/agents" className="rounded-md bg-accent text-white text-sm font-medium px-3.5 py-2 hover:bg-accent-hover transition-colors">创建助理</Link>
+              <Link href="/agents" className="rounded-md bg-primary text-white text-sm font-medium px-3.5 py-2 hover:bg-primary-hover transition-colors">创建助理</Link>
               <Link href="/leads" className="rounded-md border border-border text-text-secondary text-sm font-medium px-3.5 py-2 hover:bg-bg-subtle transition-colors">导入客户</Link>
             </div>
           </div>
@@ -94,17 +94,17 @@ export default async function DashboardHomePage() {
           <p className="text-xs font-semibold text-text-muted uppercase tracking-[0.15em] mb-1">概览</p>
           <h1 className="text-2xl font-bold tracking-tight text-text">
             {new Date().getHours() < 12 ? "早上好" : new Date().getHours() < 18 ? "下午好" : "晚上好"}，{" "}
-            <span className="text-accent">{session.name?.split(" ")[0] || "欢迎"}</span>
+            <span className="text-primary">{session.name?.split(" ")[0] || "欢迎"}</span>
           </h1>
         </div>
         <div className="flex items-center gap-2.5">
-          <Link href="/agents" className="inline-flex items-center gap-2 rounded-xl bg-accent text-white text-sm font-semibold px-4 py-2.5 hover:bg-accent-hover transition-all shadow-sm hover:shadow-md hover:shadow-accent/25">
+          <Link href="/agents" className="inline-flex items-center gap-2 rounded-xl bg-primary text-white text-sm font-semibold px-4 py-2.5 hover:bg-primary-hover transition-all shadow-sm hover:shadow-md hover:shadow-primary/25">
             <Plus className="size-4" /> 新建助理
           </Link>
-          <Link href="/campaigns/new" className="inline-flex items-center gap-2 rounded-xl border border-border bg-bg-card text-text-secondary text-sm font-medium px-4 py-2.5 hover:bg-bg-subtle hover:border-accent/30 transition-all">
+          <Link href="/campaigns/new" className="inline-flex items-center gap-2 rounded-xl border border-border bg-bg-card text-text-secondary text-sm font-medium px-4 py-2.5 hover:bg-bg-subtle hover:border-primary/30 transition-all">
             <Zap className="size-4" /> 外呼活动
           </Link>
-          <Link href="/inbox" className="inline-flex items-center gap-2 rounded-xl border border-border bg-bg-card text-text-secondary text-sm font-medium px-4 py-2.5 hover:bg-bg-subtle hover:border-accent/30 transition-all">
+          <Link href="/inbox" className="inline-flex items-center gap-2 rounded-xl border border-border bg-bg-card text-text-secondary text-sm font-medium px-4 py-2.5 hover:bg-bg-subtle hover:border-primary/30 transition-all">
             <MessageSquare className="size-4" /> 收件箱
           </Link>
         </div>
@@ -113,14 +113,14 @@ export default async function DashboardHomePage() {
       {/* ── KPI Row ────────────────────────── */}
       <div className="grid grid-cols-4 gap-4 shrink-0 mb-5">
         {[
-          { label: "销售漏斗", value: `¥${(estimatedRevenue / 10000).toFixed(1)}万`, sub: `${pipelineCount} 个商机`, icon: Target, color: "text-accent", bg: "bg-accent/10", glow: "shadow-accent/5" },
-          { label: "本月会议", value: meetingsThisMonth, sub: "本月", icon: Sparkles, color: "text-accent-hover", bg: "bg-accent-soft", glow: "shadow-accent-hover/5" },
-          { label: "回复率", value: replyRate ? `${replyRate}%` : "—", sub: totalSent > 0 ? `${totalReplied}/${totalSent}` : "暂无活动", icon: Send, color: "text-accent-secondary", bg: "bg-accent-muted", glow: "shadow-accent-secondary/5" },
-          { label: "AI 回复", value: aiResponseRate ? `${aiResponseRate}%` : "—", sub: aiMessageCount > 0 ? `${aiMessageCount} 条自动` : "待激活助理", icon: Bot, color: "text-accent", bg: "bg-accent/10", glow: "shadow-accent/5" },
+          { label: "销售漏斗", value: `¥${(estimatedRevenue / 10000).toFixed(1)}万`, sub: `${pipelineCount} 个商机`, icon: Target, color: "text-primary", bg: "bg-primary/10", glow: "shadow-primary/5" },
+          { label: "本月会议", value: meetingsThisMonth, sub: "本月", icon: Sparkles, color: "text-primary-hover", bg: "bg-primary/10", glow: "shadow-primary-hover/5" },
+          { label: "回复率", value: replyRate ? `${replyRate}%` : "—", sub: totalSent > 0 ? `${totalReplied}/${totalSent}` : "暂无活动", icon: Send, color: "text-muted-foreground", bg: "bg-primary-muted", glow: "shadow-muted-foreground/5" },
+          { label: "AI 回复", value: aiResponseRate ? `${aiResponseRate}%` : "—", sub: aiMessageCount > 0 ? `${aiMessageCount} 条自动` : "待激活助理", icon: Bot, color: "text-primary", bg: "bg-primary/10", glow: "shadow-primary/5" },
         ].map((card, i) => (
           <div
             key={card.label}
-            className="animate-fade-in rounded-lg border border-border bg-bg-card/80 px-5 py-4 hover:border-accent/30 hover:shadow-sm transition-all duration-300 group"
+            className="animate-fade-in rounded-lg border border-border bg-bg-card/80 px-5 py-4 hover:border-primary/30 hover:shadow-sm transition-all duration-300 group"
             style={{ animationDelay: `${i * 80}ms` }}
           >
             <div className="flex items-center gap-3.5">
@@ -144,8 +144,8 @@ export default async function DashboardHomePage() {
         <div className="rounded-lg border border-border bg-bg-card/80 shadow-sm flex flex-col min-h-0 overflow-hidden">
           <div className="flex items-center gap-2.5 px-5 py-3 border-b border-border shrink-0">
             <span className="relative flex size-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75" />
-              <span className="relative inline-flex rounded-full size-2 bg-accent" />
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
+              <span className="relative inline-flex rounded-full size-2 bg-primary" />
             </span>
             <h2 className="text-sm font-semibold text-text">实时动态</h2>
             <span className="ml-auto text-[10px] text-text-muted tabular-nums">30s</span>
@@ -229,9 +229,9 @@ export default async function DashboardHomePage() {
             {totalSent > 0 ? (
               <div className="grid grid-cols-3 gap-5 mb-5">
                 {[
-                  { label: "已发送", val: totalSent, pct: null, color: "from-accent-secondary to-accent-secondary/70", bg: "bg-accent-secondary" },
-                  { label: "已打开", val: totalOpened, pct: openRate, color: "from-accent-hover to-accent-hover/70", bg: "bg-accent-hover" },
-                  { label: "已回复", val: totalReplied, pct: replyRate, color: "from-accent to-accent/70", bg: "bg-accent" },
+                  { label: "已发送", val: totalSent, pct: null, color: "from-muted-foreground to-muted-foreground/70", bg: "bg-muted-foreground" },
+                  { label: "已打开", val: totalOpened, pct: openRate, color: "from-primary-hover to-primary-hover/70", bg: "bg-primary-hover" },
+                  { label: "已回复", val: totalReplied, pct: replyRate, color: "from-primary to-primary/70", bg: "bg-primary" },
                 ].map((bar) => (
                   <div key={bar.label} className="space-y-2">
                     <div className="flex items-center justify-between text-xs">
@@ -251,7 +251,7 @@ export default async function DashboardHomePage() {
               <div className="flex items-center justify-center py-4 mb-4 rounded-xl bg-bg-subtle/50 border border-border/50">
                 <p className="text-xs text-text-muted">
                   暂无活动数据 —{" "}
-                  <Link href="/campaigns/new" className="text-accent hover:underline font-semibold">创建首个活动</Link>
+                  <Link href="/campaigns/new" className="text-primary hover:underline font-semibold">创建首个活动</Link>
                 </p>
               </div>
             )}
@@ -263,7 +263,7 @@ export default async function DashboardHomePage() {
                 { val: activeConversations, label: "对话", icon: MessageSquare },
               ].map((s) => (
                 <div key={s.label} className="rounded-xl bg-bg-subtle/70 py-3 px-2 hover:bg-bg-muted transition-colors group">
-                  <s.icon className="size-3.5 mx-auto mb-1.5 text-text-muted group-hover:text-accent transition-colors" />
+                  <s.icon className="size-3.5 mx-auto mb-1.5 text-text-muted group-hover:text-primary transition-colors" />
                   <p className="text-lg font-extrabold text-text tabular-nums">{s.val}</p>
                   <p className="text-[10px] text-text-muted mt-0.5 font-medium">{s.label}</p>
                 </div>

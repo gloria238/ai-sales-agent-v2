@@ -66,11 +66,11 @@ export default async function DocsPage() {
   ];
 
   const methodColor = (m: string) => ({
-    GET: "bg-accent-soft text-accent",
+    GET: "bg-primary/10 text-primary",
     POST: "bg-bg-subtle text-lp-hero-sub",
-    PUT: "bg-warning-soft text-warning",
-    PATCH: "bg-warning-soft text-warning",
-    DELETE: "bg-danger-soft text-danger",
+    PUT: "bg-warning/10 text-warning",
+    PATCH: "bg-warning/10 text-warning",
+    DELETE: "bg-danger/10 text-danger",
   }[m] || "bg-bg-subtle text-text-muted");
 
   const sections = ["Auth", "Organizations", "Leads", "Conversations", "Agents", "Campaigns", "Scripts", "Members & Settings", "AI"];

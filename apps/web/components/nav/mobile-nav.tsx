@@ -36,7 +36,7 @@ export function MobileNav() {
           <div className="absolute left-0 top-0 bottom-0 w-64 bg-lp-background/95 shadow-sm border-r border-border p-4 flex flex-col">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-2">
-                <div className="size-7 rounded-md bg-accent flex items-center justify-center text-white text-xs font-bold">S</div>
+                <div className="size-7 rounded-md bg-primary flex items-center justify-center text-white text-xs font-bold">S</div>
                 <span className="font-semibold text-sm text-text">SalesAgent</span>
               </div>
               <button onClick={() => setOpen(false)} className="p-1 rounded hover:bg-bg-subtle transition-colors">
@@ -52,7 +52,7 @@ export function MobileNav() {
                     className={cn(
                       "flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-all",
                       active
-                        ? "bg-accent/10 text-accent"
+                        ? "bg-primary/10 text-primary"
                         : "text-text-muted hover:text-text hover:bg-bg-subtle",
                     )}
                   >

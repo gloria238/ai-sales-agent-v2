@@ -84,7 +84,7 @@ export function ActivityFeed({ orgSlug }: Props) {
             <div className="flex-1 min-w-0">
               <p className="text-[11px] text-text-secondary truncate leading-relaxed">
                 {item.lead ? (
-                  <Link href={leadLink!} className="font-semibold text-text hover:text-accent transition-colors">
+                  <Link href={leadLink!} className="font-semibold text-text hover:text-primary transition-colors">
                     {item.lead.name}
                   </Link>
                 ) : (

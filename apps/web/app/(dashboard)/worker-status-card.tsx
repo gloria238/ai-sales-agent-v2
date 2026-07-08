@@ -35,13 +35,13 @@ export function WorkerStatusCard({ orgSlug }: { orgSlug: string }) {
             <Activity className="size-4 text-text-muted" />
             <span className="text-sm font-medium text-text-secondary">Worker</span>
           </div>
-          <span className={cn("size-2 rounded-full", workerOk ? "bg-accent" : "bg-bg-muted")} />
+          <span className={cn("size-2 rounded-full", workerOk ? "bg-primary" : "bg-bg-muted")} />
         </div>
         {data ? (
           <div className="space-y-1.5 text-xs">
             <div className="flex items-center justify-between">
               <span className="text-text-muted">Status</span>
-              <span className={cn("font-medium", workerOk ? "text-accent" : "text-text-muted")}>
+              <span className={cn("font-medium", workerOk ? "text-primary" : "text-text-muted")}>
                 {data.worker.status}
               </span>
             </div>

@@ -49,8 +49,8 @@ export function Sidebar({ currentOrg, orgs, user, SidebarHeader }: Props) {
   const sidebarWidth = collapsed ? "w-[68px]" : "w-60";
 
   return (
-    <aside className={cn(
-      "hidden lg:flex flex-col border-r border-border bg-bg shrink-0 transition-all duration-200",
+    <aside data-sidebar className={cn(
+      "hidden lg:flex flex-col border-r border-border bg-background shrink-0 transition-all duration-200",
       sidebarWidth,
     )}>
       {/* Logo + collapse button */}
@@ -60,7 +60,7 @@ export function Sidebar({ currentOrg, orgs, user, SidebarHeader }: Props) {
       )}>
         {!collapsed && (
           <Link href="/home" className="flex items-center gap-2.5 group">
-            <div className="size-7 rounded-md bg-accent flex items-center justify-center text-white text-xs font-bold">
+            <div className="size-7 rounded-md bg-primary flex items-center justify-center text-white text-xs font-bold">
               S
             </div>
             <span className="font-bold text-sm text-text tracking-tight">SalesAgent</span>
@@ -69,12 +69,12 @@ export function Sidebar({ currentOrg, orgs, user, SidebarHeader }: Props) {
         {/* Collapsed: logo doubles as expand button */}
         {collapsed && (
           <div className="relative group/logo">
-            <Link href="/home" className="size-8 rounded-lg bg-accent flex items-center justify-center text-white text-xs font-bold shadow-sm group-hover/logo:opacity-0 transition-opacity block">
+            <Link href="/home" className="size-8 rounded-lg bg-primary flex items-center justify-center text-white text-xs font-bold shadow-sm group-hover/logo:opacity-0 transition-opacity block">
               S
             </Link>
             <button
               onClick={() => setCollapsed(false)}
-              className="absolute inset-0 size-8 rounded-lg bg-bg-card border border-border flex items-center justify-center text-text-muted hover:text-accent hover:border-accent/30 opacity-0 group-hover/logo:opacity-100 transition-all shadow-sm"
+              className="absolute inset-0 size-8 rounded-lg bg-bg-card border border-border flex items-center justify-center text-text-muted hover:text-primary hover:border-primary/30 opacity-0 group-hover/logo:opacity-100 transition-all shadow-sm"
               title="展开侧边栏"
             >
               <PanelLeft className="size-3.5" />
@@ -114,16 +114,16 @@ export function Sidebar({ currentOrg, orgs, user, SidebarHeader }: Props) {
                   collapsed ? "justify-center px-0 py-2.5" : "gap-2.5 px-2.5 py-2",
                   "text-[13px] font-medium",
                   isActive
-                    ? "bg-accent/10 text-accent"
+                    ? "bg-primary/10 text-primary"
                     : "text-text-secondary hover:text-text hover:bg-bg-subtle",
                 )}
                 title={collapsed ? item.label : undefined}
               >
-                <Icon className={cn("size-4 shrink-0", isActive ? "text-accent" : "text-text-muted group-hover:text-text-secondary")} />
+                <Icon className={cn("size-4 shrink-0", isActive ? "text-primary" : "text-text-muted group-hover:text-text-secondary")} />
                 {!collapsed && <span>{item.label}</span>}
-                {!collapsed && item.badge && <span className="ml-auto size-1.5 rounded-full bg-accent" />}
+                {!collapsed && item.badge && <span className="ml-auto size-1.5 rounded-full bg-primary" />}
                 {isActive && !collapsed && (
-                  <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 rounded-r-full bg-accent" />
+                  <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 rounded-r-full bg-primary" />
                 )}
               </Link>
             );
@@ -145,7 +145,7 @@ export function Sidebar({ currentOrg, orgs, user, SidebarHeader }: Props) {
                   collapsed ? "justify-center px-0 py-2.5" : "gap-2.5 px-2.5 py-2",
                   "text-[13px] font-medium",
                   isActive
-                    ? "bg-accent/10 text-accent"
+                    ? "bg-primary/10 text-primary"
                     : "text-text-muted hover:text-text-secondary hover:bg-bg-subtle",
                 )}
                 title={collapsed ? item.label : undefined}
@@ -153,7 +153,7 @@ export function Sidebar({ currentOrg, orgs, user, SidebarHeader }: Props) {
                 <Icon className="size-4 shrink-0" />
                 {!collapsed && <span>{item.label}</span>}
                 {isActive && !collapsed && (
-                  <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 rounded-r-full bg-accent" />
+                  <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 rounded-r-full bg-primary" />
                 )}
               </Link>
             );

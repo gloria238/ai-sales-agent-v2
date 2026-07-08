@@ -77,7 +77,7 @@ export function PlaygroundClient({ orgSlug }: { orgSlug: string }) {
           <button
             onClick={handleAsk}
             disabled={loading || !question.trim()}
-            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-accent text-white hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-primary text-white hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
           >
             {loading ? (
               <Loader2 className="size-4 animate-spin" />
@@ -109,7 +109,7 @@ export function PlaygroundClient({ orgSlug }: { orgSlug: string }) {
                 {citations.map((c, i) => (
                   <div key={c.id} className="rounded-lg border border-border/50 bg-bg-subtle/50 p-3">
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="text-xs font-bold text-accent bg-accent/10 px-1.5 py-0.5 rounded">
+                      <span className="text-xs font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded">
                         [{i + 1}]
                       </span>
                       <FileText className="size-3 text-text-muted" />
@@ -146,7 +146,7 @@ export function PlaygroundClient({ orgSlug }: { orgSlug: string }) {
       {!answer && !loading && (
         <div className="flex flex-col items-center justify-center py-20 text-center">
           <div className="size-16 rounded-lg bg-bg-sage flex items-center justify-center mb-5">
-            <Search className="size-7 text-accent" />
+            <Search className="size-7 text-primary" />
           </div>
           <h3 className="text-base font-semibold text-text mb-1">Ask a question</h3>
           <p className="text-sm text-text-muted max-w-sm">

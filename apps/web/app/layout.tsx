@@ -33,7 +33,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 try {
                   var t = localStorage.getItem('theme');
                   if (t === 'light') {
-                    /* user explicitly picked light — respect it */;
+                    document.documentElement.classList.add('light');
                   } else {
                     document.documentElement.classList.add('dark');
                   }
@@ -52,9 +52,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             toastOptions={{
               className: "font-sans",
               style: {
-                background: "rgb(var(--bg-card))",
-                color: "rgb(var(--text))",
-                border: "1px solid rgb(var(--border))",
+                background: "hsl(var(--background-card))",
+                color: "hsl(var(--foreground))",
+                border: "1px solid var(--border)",
                 borderRadius: "0.75rem",
                 boxShadow: "0 4px 24px -8px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.06)",
                 fontSize: "0.875rem",

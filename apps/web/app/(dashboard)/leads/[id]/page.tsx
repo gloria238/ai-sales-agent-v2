@@ -29,7 +29,7 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
     return (
       <div className="text-center py-12">
         <p className="text-text-muted mb-4">客户未找到</p>
-        <Link href="/leads" className="text-accent hover:underline text-sm">← Back to Leads</Link>
+        <Link href="/leads" className="text-primary hover:underline text-sm">← Back to Leads</Link>
       </div>
     );
   }
@@ -42,8 +42,8 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
 
   const canManage = ["owner", "admin", "operator"].includes(membership.role);
   const scoreLabel = lead.score !== null ? (lead.score >= 70 ? "Hot" : lead.score >= 40 ? "Warm" : "Cold") : null;
-  const scoreColor = scoreLabel === "Hot" ? "bg-accent-soft text-accent border-accent/20" :
-    scoreLabel === "Warm" ? "bg-warning-soft text-warning border-warning/20" :
+  const scoreColor = scoreLabel === "Hot" ? "bg-primary/10 text-primary border-primary/20" :
+    scoreLabel === "Warm" ? "bg-warning/10 text-warning border-warning/20" :
     "bg-bg-subtle text-text-muted border-lp-border/20";
 
   return (
@@ -55,7 +55,7 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
       {/* Lead header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center gap-4">
-          <div className="size-12 rounded-lg bg-accent/10 flex items-center justify-center text-accent font-bold text-lg shrink-0">
+          <div className="size-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary font-bold text-lg shrink-0">
             {lead.name.charAt(0)}
           </div>
           <div>
@@ -141,9 +141,9 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
                   <div key={a.id} className="flex gap-3 text-sm">
                     <div className="mt-1.5 shrink-0">
                       <div className={cn("w-2 h-2 rounded-full", {
-                        note: "bg-lp-hero-sub", stage_change: "bg-accent-secondary",
-                        email_sent: "bg-accent", email_received: "bg-warning",
-                        meeting_booked: "bg-accent", created: "bg-bg-muted",
+                        note: "bg-lp-hero-sub", stage_change: "bg-muted-foreground",
+                        email_sent: "bg-primary", email_received: "bg-warning",
+                        meeting_booked: "bg-primary", created: "bg-bg-muted",
                       }[a.type] || "bg-bg-muted")} />
                     </div>
                     <div className="flex-1 min-w-0">
@@ -172,10 +172,10 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
 
       {/* AI Intelligence sidebar */}
       <div className="space-y-4">
-        <Card className="rounded-md border border-border bg-bg-card border-accent/10">
+        <Card className="rounded-md border border-border bg-bg-card border-primary/10">
           <CardHeader>
             <p className="font-medium text-text text-sm flex items-center gap-2">
-              <Sparkles className="size-4 text-accent" /> AI Intelligence
+              <Sparkles className="size-4 text-primary" /> AI Intelligence
             </p>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -203,7 +203,7 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
                     <div key={d.label} className="flex items-center gap-2">
                       <span className="text-[10px] text-text-muted w-14">{d.label}</span>
                       <div className="flex-1 h-1.5 bg-bg-subtle rounded-full overflow-hidden">
-                        <div className={cn("h-full rounded-full", d.val >= 70 ? "bg-accent" : d.val >= 40 ? "bg-warning" : "bg-bg-muted")}
+                        <div className={cn("h-full rounded-full", d.val >= 70 ? "bg-primary" : d.val >= 40 ? "bg-warning" : "bg-bg-muted")}
                           style={{ width: `${d.val}%` }} />
                       </div>
                       <span className="text-[10px] text-text-muted w-6 text-right">{Math.round(d.val)}</span>
@@ -219,7 +219,7 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-text-secondary">Sentiment</span>
-                  <Badge className="text-[10px] bg-accent-soft text-accent" variant="default">
+                  <Badge className="text-[10px] bg-primary/10 text-primary" variant="default">
                     <ThumbsUp className="size-2.5 mr-1" /> Positive
                   </Badge>
                 </div>
@@ -227,7 +227,7 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
                   {lead.stage === "qualified" || lead.stage === "proposal" ? (
                     ["Strong product interest", "Decision-maker contact", "Budget confirmed"].map((s) => (
                       <div key={s} className="flex items-center gap-1.5 text-xs text-text-muted">
-                        <div className="size-1 rounded-full bg-accent" />{s}
+                        <div className="size-1 rounded-full bg-primary" />{s}
                       </div>
                     ))
                   ) : (
@@ -244,7 +244,7 @@ export default async function LeadDetailPage({ params }: { params: { id: string 
             {/* Recommendation */}
             <div className="border-t border-border pt-4">
               <p className="text-[10px] font-semibold text-text-muted uppercase tracking-wide mb-2">AI Recommendation</p>
-              <div className="rounded-md border border-border bg-bg-card p-3 rounded-xl border border-accent/10">
+              <div className="rounded-md border border-border bg-bg-card p-3 rounded-xl border border-primary/10">
                 <p className="text-xs text-text-secondary leading-relaxed">
                   {lead.stage === "new"
                     ? "Send a personalized welcome email. Introduce your product and ask a qualifying question about their needs."

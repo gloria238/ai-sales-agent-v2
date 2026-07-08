@@ -42,7 +42,7 @@ export default function LoginPage() {
       {/* Glass card */}
       <div className="rounded-md border border-border bg-bg-card p-8 sm:p-10 rounded-lg">
         <div className="text-center mb-8">
-          <Link href="/" className="inline-flex size-11 rounded-lg bg-accent items-center justify-center text-white font-bold text-lg shadow-sm shadow-accent/25 mb-5 hover:shadow-md hover:shadow-accent/30 transition-shadow duration-300">
+          <Link href="/" className="inline-flex size-11 rounded-lg bg-primary items-center justify-center text-white font-bold text-lg shadow-sm shadow-primary/25 mb-5 hover:shadow-md hover:shadow-primary/30 transition-shadow duration-300">
             S
           </Link>
           <h1 className="text-xl font-bold tracking-tight text-text">欢迎回来</h1>
@@ -58,7 +58,7 @@ export default function LoginPage() {
               id="email" type="email" value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="name@company.com"
-              className="block w-full rounded-xl border border-border bg-bg px-3.5 py-2.5 text-sm text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all duration-200"
+              className="block w-full rounded-xl border border-border bg-bg px-3.5 py-2.5 text-sm text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
               required autoComplete="email"
             />
           </div>
@@ -70,20 +70,20 @@ export default function LoginPage() {
               id="password" type="password" value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="请输入密码"
-              className="block w-full rounded-xl border border-border bg-bg px-3.5 py-2.5 text-sm text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all duration-200"
+              className="block w-full rounded-xl border border-border bg-bg px-3.5 py-2.5 text-sm text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
               required autoComplete="current-password"
             />
           </div>
 
           {error && (
-            <div className="rounded-xl bg-danger-soft border border-danger/20 px-4 py-3 text-sm text-danger animate-scale-in">
+            <div className="rounded-xl bg-danger/10 border border-danger/20 px-4 py-3 text-sm text-danger animate-scale-in">
               {error}
             </div>
           )}
 
           <button
             type="submit" disabled={loading}
-            className="w-full rounded-xl bg-accent text-white text-sm font-semibold py-2.5 hover:bg-accent-hover disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-200 shadow-sm shadow-accent/25 hover:shadow-md hover:shadow-accent/30 active:scale-[0.98]"
+            className="w-full rounded-xl bg-primary text-white text-sm font-semibold py-2.5 hover:bg-primary-hover disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-200 shadow-sm shadow-primary/25 hover:shadow-md hover:shadow-primary/30 active:scale-[0.98]"
           >
             {loading ? (
               <span className="flex items-center justify-center gap-2">
@@ -97,7 +97,7 @@ export default function LoginPage() {
 
       <p className="text-center text-sm text-text-muted mt-6">
         还没有账号？{" "}
-        <Link href="/register" className="text-accent font-semibold hover:text-accent-hover transition-colors">
+        <Link href="/register" className="text-primary font-semibold hover:text-primary-hover transition-colors">
           立即注册
         </Link>
       </p>

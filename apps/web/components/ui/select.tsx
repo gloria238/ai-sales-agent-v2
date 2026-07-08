@@ -71,7 +71,7 @@ export function SelectTrigger({ placeholder, className }: { placeholder?: string
       className={cn(
         "w-full flex items-center justify-between rounded-xl border border-border bg-lp-card/60 px-3.5 py-2.5 text-sm text-text",
         "hover:bg-bg-subtle transition-colors duration-150",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30",
         className,
       )}
     >
@@ -123,12 +123,12 @@ export function SelectItem({ value, children }: { value: string; children: React
       aria-selected={isSelected}
       className={cn(
         "px-3 py-2 text-sm cursor-pointer transition-colors duration-100",
-        isSelected ? "bg-accent/10 text-accent" : isActive ? "bg-white/[0.06] text-text" : "text-text hover:bg-bg-subtle",
+        isSelected ? "bg-primary/10 text-primary" : isActive ? "bg-white/[0.06] text-text" : "text-text hover:bg-bg-subtle",
       )}
       onClick={() => { onValueChange(value); setOpen(false); }}
     >
       {children}
-      {isSelected && <span className="float-right text-accent">&#10003;</span>}
+      {isSelected && <span className="float-right text-primary">&#10003;</span>}
     </div>
   );
 }

@@ -53,7 +53,7 @@ export function ScriptListClient({ scripts, orgSlug }: { scripts: any[]; orgSlug
           const installed = installedSlugs.has(t.slug);
           return (
             <Card key={t.slug} className="p-5 rounded-md border border-border bg-bg-card">
-              <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center mb-3"><FileText className="w-5 h-5 text-accent" /></div>
+              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center mb-3"><FileText className="w-5 h-5 text-primary" /></div>
               <h3 className="font-semibold text-text text-sm mb-1">{t.name}</h3>
               <p className="text-xs text-text-muted mb-4">{t.desc}</p>
               <Button variant={installed ? "outline" : "default"} size="sm" className="w-full" loading={installing===t.slug} disabled={installed} onClick={()=>handleInstall(t.slug)}>
@@ -70,7 +70,7 @@ export function ScriptListClient({ scripts, orgSlug }: { scripts: any[]; orgSlug
             {scripts.map((s) => (
               <Card key={s.id} className="p-4 rounded-md border border-border bg-bg-card hover:shadow-panel-md transition-all cursor-pointer" onClick={() => router.push(`/scripts/${s.id}`)}>
                 <div className="flex items-center gap-3">
-                  <FileText className="w-5 h-5 text-accent" />
+                  <FileText className="w-5 h-5 text-primary" />
                   <div>
                     <h4 className="font-medium text-text text-sm">{s.name}</h4>
                     <p className="text-xs text-text-muted">{s.description || `${(s.steps as any[])?.length || 0} steps`}</p>

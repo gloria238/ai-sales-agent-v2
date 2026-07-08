@@ -84,7 +84,7 @@ export function ScriptGenerateClient({ orgSlug }: { orgSlug: string }) {
       {result && (
         <Card className="p-6 rounded-md border border-border bg-bg-card mt-6">
           <div className="flex items-center gap-3 mb-4">
-            <FileText className="w-6 h-6 text-accent" />
+            <FileText className="w-6 h-6 text-primary" />
             <div>
               <h2 className="font-semibold text-text">{result.name || "Generated Script"}</h2>
               <p className="text-xs text-text-muted">{result.steps?.length || 0} steps</p>

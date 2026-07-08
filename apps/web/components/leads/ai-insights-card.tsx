@@ -48,15 +48,15 @@ export function AIInsightsCard({ leadId, orgSlug }: Props) {
     ? "bg-warning" : "bg-bg-muted";
 
   const badgeColor = result?.label === "hot"
-    ? "bg-danger-soft text-danger" : result?.label === "warm"
-    ? "bg-warning-soft text-warning" : "bg-bg-subtle text-text-muted";
+    ? "bg-danger/10 text-danger" : result?.label === "warm"
+    ? "bg-warning/10 text-warning" : "bg-bg-subtle text-text-muted";
 
   return (
     <div className="rounded-xl rounded-md border border-border bg-bg-card p-4">
       <div className="flex items-center justify-between mb-3">
         <p className="text-sm text-text-muted">AI Insights</p>
         {!loading && (
-          <button onClick={fetchScore} className="text-xs text-accent hover:underline">
+          <button onClick={fetchScore} className="text-xs text-primary hover:underline">
             Refresh
           </button>
         )}
@@ -82,8 +82,8 @@ export function AIInsightsCard({ leadId, orgSlug }: Props) {
             </div>
           </div>
           {result.nextAction && (
-            <div className="rounded-lg bg-accent-soft border border-accent/20 p-3">
-              <p className="text-xs font-semibold text-accent uppercase mb-1">Suggested Next Action</p>
+            <div className="rounded-lg bg-primary/10 border border-primary/20 p-3">
+              <p className="text-xs font-semibold text-primary uppercase mb-1">Suggested Next Action</p>
               <p className="text-sm text-text">{result.nextAction}</p>
             </div>
           )}

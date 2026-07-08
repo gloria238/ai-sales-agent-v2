@@ -12,7 +12,7 @@ export function Textarea({ label, className, ...props }: TextareaProps) {
         className={cn(
           "w-full rounded-xl border border-border bg-bg-card px-3.5 py-2.5 text-sm text-text min-h-[80px] resize-y",
           "placeholder:text-text-muted",
-          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/30 focus-visible:border-accent",
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:border-primary",
           "transition-colors duration-150",
           className,
         )}

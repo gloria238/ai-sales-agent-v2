@@ -14,12 +14,12 @@ const SIZE_MAP: Record<AvatarSize, { container: string; text: string }> = {
 };
 
 const AVATAR_GRADIENTS = [
-  "from-accent/70 to-accent/20",
-  "from-accent/50 to-accent-secondary/20",
+  "from-primary/70 to-primary/20",
+  "from-primary/50 to-muted-foreground/20",
   "from-lp-hero-sub/40 to-lp-hero-sub/10",
-  "from-accent-secondary/60 to-accent/20",
-  "from-lp-hero-sub/30 to-accent/30",
-  "from-accent/40 to-lp-hero-sub/20",
+  "from-muted-foreground/60 to-primary/20",
+  "from-lp-hero-sub/30 to-primary/30",
+  "from-primary/40 to-lp-hero-sub/20",
 ];
 
 function avatarGradient(name: string): string {

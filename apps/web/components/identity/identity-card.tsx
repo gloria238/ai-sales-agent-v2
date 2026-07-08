@@ -30,16 +30,16 @@ const STAGE_CONFIG: Record<string, { dot: string; color: string }> = {
   qualified:    { dot: "bg-lp-hero-sub", color: "text-lp-hero-sub" },
   proposal:     { dot: "bg-warning", color: "text-warning" },
   negotiation:  { dot: "bg-warning", color: "text-warning" },
-  closed_won:   { dot: "bg-accent", color: "text-accent" },
+  closed_won:   { dot: "bg-primary", color: "text-primary" },
   closed_lost:  { dot: "bg-danger", color: "text-danger" },
 };
 
 const SCORE_LABEL = (s: number) => (s >= 70 ? "Hot" : s >= 40 ? "Warm" : "Cold");
 const SCORE_BG = (s: number) =>
   s >= 70
-    ? "bg-accent-soft text-accent"
+    ? "bg-primary/10 text-primary"
     : s >= 40
-    ? "bg-warning-soft text-warning"
+    ? "bg-warning/10 text-warning"
     : "bg-bg-subtle text-text-muted";
 
 // ── Sub-components ─────────────────────────────────────────────
@@ -81,7 +81,7 @@ function AIState({ customer, compact }: { customer: Customer; compact?: boolean 
     if (customer.agentName) {
       return (
         <span className="text-[10px] text-text-muted flex items-center gap-1">
-          <Sparkles className="size-2.5 text-accent" />
+          <Sparkles className="size-2.5 text-primary" />
           {customer.agentName}
         </span>
       );
@@ -93,7 +93,7 @@ function AIState({ customer, compact }: { customer: Customer; compact?: boolean 
   if (customer.agentName) {
     return (
       <div className="flex items-center gap-2 mt-1">
-        <span className="inline-flex items-center gap-1 rounded-full bg-accent/10 px-2 py-0.5 text-[10px] font-medium text-accent">
+        <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
           <Sparkles className="size-2.5" />
           AI handling
         </span>
@@ -111,7 +111,7 @@ function AIState({ customer, compact }: { customer: Customer; compact?: boolean 
     const presence = presenceFromDate(customer.lastSeenAt);
     if (presence === "offline") {
       return (
-        <span className="inline-flex items-center gap-1 rounded-full bg-warning-soft px-2 py-0.5 text-[10px] font-medium text-warning mt-1">
+        <span className="inline-flex items-center gap-1 rounded-full bg-warning/10 px-2 py-0.5 text-[10px] font-medium text-warning mt-1">
           <User className="size-2.5" />
           Needs human review
         </span>
@@ -176,8 +176,8 @@ export function IdentityCard({
           "w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-150 group",
           isClickable && "cursor-pointer",
           isActive
-            ? "bg-accent/5 border-l-2 border-l-accent shadow-sm"
-            : "border-l-2 border-l-transparent hover:bg-bg-subtle hover:border-l-accent/30",
+            ? "bg-primary/5 border-l-2 border-l-primary shadow-sm"
+            : "border-l-2 border-l-transparent hover:bg-bg-subtle hover:border-l-primary/30",
           className,
         )}
       >

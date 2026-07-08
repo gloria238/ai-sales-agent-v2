@@ -31,15 +31,15 @@ const STAGE_CONFIG: Record<string, { color: string; bg: string; dot: string }> =
   new:          { color: "text-text-muted", bg: "bg-bg-subtle", dot: "bg-text-muted" },
   contacted:    { color: "text-lp-hero-sub", bg: "bg-bg-subtle", dot: "bg-lp-hero-sub" },
   qualified:    { color: "text-lp-hero-sub", bg: "bg-bg-subtle", dot: "bg-lp-hero-sub" },
-  proposal:     { color: "text-warning", bg: "bg-warning-soft", dot: "bg-warning" },
-  negotiation:  { color: "text-warning", bg: "bg-warning-soft", dot: "bg-warning" },
-  closed_won:   { color: "text-accent", bg: "bg-accent-soft", dot: "bg-accent" },
-  closed_lost:  { color: "text-danger", bg: "bg-danger-soft", dot: "bg-danger" },
+  proposal:     { color: "text-warning", bg: "bg-warning/10", dot: "bg-warning" },
+  negotiation:  { color: "text-warning", bg: "bg-warning/10", dot: "bg-warning" },
+  closed_won:   { color: "text-primary", bg: "bg-primary/10", dot: "bg-primary" },
+  closed_lost:  { color: "text-danger", bg: "bg-danger/10", dot: "bg-danger" },
 };
 
 const SCORE_CONFIG = {
-  hot:  { bg: "bg-accent-soft", text: "text-accent", bar: "bg-accent", label: "Hot" },
-  warm: { bg: "bg-warning-soft", text: "text-warning", bar: "bg-warning", label: "Warm" },
+  hot:  { bg: "bg-primary/10", text: "text-primary", bar: "bg-primary", label: "Hot" },
+  warm: { bg: "bg-warning/10", text: "text-warning", bar: "bg-warning", label: "Warm" },
   cold: { bg: "bg-bg-subtle", text: "text-text-muted", bar: "bg-bg-muted", label: "Cold" },
 };
 
@@ -259,14 +259,14 @@ export function LeadTableClient({ initialLeads, initialTotal, orgSlug, canManage
       <Link
         key={lead.id}
         href={`/leads/${lead.id}`}
-        className="rounded-md border border-border bg-bg-card group p-5 flex flex-col gap-3 hover:-translate-y-0.5 hover:shadow-sm hover:border-accent/20 transition-all duration-200 animate-slide-up"
+        className="rounded-md border border-border bg-bg-card group p-5 flex flex-col gap-3 hover:-translate-y-0.5 hover:shadow-sm hover:border-primary/20 transition-all duration-200 animate-slide-up"
         style={{ animationDelay: `${index * 40}ms` }}
       >
         {/* Header: Avatar + identity */}
         <div className="flex items-start gap-3">
           <Avatar name={lead.name} size="md" seed={lead.email || lead.name} />
           <div className="flex-1 min-w-0">
-            <h3 className="text-sm font-semibold text-text truncate group-hover:text-accent transition-colors">
+            <h3 className="text-sm font-semibold text-text truncate group-hover:text-primary transition-colors">
               {lead.name}
             </h3>
             {lead.company ? (
@@ -291,7 +291,7 @@ export function LeadTableClient({ initialLeads, initialTotal, orgSlug, canManage
           ) : (
             <button
               onClick={(e) => { e.preventDefault(); scoreLead(lead.id); }}
-              className="text-[11px] text-accent hover:underline font-medium flex items-center gap-1 ml-auto"
+              className="text-[11px] text-primary hover:underline font-medium flex items-center gap-1 ml-auto"
             >
               <Sparkles className="size-3" /> Score
             </button>
@@ -336,8 +336,8 @@ export function LeadTableClient({ initialLeads, initialTotal, orgSlug, canManage
         key={lead.id}
         href={`/leads/${lead.id}`}
         className={cn(
-          "group flex items-center gap-4 px-4 py-3 rounded-xl border border-transparent hover:border-accent/20 hover:bg-bg-subtle/70 transition-all duration-150",
-          "border-l-2 hover:border-l-accent",
+          "group flex items-center gap-4 px-4 py-3 rounded-xl border border-transparent hover:border-primary/20 hover:bg-bg-subtle/70 transition-all duration-150",
+          "border-l-2 hover:border-l-primary",
           rowBg,
         )}
       >
@@ -345,7 +345,7 @@ export function LeadTableClient({ initialLeads, initialTotal, orgSlug, canManage
         <div className="flex items-center gap-3 min-w-0 w-48">
           <Avatar name={lead.name} size="sm" seed={lead.email || lead.name} />
           <div className="min-w-0">
-            <p className="text-[13px] font-semibold text-text truncate group-hover:text-accent transition-colors">
+            <p className="text-[13px] font-semibold text-text truncate group-hover:text-primary transition-colors">
               {lead.name}
             </p>
             {lead.company && (
@@ -366,7 +366,7 @@ export function LeadTableClient({ initialLeads, initialTotal, orgSlug, canManage
           ) : (
             <button
               onClick={(e) => { e.preventDefault(); scoreLead(lead.id); }}
-              className="text-[11px] text-accent hover:underline font-medium flex items-center gap-1"
+              className="text-[11px] text-primary hover:underline font-medium flex items-center gap-1"
             >
               <Sparkles className="size-3" /> Score
             </button>
@@ -449,7 +449,7 @@ export function LeadTableClient({ initialLeads, initialTotal, orgSlug, canManage
               className={cn(
                 "flex items-center justify-center size-8 rounded-md transition-all duration-150",
                 viewMode === "grid"
-                  ? "bg-bg-card text-accent shadow-sm"
+                  ? "bg-bg-card text-primary shadow-sm"
                   : "text-text-muted hover:text-text",
               )}
               title="Card view"
@@ -461,7 +461,7 @@ export function LeadTableClient({ initialLeads, initialTotal, orgSlug, canManage
               className={cn(
                 "flex items-center justify-center size-8 rounded-md transition-all duration-150",
                 viewMode === "list"
-                  ? "bg-bg-card text-accent shadow-sm"
+                  ? "bg-bg-card text-primary shadow-sm"
                   : "text-text-muted hover:text-text",
               )}
               title="List view"
@@ -510,7 +510,7 @@ export function LeadTableClient({ initialLeads, initialTotal, orgSlug, canManage
         </button>
         <button
           onClick={scoreAllLeads}
-          className="shrink-0 inline-flex items-center gap-1.5 rounded-lg border border-accent/30 bg-accent/5 text-accent text-xs font-medium px-3 py-2 hover:bg-accent/10 transition-all"
+          className="shrink-0 inline-flex items-center gap-1.5 rounded-lg border border-primary/30 bg-primary/5 text-primary text-xs font-medium px-3 py-2 hover:bg-primary/10 transition-all"
         >
           <Sparkles className="size-3.5" />
           Score all
@@ -519,7 +519,7 @@ export function LeadTableClient({ initialLeads, initialTotal, orgSlug, canManage
 
       {/* ── Error ── */}
       {error && (
-        <div className="rounded-xl border border-danger/30 bg-danger-soft p-4 text-center mb-5">
+        <div className="rounded-xl border border-danger/30 bg-danger/10 p-4 text-center mb-5">
           <p className="text-sm text-danger mb-2">{error instanceof Error ? error.message : "Failed to load leads"}</p>
           <Button variant="outline" size="sm" onClick={() => queryClient.invalidateQueries({ queryKey: ["leads", orgSlug] })}>Retry</Button>
         </div>
@@ -550,8 +550,8 @@ export function LeadTableClient({ initialLeads, initialTotal, orgSlug, canManage
           ) : leads.length === 0 ? (
             /* Empty state */
             <div className="rounded-md border border-border bg-bg-card p-16 text-center">
-              <div className="size-16 rounded-lg bg-accent-soft flex items-center justify-center mx-auto mb-4">
-                <User className="size-8 text-accent opacity-50" />
+              <div className="size-16 rounded-lg bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                <User className="size-8 text-primary opacity-50" />
               </div>
               <h3 className="text-lg font-semibold text-text mb-2">
                 {search || stage ? "No leads match your search" : "No leads yet"}

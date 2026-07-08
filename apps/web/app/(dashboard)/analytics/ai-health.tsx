@@ -112,7 +112,7 @@ export default function AIHealthTab() {
               key={p}
               onClick={() => setPeriod(p)}
               className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
-                period === p ? "bg-accent text-white" : "text-text-muted hover:text-text"
+                period === p ? "bg-primary text-white" : "text-text-muted hover:text-text"
               }`}
             >
               {p === "24h" ? "24小时" : p === "7d" ? "7天" : "30天"}
@@ -124,16 +124,16 @@ export default function AIHealthTab() {
       {/* KPI cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         <div className="rounded-md border border-border bg-bg-card p-4">
-          <div className="size-9 rounded-lg bg-accent/10 flex items-center justify-center mb-2">
-            <Zap className="size-4 text-accent" />
+          <div className="size-9 rounded-lg bg-primary/10 flex items-center justify-center mb-2">
+            <Zap className="size-4 text-primary" />
           </div>
           <p className="text-xs text-text-muted">调用次数</p>
           <p className="text-xl font-bold text-text">{data.summary.totalCalls}</p>
         </div>
 
         <div className="rounded-md border border-border bg-bg-card p-4">
-          <div className="size-9 rounded-lg bg-accent-secondary/10 flex items-center justify-center mb-2">
-            <Timer className="size-4 text-accent-secondary" />
+          <div className="size-9 rounded-lg bg-muted-foreground/10 flex items-center justify-center mb-2">
+            <Timer className="size-4 text-muted-foreground" />
           </div>
           <p className="text-xs text-text-muted">延迟 P50 / P95</p>
           <p className="text-xl font-bold text-text">
@@ -142,16 +142,16 @@ export default function AIHealthTab() {
         </div>
 
         <div className="rounded-md border border-border bg-bg-card p-4">
-          <div className="size-9 rounded-lg bg-accent/10 flex items-center justify-center mb-2">
-            <DollarSign className="size-4 text-accent" />
+          <div className="size-9 rounded-lg bg-primary/10 flex items-center justify-center mb-2">
+            <DollarSign className="size-4 text-primary" />
           </div>
           <p className="text-xs text-text-muted">总费用（估算）</p>
           <p className="text-xl font-bold text-text">{formatCost(data.summary.totalCost)}</p>
         </div>
 
         <div className="rounded-md border border-border bg-bg-card p-4">
-          <div className="size-9 rounded-lg bg-accent-secondary/10 flex items-center justify-center mb-2">
-            <TrendingUp className="size-4 text-accent-secondary" />
+          <div className="size-9 rounded-lg bg-muted-foreground/10 flex items-center justify-center mb-2">
+            <TrendingUp className="size-4 text-muted-foreground" />
           </div>
           <p className="text-xs text-text-muted">成功率</p>
           <p className="text-xl font-bold text-text">{data.summary.successRate}%</p>
@@ -198,7 +198,7 @@ export default function AIHealthTab() {
                 </span>
                 <div className="flex-1 bg-bg-subtle rounded-full h-4 overflow-hidden">
                   <div
-                    className="h-full bg-accent rounded-full transition-all duration-500"
+                    className="h-full bg-primary rounded-full transition-all duration-500"
                     style={{ width: `${(j.count / maxJobCount) * 100}%` }}
                   />
                 </div>
@@ -225,11 +225,11 @@ export default function AIHealthTab() {
                   <span className="w-20 text-xs text-text-muted tabular-nums">{d.date.slice(5)}</span>
                   <div className="flex-1 bg-bg-subtle rounded-full h-3 overflow-hidden flex">
                     <div
-                      className="h-full bg-accent transition-all duration-300"
+                      className="h-full bg-primary transition-all duration-300"
                       style={{ width: `${(d.promptTokens / maxDailyTokens) * 100}%` }}
                     />
                     <div
-                      className="h-full bg-accent-secondary/60 transition-all duration-300"
+                      className="h-full bg-muted-foreground/60 transition-all duration-300"
                       style={{ width: `${(d.completionTokens / maxDailyTokens) * 100}%` }}
                     />
                   </div>
@@ -242,11 +242,11 @@ export default function AIHealthTab() {
           </div>
           <div className="flex items-center gap-4 mt-3">
             <div className="flex items-center gap-1.5">
-              <div className="size-2.5 rounded-full bg-accent" />
+              <div className="size-2.5 rounded-full bg-primary" />
               <span className="text-xs text-text-muted">输入</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <div className="size-2.5 rounded-full bg-accent-secondary/60" />
+              <div className="size-2.5 rounded-full bg-muted-foreground/60" />
               <span className="text-xs text-text-muted">输出</span>
             </div>
           </div>

@@ -25,16 +25,16 @@ type Props = { conversations: any[]; orgSlug: string; selectedId?: string };
 function AITypingIndicator() {
   return (
     <div className="flex items-start gap-3 animate-slide-up flex-row-reverse">
-      <div className="size-7 rounded-full bg-accent/10 flex items-center justify-center shrink-0">
-        <Sparkles className="size-3.5 text-accent" />
+      <div className="size-7 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+        <Sparkles className="size-3.5 text-primary" />
       </div>
-      <div className="rounded-lg rounded-tr-sm px-4 py-3 border border-accent/10 bg-bg-card">
+      <div className="rounded-lg rounded-tr-sm px-4 py-3 border border-primary/10 bg-bg-card">
         <div className="flex items-center gap-1.5">
-          <span className="text-xs text-accent font-medium">AI 起草中…</span>
+          <span className="text-xs text-primary font-medium">AI 起草中…</span>
           <span className="flex gap-0.5">
-            <span className="w-1 h-1 rounded-full bg-accent animate-bounce" style={{ animationDelay: "0ms" }} />
-            <span className="w-1 h-1 rounded-full bg-accent animate-bounce" style={{ animationDelay: "150ms" }} />
-            <span className="w-1 h-1 rounded-full bg-accent animate-bounce" style={{ animationDelay: "300ms" }} />
+            <span className="w-1 h-1 rounded-full bg-primary animate-bounce" style={{ animationDelay: "0ms" }} />
+            <span className="w-1 h-1 rounded-full bg-primary animate-bounce" style={{ animationDelay: "150ms" }} />
+            <span className="w-1 h-1 rounded-full bg-primary animate-bounce" style={{ animationDelay: "300ms" }} />
           </span>
         </div>
       </div>
@@ -46,8 +46,8 @@ function AITypingIndicator() {
 function LeadPopover({ lead }: { lead: any }) {
   const [show, setShow] = useState(false);
   const sl = lead.score != null ? (lead.score >= 70 ? "高意向" : lead.score >= 40 ? "中等" : "低意向") : null;
-  const sc = sl === "高意向" ? "text-accent bg-accent-soft" :
-    sl === "中等" ? "text-warning bg-warning-soft" : "text-text-muted bg-bg-subtle";
+  const sc = sl === "高意向" ? "text-primary bg-primary/10" :
+    sl === "中等" ? "text-warning bg-warning/10" : "text-text-muted bg-bg-subtle";
 
   return (
     <div className="relative inline-flex items-center">
@@ -76,7 +76,7 @@ function LeadPopover({ lead }: { lead: any }) {
                   <span className={cn("rounded-full px-2 py-0.5 text-[11px] font-semibold", sc)}>{lead.score}</span>
                 </div>
               )}
-              <a href={`/leads/${lead.id}`} className="block text-xs text-accent hover:underline font-medium mt-2 pt-2 border-t border-border">查看完整信息 →</a>
+              <a href={`/leads/${lead.id}`} className="block text-xs text-primary hover:underline font-medium mt-2 pt-2 border-t border-border">查看完整信息 →</a>
             </div>
           </div>
         </>
@@ -122,21 +122,21 @@ function DetailHeader({ lead, agent, conversation }: { lead: any; agent: any; co
         )}
         {lead.score != null && (
           <span className={cn("inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold",
-            sl === "高意向" ? "text-accent bg-accent-soft" :
-            sl === "中等" ? "text-warning bg-warning-soft" :
+            sl === "高意向" ? "text-primary bg-primary/10" :
+            sl === "中等" ? "text-warning bg-warning/10" :
             "text-text-muted bg-bg-subtle",
           )}>
             <Star className="size-2.5" />{lead.score}
           </span>
         )}
         {agent?.name && (
-          <span className="inline-flex items-center gap-1 text-[10px] text-accent"><Sparkles className="size-2.5" />{agent.name}</span>
+          <span className="inline-flex items-center gap-1 text-[10px] text-primary"><Sparkles className="size-2.5" />{agent.name}</span>
         )}
       </div>
 
       {/* AI suggestion bar */}
-      <div className="ml-[3.25rem] flex items-start gap-1.5 text-[11px] text-text-muted bg-accent/5 rounded-lg px-2.5 py-1.5 border border-accent/10">
-        <Sparkles className="size-3 text-accent shrink-0 mt-px" />
+      <div className="ml-[3.25rem] flex items-start gap-1.5 text-[11px] text-text-muted bg-primary/5 rounded-lg px-2.5 py-1.5 border border-primary/10">
+        <Sparkles className="size-3 text-primary shrink-0 mt-px" />
         <span>{suggestion}</span>
       </div>
     </div>
@@ -340,7 +340,7 @@ export function InboxClient({ conversations, orgSlug, selectedId: initialSelecte
                 onClick={() => setFilter(f)}
                 className={cn(
                   "flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg transition-all duration-150",
-                  filter === f ? "bg-accent text-white shadow-sm" : "text-text-muted hover:text-text hover:bg-bg-subtle",
+                  filter === f ? "bg-primary text-white shadow-sm" : "text-text-muted hover:text-text hover:bg-bg-subtle",
                 )}
               >
                 <span>{f === "all" ? "全部" : f === "active" ? "进行中" : f === "needs_review" ? "⏳ 待审核" : f === "needs_reply" ? "待回复" : "已关闭"}</span>
@@ -429,7 +429,7 @@ export function InboxClient({ conversations, orgSlug, selectedId: initialSelecte
                   <button onClick={() => setChatMode(false)} className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium transition-all ${!chatMode ? "bg-bg-card text-text shadow-sm" : "text-text-muted hover:text-text"}`}>
                     <Mail className="size-3" /> 邮件
                   </button>
-                  <button onClick={() => setChatMode(true)} className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium transition-all ${chatMode ? "bg-bg-card text-accent shadow-sm" : "text-text-muted hover:text-text"}`}>
+                  <button onClick={() => setChatMode(true)} className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium transition-all ${chatMode ? "bg-bg-card text-primary shadow-sm" : "text-text-muted hover:text-text"}`}>
                     <MessageCircle className="size-3" /> 聊天
                   </button>
                 </div>
@@ -455,9 +455,9 @@ export function InboxClient({ conversations, orgSlug, selectedId: initialSelecte
             {msgsLoading ? (
               <div className="flex items-center justify-center h-full">
                 <div className="flex items-center gap-2 text-text-muted">
-                  <span className="w-1.5 h-1.5 rounded-full bg-accent animate-bounce" />
-                  <span className="w-1.5 h-1.5 rounded-full bg-accent animate-bounce" style={{ animationDelay: "150ms" }} />
-                  <span className="w-1.5 h-1.5 rounded-full bg-accent animate-bounce" style={{ animationDelay: "300ms" }} />
+                  <span className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce" style={{ animationDelay: "150ms" }} />
+                  <span className="w-1.5 h-1.5 rounded-full bg-primary animate-bounce" style={{ animationDelay: "300ms" }} />
                 </div>
               </div>
             ) : (
@@ -468,7 +468,7 @@ export function InboxClient({ conversations, orgSlug, selectedId: initialSelecte
                     <button
                       onClick={loadMoreMessages}
                       disabled={loadingMore}
-                      className="text-xs text-text-muted hover:text-accent transition-colors px-3 py-1 rounded-md hover:bg-bg-subtle"
+                      className="text-xs text-text-muted hover:text-primary transition-colors px-3 py-1 rounded-md hover:bg-bg-subtle"
                     >
                       {loadingMore ? "加载中..." : "加载更早的消息"}
                     </button>
@@ -483,16 +483,16 @@ export function InboxClient({ conversations, orgSlug, selectedId: initialSelecte
                   <div key={msg.id} className={cn("flex items-start gap-3", msg.direction === "outbound" ? "flex-row-reverse" : "")}>
                     <div className={cn(
                       "size-7 rounded-full flex items-center justify-center shrink-0",
-                      msg.direction === "inbound" ? "bg-bg-subtle" : "bg-accent/10",
+                      msg.direction === "inbound" ? "bg-bg-subtle" : "bg-primary/10",
                     )}>
                       {msg.direction === "inbound"
                         ? <User className="size-3.5 text-text-muted" />
-                        : msg.aiMetadata ? <Sparkles className="size-3.5 text-accent" /> : <User className="size-3.5 text-accent" />
+                        : msg.aiMetadata ? <Sparkles className="size-3.5 text-primary" /> : <User className="size-3.5 text-primary" />
                       }
                     </div>
                     <div className={cn(
                       "max-w-[70%] rounded-lg px-4 py-2.5",
-                      msg.direction === "inbound" ? "bg-bg-card border border-border rounded-tl-sm" : "bg-accent text-white rounded-tr-sm",
+                      msg.direction === "inbound" ? "bg-bg-card border border-border rounded-tl-sm" : "bg-primary text-white rounded-tr-sm",
                     )}>
                       <p className="text-sm whitespace-pre-wrap leading-relaxed">{msg.content}</p>
                       <div className="flex items-center gap-2 mt-1.5">
@@ -503,7 +503,7 @@ export function InboxClient({ conversations, orgSlug, selectedId: initialSelecte
                           <span className="text-[10px] text-warning">⏳ 待审核草稿</span>
                         )}
                         {msg.aiMetadata && selectedConv.status !== "awaiting_approval" && (
-                          <span className="text-[10px] text-accent/80">AI 生成</span>
+                          <span className="text-[10px] text-primary/80">AI 生成</span>
                         )}
                       </div>
                     </div>
@@ -514,11 +514,11 @@ export function InboxClient({ conversations, orgSlug, selectedId: initialSelecte
 
                 {aiDraft && !aiTyping && (
                   <div className="flex items-start gap-3 flex-row-reverse animate-slide-up">
-                    <div className="size-7 rounded-full bg-accent/10 flex items-center justify-center shrink-0">
-                      <Sparkles className="size-3.5 text-accent" />
+                    <div className="size-7 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                      <Sparkles className="size-3.5 text-primary" />
                     </div>
-                    <div className="max-w-[70%] rounded-lg rounded-tr-sm px-4 py-2.5 bg-accent/5 border border-accent/20 border-dashed">
-                      <p className="text-xs text-accent font-medium mb-1">AI 草稿 — 发送前请审核</p>
+                    <div className="max-w-[70%] rounded-lg rounded-tr-sm px-4 py-2.5 bg-primary/5 border border-primary/20 border-dashed">
+                      <p className="text-xs text-primary font-medium mb-1">AI 草稿 — 发送前请审核</p>
                       <p className="text-sm text-text-secondary whitespace-pre-wrap leading-relaxed">{aiDraft.body}</p>
                       <div className="flex gap-2 mt-2">
                         <Button size="sm" variant="default" loading={sending} onClick={sendReply}><Send className="size-3 mr-1" /> 发送</Button>

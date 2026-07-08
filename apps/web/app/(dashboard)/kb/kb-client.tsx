@@ -17,7 +17,7 @@ function getDocLayer(name: string): { layer: string; color: string } {
   const ops = ["onboarding-guide", "compliance-policy", "internal-escalation"];
 
   const base = name.replace(/\.[^.]+$/, "");
-  if (core.includes(base)) return { layer: "核心层", color: "bg-accent/10 text-accent border-accent/20" };
+  if (core.includes(base)) return { layer: "核心层", color: "bg-primary/10 text-primary border-primary/20" };
   if (sales.includes(base)) return { layer: "销售参考层", color: "bg-blue-500/10 text-blue-400 border-blue-500/20" };
   if (ops.includes(base)) return { layer: "运营支撑层", color: "bg-amber-500/10 text-amber-400 border-amber-500/20" };
   return { layer: "未分类", color: "bg-bg-subtle text-text-muted border-border" };
@@ -119,7 +119,7 @@ export function KbClient({ orgSlug, initialDocs }: { orgSlug: string; initialDoc
         <div className="flex items-center gap-3">
           <button
             onClick={() => router.push(`/kb/playground`)}
-            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg border border-border bg-bg-card text-text-secondary hover:bg-bg-subtle hover:border-accent/30 transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg border border-border bg-bg-card text-text-secondary hover:bg-bg-subtle hover:border-primary/30 transition-colors"
           >
             <ExternalLink className="size-4" />
             Playground
@@ -129,7 +129,7 @@ export function KbClient({ orgSlug, initialDocs }: { orgSlug: string; initialDoc
             transition-colors
             ${uploading
               ? "bg-bg-muted text-text-muted cursor-not-allowed"
-              : "bg-accent text-white hover:bg-accent-hover shadow-sm"
+              : "bg-primary text-white hover:bg-primary-hover shadow-sm"
             }
           `}>
             {uploading ? (
@@ -153,7 +153,7 @@ export function KbClient({ orgSlug, initialDocs }: { orgSlug: string; initialDoc
       {docs.length > 0 && (
         <div className="grid grid-cols-3 gap-3">
           {[
-            { label: "核心层", desc: "产品·定价·技术规格", count: layerCounts.核心层, color: "border-l-accent" },
+            { label: "核心层", desc: "产品·定价·技术规格", count: layerCounts.核心层, color: "border-l-primary" },
             { label: "销售参考层", desc: "FAQ·话术·案例·竞品", count: layerCounts.销售参考层, color: "border-l-blue-500" },
             { label: "运营支撑层", desc: "上线·合规·内部流程", count: layerCounts.运营支撑层, color: "border-l-amber-500" },
           ].map((l) => (
@@ -186,7 +186,7 @@ export function KbClient({ orgSlug, initialDocs }: { orgSlug: string; initialDoc
           </div>
           <div className="p-3 font-mono text-xs space-y-0.5">
             {/* Layer 1: Core */}
-            <div className="flex items-center gap-1.5 text-accent">
+            <div className="flex items-center gap-1.5 text-primary">
               <span>📁</span><span className="font-semibold">core/</span>
               <span className="text-text-muted text-[10px]">核心层 · 权威数据源</span>
             </div>
@@ -271,7 +271,7 @@ export function KbClient({ orgSlug, initialDocs }: { orgSlug: string; initialDoc
                 <tr key={doc.id} className="border-b border-border/50 hover:bg-bg-subtle/30 transition-colors">
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2.5">
-                      <FileText className="size-4 text-accent shrink-0" />
+                      <FileText className="size-4 text-primary shrink-0" />
                       <span className="text-sm font-medium text-text truncate max-w-[180px]" title={doc.name}>{doc.name}</span>
                     </div>
                   </td>

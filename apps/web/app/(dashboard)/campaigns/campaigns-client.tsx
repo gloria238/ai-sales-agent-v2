@@ -33,8 +33,8 @@ export function CampaignListClient({ campaigns, orgSlug }: { campaigns: Campaign
   }
 
   const statusBadge = (s: string) => ({
-    draft: "bg-bg-subtle text-text-muted", active: "bg-accent-soft text-accent border-accent/20",
-    paused: "bg-warning-soft text-warning border-warning/20", completed: "bg-bg-subtle text-text-secondary border-lp-border/20",
+    draft: "bg-bg-subtle text-text-muted", active: "bg-primary/10 text-primary border-primary/20",
+    paused: "bg-warning/10 text-warning border-warning/20", completed: "bg-bg-subtle text-text-secondary border-lp-border/20",
   }[s] || "bg-bg-subtle text-text-muted");
 
   return (
@@ -59,7 +59,7 @@ export function CampaignListClient({ campaigns, orgSlug }: { campaigns: Campaign
             <Card key={c.id} className="p-5 rounded-md border border-border bg-bg-card hover:shadow-panel-md transition-all cursor-pointer" onClick={() => router.push(`/campaigns/${c.id}`)}>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center"><Send className="w-5 h-5 text-accent" /></div>
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center"><Send className="w-5 h-5 text-primary" /></div>
                   <div>
                     <h3 className="font-semibold text-text">{c.name}</h3>
                     <div className="flex items-center gap-2 mt-0.5">

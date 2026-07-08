@@ -183,7 +183,7 @@ export function ChatWindow({
       <div className="flex items-center justify-between px-4 py-2 border-b border-border bg-bg-subtle/50">
         <div className="flex items-center gap-2 text-xs">
           {isConnected ? (
-            <Wifi className="size-3 text-green-500" />
+            <Wifi className="size-3 text-success" />
           ) : (
             <WifiOff className="size-3 text-amber-500" />
           )}
@@ -191,12 +191,12 @@ export function ChatWindow({
             {isConnected ? "实时连接" : "轮询模式"}
           </span>
           <span className="text-text-muted">·</span>
-          <span className={otherPartyOnline ? "text-green-500" : "text-text-muted"}>
+          <span className={otherPartyOnline ? "text-success" : "text-text-muted"}>
             {otherPartyOnline ? `${otherPartyName} 在线` : `${otherPartyName} 离线`}
           </span>
         </div>
         {typingUsers.size > 0 && (
-          <span className="text-xs text-accent animate-pulse">对方正在输入...</span>
+          <span className="text-xs text-primary animate-pulse">对方正在输入...</span>
         )}
       </div>
 
@@ -219,15 +219,15 @@ export function ChatWindow({
               className={`flex gap-3 ${isMine ? "justify-end" : "justify-start"}`}
             >
               {!isMine && (
-                <div className="size-8 rounded-lg bg-accent/10 flex items-center justify-center shrink-0 mt-1">
-                  <Bot className="size-4 text-accent" />
+                <div className="size-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 mt-1">
+                  <Bot className="size-4 text-primary" />
                 </div>
               )}
 
               <div
                 className={`max-w-[75%] rounded-lg px-4 py-3 ${
                   isMine
-                    ? "bg-accent text-white rounded-br-md"
+                    ? "bg-primary text-white rounded-br-md"
                     : "bg-bg-card border border-border rounded-bl-md"
                 }`}
               >
@@ -240,8 +240,8 @@ export function ChatWindow({
               </div>
 
               {isMine && (
-                <div className="size-8 rounded-lg bg-accent/20 flex items-center justify-center shrink-0 mt-1">
-                  <User className="size-4 text-accent" />
+                <div className="size-8 rounded-lg bg-primary/20 flex items-center justify-center shrink-0 mt-1">
+                  <User className="size-4 text-primary" />
                 </div>
               )}
             </div>
@@ -251,8 +251,8 @@ export function ChatWindow({
         {/* Typing indicator */}
         {typingUsers.size > 0 && (
           <div className="flex gap-3 justify-start">
-            <div className="size-8 rounded-lg bg-accent/10 flex items-center justify-center shrink-0">
-              <Bot className="size-4 text-accent" />
+            <div className="size-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+              <Bot className="size-4 text-primary" />
             </div>
             <div className="bg-bg-card border border-border rounded-lg rounded-bl-md px-4 py-3">
               <div className="flex gap-1">
@@ -267,8 +267,8 @@ export function ChatWindow({
         {/* AI Draft bubble — matches email inbox pattern */}
         {aiDraft && isAgent && (
           <div className="flex gap-3 justify-end px-4 py-1 animate-slide-up">
-            <div className="max-w-[75%] rounded-lg rounded-br-md px-4 py-3 bg-accent/5 border border-accent/20 border-dashed">
-              <p className="text-xs text-accent font-medium mb-1 flex items-center gap-1.5">
+            <div className="max-w-[75%] rounded-lg rounded-br-md px-4 py-3 bg-primary/5 border border-primary/20 border-dashed">
+              <p className="text-xs text-primary font-medium mb-1 flex items-center gap-1.5">
                 <Sparkles className="size-3" />
                 AI 草稿 — 审核后发送
                 {aiDraft.kbChunksUsed > 0 && (
@@ -282,7 +282,7 @@ export function ChatWindow({
                 <button
                   onClick={handleSendDraft}
                   disabled={!aiDraft?.body || sending}
-                  className="rounded-lg bg-accent text-white text-xs font-medium px-3 py-1.5 hover:bg-accent-hover disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center gap-1"
+                  className="rounded-lg bg-primary text-white text-xs font-medium px-3 py-1.5 hover:bg-primary-hover disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center gap-1"
                 >
                   {sending ? <Loader2 className="size-3 animate-spin" /> : <Send className="size-3" />}
                   发送
@@ -296,15 +296,15 @@ export function ChatWindow({
                 <button
                   onClick={handleAiDraft}
                   disabled={generating}
-                  className="rounded-lg text-text-muted text-xs font-medium px-3 py-1.5 hover:text-accent hover:bg-accent/5 transition-colors flex items-center gap-1"
+                  className="rounded-lg text-text-muted text-xs font-medium px-3 py-1.5 hover:text-primary hover:bg-primary/5 transition-colors flex items-center gap-1"
                 >
                   {generating ? <Loader2 className="size-3 animate-spin" /> : <RefreshCw className="size-3" />}
                   重新生成
                 </button>
               </div>
             </div>
-            <div className="size-8 rounded-lg bg-accent/10 flex items-center justify-center shrink-0 mt-1">
-              <Bot className="size-4 text-accent" />
+            <div className="size-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 mt-1">
+              <Bot className="size-4 text-primary" />
             </div>
           </div>
         )}
@@ -318,7 +318,7 @@ export function ChatWindow({
             <button
               onClick={handleAiDraft}
               disabled={generating}
-              className="rounded-xl border border-accent/30 bg-accent/5 text-accent text-sm font-medium px-3.5 py-2.5 hover:bg-accent/10 disabled:opacity-50 disabled:cursor-not-allowed transition-all shrink-0 flex items-center gap-1.5"
+              className="rounded-xl border border-primary/30 bg-primary/5 text-primary text-sm font-medium px-3.5 py-2.5 hover:bg-primary/10 disabled:opacity-50 disabled:cursor-not-allowed transition-all shrink-0 flex items-center gap-1.5"
               title="基于知识库和对话历史生成 AI 草稿"
             >
               {generating ? (
@@ -336,13 +336,13 @@ export function ChatWindow({
             onChange={(e) => handleTyping(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder={isAgent ? "输入消息... (Enter 发送)" : "输入消息咨询 AI 助理... (Enter 发送)"}
-            className="flex-1 rounded-xl border border-border bg-bg px-4 py-2.5 text-sm text-text placeholder:text-text-muted/50 focus:outline-none focus:border-accent/50 focus:ring-1 focus:ring-accent/20 transition-all"
+            className="flex-1 rounded-xl border border-border bg-bg px-4 py-2.5 text-sm text-text placeholder:text-text-muted/50 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/20 transition-all"
             disabled={sending}
           />
           <button
             onClick={handleSend}
             disabled={!input.trim() || sending}
-            className="rounded-xl bg-accent text-white text-sm font-medium px-5 py-2.5 hover:bg-accent-hover disabled:opacity-40 disabled:cursor-not-allowed transition-all shrink-0 flex items-center gap-1.5"
+            className="rounded-xl bg-primary text-white text-sm font-medium px-5 py-2.5 hover:bg-primary-hover disabled:opacity-40 disabled:cursor-not-allowed transition-all shrink-0 flex items-center gap-1.5"
           >
             {sending ? (
               <Loader2 className="size-4 animate-spin" />

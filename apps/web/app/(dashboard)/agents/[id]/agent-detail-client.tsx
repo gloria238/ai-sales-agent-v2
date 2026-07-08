@@ -61,8 +61,8 @@ export function AgentDetailClient({ agent, orgSlug }: { agent: Agent; orgSlug: s
 
       <div className="flex items-start justify-between mb-8">
         <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-lg bg-accent/10 flex items-center justify-center">
-            <Bot className="w-7 h-7 text-accent" />
+          <div className="w-14 h-14 rounded-lg bg-primary/10 flex items-center justify-center">
+            <Bot className="w-7 h-7 text-primary" />
           </div>
           <div>
             {editing ? (

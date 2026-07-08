@@ -41,8 +41,8 @@ export function CampaignDetailClient({ campaign, orgSlug }: { campaign: Campaign
   const bookRate = replied > 0 ? Math.round((booked / replied) * 100) : 0;
 
   const statusBadge = (s: string) => ({
-    draft: "bg-bg-subtle text-text-muted", active: "bg-accent-soft text-accent border-accent/20",
-    paused: "bg-warning-soft text-warning border-warning/20", completed: "bg-bg-subtle text-text-secondary border-lp-border/20",
+    draft: "bg-bg-subtle text-text-muted", active: "bg-primary/10 text-primary border-primary/20",
+    paused: "bg-warning/10 text-warning border-warning/20", completed: "bg-bg-subtle text-text-secondary border-lp-border/20",
   }[s] || "");
 
   return (
@@ -83,10 +83,10 @@ export function CampaignDetailClient({ campaign, orgSlug }: { campaign: Campaign
       {/* Revenue metrics */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
-          { icon: Send, label: "已发送", val: total.toLocaleString(), sub: "已投递", color: "text-accent", bg: "bg-accent-soft" },
+          { icon: Send, label: "已发送", val: total.toLocaleString(), sub: "已投递", color: "text-primary", bg: "bg-primary/10" },
           { icon: MousePointerClick, label: "打开率", val: `${openRate}%`, sub: `打开 ${opened} / 发送 ${total}`, color: "text-lp-hero-sub", bg: "bg-bg-subtle" },
-          { icon: Reply, label: "回复率", val: `${replyRate}%`, sub: `${replied} 条回复`, color: "text-accent", bg: "bg-accent-soft" },
-          { icon: Calendar, label: "预约会议", val: String(booked), sub: `占回复 ${bookRate}%`, color: "text-warning", bg: "bg-warning-soft" },
+          { icon: Reply, label: "回复率", val: `${replyRate}%`, sub: `${replied} 条回复`, color: "text-primary", bg: "bg-primary/10" },
+          { icon: Calendar, label: "预约会议", val: String(booked), sub: `占回复 ${bookRate}%`, color: "text-warning", bg: "bg-warning/10" },
         ].map((m) => (
           <Card key={m.label} className="p-4 rounded-md border border-border bg-bg-card">
             <div className="flex items-center gap-3">
@@ -105,13 +105,13 @@ export function CampaignDetailClient({ campaign, orgSlug }: { campaign: Campaign
 
       {/* Funnel visualization */}
       <Card className="p-6 rounded-md border border-border bg-bg-card">
-        <h3 className="text-sm font-semibold text-text mb-4 flex items-center gap-2"><BarChart3 className="size-4 text-accent" /> 转化漏斗</h3>
+        <h3 className="text-sm font-semibold text-text mb-4 flex items-center gap-2"><BarChart3 className="size-4 text-primary" /> 转化漏斗</h3>
         <div className="space-y-3">
           {[
-            { label: "发送", count: total, color: "bg-accent", width: 100 },
+            { label: "发送", count: total, color: "bg-primary", width: 100 },
             { label: "打开", count: opened, color: "bg-lp-hero-sub/60", width: openRate },
             { label: "点击", count: clicked, color: "bg-warning/60", width: clickRate },
-            { label: "回复", count: replied, color: "bg-accent/60", width: replyRate },
+            { label: "回复", count: replied, color: "bg-primary/60", width: replyRate },
             { label: "预约", count: booked, color: "bg-warning", width: bookRate },
           ].map((f) => (
             <div key={f.label} className="flex items-center gap-3">
@@ -134,7 +134,7 @@ export function CampaignDetailClient({ campaign, orgSlug }: { campaign: Campaign
           <div className="space-y-2">
             {(campaign.script?.steps as any[] || []).map((step: any, i: number) => (
               <Card key={i} className="p-4 rounded-md border border-border bg-bg-card flex items-start gap-3">
-                <div className="size-7 rounded-full bg-accent/10 flex items-center justify-center text-xs font-bold text-accent shrink-0 mt-0.5">{step.order}</div>
+                <div className="size-7 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary shrink-0 mt-0.5">{step.order}</div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
                     <Badge className="text-[10px]" variant="default">{step.type}</Badge>
@@ -160,8 +160,8 @@ export function CampaignDetailClient({ campaign, orgSlug }: { campaign: Campaign
                   <div className="flex items-center justify-between">
                     <div>
                       <Badge className={cn("text-[10px]", {
-                        queued: "bg-bg-subtle text-text-muted", running: "bg-accent-soft text-accent",
-                        completed: "bg-accent-soft text-accent", failed: "bg-danger-soft text-danger",
+                        queued: "bg-bg-subtle text-text-muted", running: "bg-primary/10 text-primary",
+                        completed: "bg-primary/10 text-primary", failed: "bg-danger/10 text-danger",
                       }[run.status])} variant="default">{RUN_STATUS_LABELS[run.status] || run.status}</Badge>
                       <span className="text-xs text-text-muted ml-2">{run.recipientCount} 人</span>
                     </div>

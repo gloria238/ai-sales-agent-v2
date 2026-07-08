@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 
 /**
- * Thin accent progress bar at the top of the viewport.
+ * Thin primary progress bar at the top of the viewport.
  * Shows on every route change to give immediate visual feedback.
  * Wrapped in ClientOnly to avoid usePathname SSR crash in root layout.
  */
@@ -29,7 +29,7 @@ function NavProgressInner() {
   return (
     <div className="fixed top-0 left-0 right-0 z-[9999] h-[2px] pointer-events-none">
       <div
-        className="h-full bg-accent"
+        className="h-full bg-primary"
         style={{ animation: "nav-progress 0.5s ease-out forwards" }}
       />
       <style>{`

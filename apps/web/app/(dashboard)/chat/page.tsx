@@ -27,7 +27,7 @@ export default async function ChatPage({
       <div className="flex items-center justify-center h-full">
         <div className="text-center">
           <p className="text-text-muted text-sm">请从收件箱选择一个对话开始聊天</p>
-          <Link href="/inbox" className="text-accent text-sm hover:underline mt-2 inline-block">
+          <Link href="/inbox" className="text-primary text-sm hover:underline mt-2 inline-block">
             ← 返回收件箱
           </Link>
         </div>
@@ -75,7 +75,7 @@ export default async function ChatPage({
         </div>
         <Link
           href={`/leads/${conversation.leadId}`}
-          className="text-xs text-accent hover:underline shrink-0"
+          className="text-xs text-primary hover:underline shrink-0"
         >
           查看客户资料
         </Link>

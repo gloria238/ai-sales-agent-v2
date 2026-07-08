@@ -65,14 +65,14 @@ export default function PortalConversationsPage() {
             <Link
               key={conv.id}
               href={`/portal/conversations/${conv.id}`}
-              className="block rounded-md border border-border bg-bg-card p-4 sm:p-5 hover:border-accent/30 hover:shadow-md transition-all duration-200 group"
+              className="block rounded-md border border-border bg-bg-card p-4 sm:p-5 hover:border-primary/30 hover:shadow-md transition-all duration-200 group"
             >
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 mb-1">
                     <h3 className="text-sm font-semibold text-text truncate">{conv.subject}</h3>
                     {conv.unread && (
-                      <span className="shrink-0 size-2 rounded-full bg-accent animate-pulse" />
+                      <span className="shrink-0 size-2 rounded-full bg-primary animate-pulse" />
                     )}
                   </div>
                   <p className="text-sm text-text-secondary truncate">{conv.lastMessage}</p>
@@ -84,7 +84,7 @@ export default function PortalConversationsPage() {
                     </span>
                   </div>
                 </div>
-                <ArrowRight className="size-4 text-text-muted group-hover:text-accent group-hover:translate-x-0.5 transition-all shrink-0 mt-1" />
+                <ArrowRight className="size-4 text-text-muted group-hover:text-primary group-hover:translate-x-0.5 transition-all shrink-0 mt-1" />
               </div>
             </Link>
           ))}
@@ -101,9 +101,9 @@ export default function PortalConversationsPage() {
           ].map((r) => (
             <div
               key={r.label}
-              className="rounded-md border border-border bg-bg-card p-4 hover:border-accent/30 transition-all duration-200 cursor-pointer group"
+              className="rounded-md border border-border bg-bg-card p-4 hover:border-primary/30 transition-all duration-200 cursor-pointer group"
             >
-              <h3 className="text-sm font-medium text-text group-hover:text-accent transition-colors">{r.label}</h3>
+              <h3 className="text-sm font-medium text-text group-hover:text-primary transition-colors">{r.label}</h3>
               <p className="text-xs text-text-muted mt-1">{r.desc}</p>
             </div>
           ))}

@@ -4,16 +4,16 @@ import { cn } from "@/lib/utils";
 import { Loader2 } from "lucide-react";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent disabled:opacity-40 disabled:pointer-events-none",
+  "inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary disabled:opacity-40 disabled:pointer-events-none",
   {
     variants: {
       variant: {
-        default: "bg-accent text-white hover:bg-accent-hover",
+        default: "bg-primary text-white hover:bg-primary-hover",
         destructive: "bg-destructive text-white hover:bg-red-700 dark:hover:bg-red-800",
         outline: "border border-border bg-bg-card hover:bg-bg-subtle text-text",
         secondary: "bg-bg-subtle text-text hover:bg-bg-muted",
         ghost: "hover:bg-bg-subtle text-text-secondary",
-        link: "text-accent underline-offset-4 hover:underline",
+        link: "text-primary underline-offset-4 hover:underline",
       },
       size: {
         default: "h-10 px-4 py-2",

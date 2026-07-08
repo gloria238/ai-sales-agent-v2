@@ -43,9 +43,9 @@ function actionVariant(action: string): "success" | "warning" | "danger" | "defa
 function UserAvatar({ name }: { name: string | null }) {
   const initials = (name || "S").slice(0, 2).toUpperCase();
   const colors = [
-    "bg-accent-soft text-accent",
-    "bg-warning-soft text-warning",
-    "bg-danger-soft text-danger",
+    "bg-primary/10 text-primary",
+    "bg-warning/10 text-warning",
+    "bg-danger/10 text-danger",
     "bg-bg-subtle text-text-secondary",
     "bg-lp-hero-sub/10 text-lp-hero-sub",
     "bg-white/[0.06] text-text-muted",

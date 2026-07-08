@@ -64,8 +64,8 @@ export function ImportButton({ orgSlug, onImported }: Props) {
               className="w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-50 dark:file:bg-blue-900/30 file:text-blue-700 dark:file:text-blue-300 hover:file:bg-blue-100 disabled:opacity-50" />
             {importing && <p className="text-zinc-400">Importing...</p>}
             {result && (
-              <div className="rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 p-3 text-xs space-y-1">
-                <p className="text-green-700 dark:text-green-400 font-medium">Imported {result.imported} leads, {result.skipped} skipped</p>
+              <div className="rounded-lg bg-success/10 border border-success/20 p-3 text-xs space-y-1">
+                <p className="text-success font-medium">Imported {result.imported} leads, {result.skipped} skipped</p>
                 {result.errors.slice(0, 5).map((e, i) => <p key={i} className="text-red-600 dark:text-red-400">{e}</p>)}
               </div>
             )}

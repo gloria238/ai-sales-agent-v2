@@ -32,8 +32,8 @@ export function ScriptDetailClient({ script, orgSlug }: { script: Script; orgSlu
       </button>
       <div className="flex items-start justify-between mb-8">
         <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-lg bg-accent/10 flex items-center justify-center">
-            <FileText className="w-7 h-7 text-accent" />
+          <div className="w-14 h-14 rounded-lg bg-primary/10 flex items-center justify-center">
+            <FileText className="w-7 h-7 text-primary" />
           </div>
           <div>
             <h1 className="text-2xl font-bold text-text">{script.name}</h1>
@@ -54,7 +54,7 @@ export function ScriptDetailClient({ script, orgSlug }: { script: Script; orgSlu
               <div className="space-y-3">
                 {steps.map((step: any, i: number) => (
                   <div key={i} className="flex gap-3 p-3 rounded-lg bg-bg-subtle/50">
-                    <div className="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center shrink-0 mt-0.5">
+                    <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
                       {STEP_ICONS[step.type] || <Send className="w-4 h-4" />}
                     </div>
                     <div className="min-w-0">

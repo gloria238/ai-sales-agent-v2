@@ -96,7 +96,7 @@ export function ApiKeysClient({ orgSlug, isOwner }: Props) {
                   <p className="font-medium text-text text-sm">{key.name}</p>
                   <p className="text-xs text-zinc-400 font-mono mt-0.5">
                     {revealed[key.id] ? (
-                      <span className="text-accent">{revealed[key.id]}</span>
+                      <span className="text-primary">{revealed[key.id]}</span>
                     ) : (
                       <>{key.prefix}... (created {new Date(key.createdAt).toLocaleDateString()})</>
                     )}

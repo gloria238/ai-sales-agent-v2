@@ -53,7 +53,7 @@ export function DonutChart({ segments, size = 120, thickness = 28, label = "Tota
         cy={center}
         r={radius}
         fill="none"
-        stroke="rgb(var(--bg-subtle))"
+        stroke="hsl(var(--background-subtle))"
         strokeWidth={thickness}
       />
       {/* Foreground arcs */}
@@ -80,7 +80,7 @@ export function DonutChart({ segments, size = 120, thickness = 28, label = "Tota
           y={center - 2}
           textAnchor="middle"
           dominantBaseline="auto"
-          style={{ fill: "rgb(var(--text))", fontSize: `${fontSize}px`, fontWeight: 700 }}
+          style={{ fill: "hsl(var(--foreground))", fontSize: `${fontSize}px`, fontWeight: 700 }}
         >
           {total > 0 ? total : "—"}
         </text>
@@ -89,7 +89,7 @@ export function DonutChart({ segments, size = 120, thickness = 28, label = "Tota
           y={center + subFontSize + 1}
           textAnchor="middle"
           dominantBaseline="auto"
-          style={{ fill: "rgb(var(--text-muted))", fontSize: `${subFontSize}px`, fontWeight: 500 }}
+          style={{ fill: "hsl(var(--muted-foreground))", fontSize: `${subFontSize}px`, fontWeight: 500 }}
         >
           {label}
         </text>

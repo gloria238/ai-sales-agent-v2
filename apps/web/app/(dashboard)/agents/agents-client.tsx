@@ -103,8 +103,8 @@ export function AgentListClient({ agents, orgSlug }: { agents: Agent[]; orgSlug:
             >
               <Card className="p-5 rounded-md border border-border bg-bg-card hover:shadow-panel-md transition-all duration-200 hover:-translate-y-0.5 cursor-pointer h-full">
                 <div className="flex items-start justify-between mb-3">
-                  <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
-                    <Bot className="w-5 h-5 text-accent" />
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                    <Bot className="w-5 h-5 text-primary" />
                   </div>
                   <Badge variant={agent.isActive ? "default" : "warning"} className="text-[10px]">
                     {agent.isActive ? "Active" : "Paused"}

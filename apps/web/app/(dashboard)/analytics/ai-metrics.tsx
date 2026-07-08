@@ -20,9 +20,9 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 const STATUS_COLORS: Record<string, string> = {
-  active: "bg-accent",
+  active: "bg-primary",
   awaiting_approval: "bg-warning",
-  approved: "bg-accent-secondary",
+  approved: "bg-muted-foreground",
   closed: "bg-bg-muted",
   archived: "bg-bg-muted",
 };
@@ -102,7 +102,7 @@ export default function AIMetricsTab({ orgSlug }: { orgSlug: string }) {
               key={d}
               onClick={() => setDays(d)}
               className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
-                days === d ? "bg-accent text-white" : "text-text-muted hover:text-text"
+                days === d ? "bg-primary text-white" : "text-text-muted hover:text-text"
               }`}
             >
               {d}天
@@ -118,29 +118,29 @@ export default function AIMetricsTab({ orgSlug }: { orgSlug: string }) {
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="rounded-md border border-border bg-bg-card p-4">
-            <div className="size-9 rounded-lg bg-accent/10 flex items-center justify-center mb-2">
-              <Timer className="size-4 text-accent" />
+            <div className="size-9 rounded-lg bg-primary/10 flex items-center justify-center mb-2">
+              <Timer className="size-4 text-primary" />
             </div>
             <p className="text-xs text-text-muted">P50 响应时长</p>
             <p className="text-xl font-bold text-text">{formatMs(data.system.p50)}</p>
           </div>
           <div className="rounded-md border border-border bg-bg-card p-4">
-            <div className="size-9 rounded-lg bg-accent-secondary/10 flex items-center justify-center mb-2">
-              <Timer className="size-4 text-accent-secondary" />
+            <div className="size-9 rounded-lg bg-muted-foreground/10 flex items-center justify-center mb-2">
+              <Timer className="size-4 text-muted-foreground" />
             </div>
             <p className="text-xs text-text-muted">P95 响应时长</p>
             <p className="text-xl font-bold text-text">{formatMs(data.system.p95)}</p>
           </div>
           <div className="rounded-md border border-border bg-bg-card p-4">
-            <div className="size-9 rounded-lg bg-accent/10 flex items-center justify-center mb-2">
-              <Zap className="size-4 text-accent" />
+            <div className="size-9 rounded-lg bg-primary/10 flex items-center justify-center mb-2">
+              <Zap className="size-4 text-primary" />
             </div>
             <p className="text-xs text-text-muted">AI 回复总量</p>
             <p className="text-xl font-bold text-text">{data.system.totalCalls}</p>
           </div>
           <div className="rounded-md border border-border bg-bg-card p-4">
-            <div className="size-9 rounded-lg bg-accent-secondary/10 flex items-center justify-center mb-2">
-              <Layers className="size-4 text-accent-secondary" />
+            <div className="size-9 rounded-lg bg-muted-foreground/10 flex items-center justify-center mb-2">
+              <Layers className="size-4 text-muted-foreground" />
             </div>
             <p className="text-xs text-text-muted">KB 命中率</p>
             <p className={`text-xl font-bold ${data.system.kbHitRate === null ? "text-text-muted text-sm" : "text-text"}`}>
@@ -166,7 +166,7 @@ export default function AIMetricsTab({ orgSlug }: { orgSlug: string }) {
                   return (
                     <div key={d.date} className="flex-1 flex flex-col items-center gap-1" title={`${d.date}: ${d.count}次`}>
                       <span className="text-[9px] text-text-muted">{d.count}</span>
-                      <div className="w-full rounded-t-sm bg-accent/70" style={{ height: `${Math.max(h, 2)}%` }} />
+                      <div className="w-full rounded-t-sm bg-primary/70" style={{ height: `${Math.max(h, 2)}%` }} />
                     </div>
                   );
                 })

@@ -23,7 +23,7 @@ export function OrgSwitcher({ currentOrg, orgs, onSwitch }: OrgSwitcherProps) {
             <DropdownMenuItem key={org.id} onClick={() => onSwitch(org.slug)}>
               <div className="flex items-center justify-between w-full">
                 <span>{org.name}</span>
-                {org.slug === currentOrg.slug && <span className="text-xs text-accent">✓</span>}
+                {org.slug === currentOrg.slug && <span className="text-xs text-primary">✓</span>}
               </div>
             </DropdownMenuItem>
           ))}

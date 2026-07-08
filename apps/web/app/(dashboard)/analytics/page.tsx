@@ -21,7 +21,7 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: { 
       <a
         href="/analytics?tab=sales"
         className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
-          activeTab === "sales" ? "bg-accent text-white" : "text-text-muted hover:text-text"
+          activeTab === "sales" ? "bg-primary text-white" : "text-text-muted hover:text-text"
         }`}
       >
         Sales
@@ -29,7 +29,7 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: { 
       <a
         href="/analytics?tab=ai"
         className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
-          activeTab === "ai" ? "bg-accent text-white" : "text-text-muted hover:text-text"
+          activeTab === "ai" ? "bg-primary text-white" : "text-text-muted hover:text-text"
         }`}
       >
         AI Health
@@ -37,7 +37,7 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: { 
       <a
         href="/analytics?tab=metrics"
         className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
-          activeTab === "metrics" ? "bg-accent text-white" : "text-text-muted hover:text-text"
+          activeTab === "metrics" ? "bg-primary text-white" : "text-text-muted hover:text-text"
         }`}
       >
         AI 指标
@@ -46,7 +46,7 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: { 
         <a
           href="/analytics?tab=boss"
           className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
-            activeTab === "boss" ? "bg-accent text-white" : "text-text-muted hover:text-text"
+            activeTab === "boss" ? "bg-primary text-white" : "text-text-muted hover:text-text"
           }`}
         >
           Boss
@@ -156,8 +156,8 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: { 
         {/* KPI cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="rounded-md border border-border bg-bg-card p-5">
-            <div className="size-10 rounded-xl bg-accent/10 flex items-center justify-center mb-3">
-              <Users className="size-5 text-accent" />
+            <div className="size-10 rounded-xl bg-primary/10 flex items-center justify-center mb-3">
+              <Users className="size-5 text-primary" />
             </div>
             <p className="text-xs text-text-muted mb-1">团队成员</p>
             <p className="text-2xl font-bold text-text">{totalMembers}</p>
@@ -167,7 +167,7 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: { 
           </div>
 
           <div className="rounded-md border border-border bg-bg-card p-5">
-            <div className="size-10 rounded-xl bg-warning-soft flex items-center justify-center mb-3">
+            <div className="size-10 rounded-xl bg-warning/10 flex items-center justify-center mb-3">
               <AlertCircle className="size-5 text-warning" />
             </div>
             <p className="text-xs text-text-muted mb-1">人工介入率</p>
@@ -178,8 +178,8 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: { 
           </div>
 
           <div className="rounded-md border border-border bg-bg-card p-5">
-            <div className="size-10 rounded-xl bg-accent-soft flex items-center justify-center mb-3">
-              <DollarSign className="size-5 text-accent-hover" />
+            <div className="size-10 rounded-xl bg-primary/10 flex items-center justify-center mb-3">
+              <DollarSign className="size-5 text-primary-hover" />
             </div>
             <p className="text-xs text-text-muted mb-1">AI 成本（30天）</p>
             <p className="text-2xl font-bold text-text">¥{(estimatedTotalCost * 7.2).toFixed(0)}</p>
@@ -187,7 +187,7 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: { 
           </div>
 
           <div className="rounded-md border border-border bg-bg-card p-5">
-            <div className="size-10 rounded-xl bg-success-soft flex items-center justify-center mb-3">
+            <div className="size-10 rounded-xl bg-success/10 flex items-center justify-center mb-3">
               <ShieldCheck className="size-5 text-success" />
             </div>
             <p className="text-xs text-text-muted mb-1">AI 成功率</p>
@@ -211,7 +211,7 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: { 
                   const h = (d.cost / maxDailyCost) * 100;
                   return (
                     <div key={d.date} className="flex-1 flex flex-col items-center gap-1 group relative" title={`${d.date}: $${d.cost.toFixed(3)}`}>
-                      <div className="w-full rounded-t-sm bg-accent/70 hover:bg-accent transition-colors" style={{ height: `${Math.max(h, 1)}%` }} />
+                      <div className="w-full rounded-t-sm bg-primary/70 hover:bg-primary transition-colors" style={{ height: `${Math.max(h, 1)}%` }} />
                     </div>
                   );
                 })}
@@ -260,7 +260,7 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: { 
                   <div key={stage.key} className="flex items-center gap-3 text-xs">
                     <span className="w-20 text-text-secondary shrink-0">{stage.label}</span>
                     <div className="flex-1 h-5 bg-bg-subtle rounded-full overflow-hidden">
-                      <div className="h-full rounded-full bg-accent/60 transition-all" style={{ width: `${Math.max(width, count > 0 ? 4 : 0)}%` }} />
+                      <div className="h-full rounded-full bg-primary/60 transition-all" style={{ width: `${Math.max(width, count > 0 ? 4 : 0)}%` }} />
                     </div>
                     <span className="font-semibold text-text w-6 text-right">{count}</span>
                   </div>
@@ -365,8 +365,8 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: { 
       {/* KPI cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="rounded-md border border-border bg-bg-card p-5">
-          <div className="size-10 rounded-xl bg-accent/10 flex items-center justify-center mb-3">
-            <DollarSign className="size-5 text-accent" />
+          <div className="size-10 rounded-xl bg-primary/10 flex items-center justify-center mb-3">
+            <DollarSign className="size-5 text-primary" />
           </div>
           <p className="text-xs text-text-muted mb-1">销售漏斗金额</p>
           <p className="text-2xl font-bold text-text">{pipelineValue > 0 ? `¥${(pipelineValue / 10000).toFixed(1)}万` : "—"}</p>
@@ -374,8 +374,8 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: { 
         </div>
 
         <div className="rounded-md border border-border bg-bg-card p-5">
-          <div className="size-10 rounded-xl bg-accent-secondary/10 flex items-center justify-center mb-3">
-            <CalendarCheck className="size-5 text-accent-secondary" />
+          <div className="size-10 rounded-xl bg-muted-foreground/10 flex items-center justify-center mb-3">
+            <CalendarCheck className="size-5 text-muted-foreground" />
           </div>
           <p className="text-xs text-text-muted mb-1">本月会议</p>
           <p className="text-2xl font-bold text-text">{meetingsThisMonth}</p>
@@ -385,7 +385,7 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: { 
         </div>
 
         <div className="rounded-md border border-border bg-bg-card p-5">
-          <div className="size-10 rounded-xl bg-warning-soft flex items-center justify-center mb-3">
+          <div className="size-10 rounded-xl bg-warning/10 flex items-center justify-center mb-3">
             <Target className="size-5 text-warning" />
           </div>
           <p className="text-xs text-text-muted mb-1">转化率</p>
@@ -394,8 +394,8 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: { 
         </div>
 
         <div className="rounded-md border border-border bg-bg-card p-5">
-          <div className="size-10 rounded-xl bg-accent-soft flex items-center justify-center mb-3">
-            <Bot className="size-5 text-accent-hover" />
+          <div className="size-10 rounded-xl bg-primary/10 flex items-center justify-center mb-3">
+            <Bot className="size-5 text-primary-hover" />
           </div>
           <p className="text-xs text-text-muted mb-1">AI 回复率</p>
           <p className="text-2xl font-bold text-text">{aiResponseRate ? `${aiResponseRate}%` : "—"}</p>
@@ -501,9 +501,9 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: { 
                       <td className="py-2 text-text-secondary">{new Date(run.createdAt).toLocaleDateString()}</td>
                       <td className="py-2">
                         <span className={`text-xs px-2 py-0.5 rounded-full ${
-                          run.status === "completed" ? "bg-success-soft text-success" :
-                          run.status === "running" ? "bg-accent-soft text-accent-hover" :
-                          run.status === "failed" ? "bg-danger-soft text-danger" :
+                          run.status === "completed" ? "bg-success/10 text-success" :
+                          run.status === "running" ? "bg-primary/10 text-primary-hover" :
+                          run.status === "failed" ? "bg-danger/10 text-danger" :
                           "bg-bg-muted text-text-muted"
                         }`}>{run.status}</span>
                       </td>

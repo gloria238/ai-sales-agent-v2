@@ -23,7 +23,7 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
               href={tab.href}
               className={`pb-3 text-sm font-medium transition-colors border-b-2 ${
                 active
-                  ? "text-accent border-accent"
+                  ? "text-primary border-primary"
                   : "text-text-muted hover:text-text border-transparent hover:border-border"
               }`}
             >

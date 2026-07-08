@@ -11,48 +11,55 @@ module.exports = {
         sans: ["var(--font-sans)", "Inter", "system-ui", "sans-serif"],
       },
       colors: {
-        accent: {
-          DEFAULT: "rgb(var(--accent) / <alpha-value>)",
-          hover: "rgb(var(--accent-hover) / <alpha-value>)",
-          secondary: "rgb(var(--accent-secondary) / <alpha-value>)",
-          subtle: "rgb(var(--accent-subtle) / <alpha-value>)",
-          text: "rgb(var(--accent-text) / <alpha-value>)",
-          soft: "rgb(var(--accent-subtle) / <alpha-value>)",   // legacy alias
+        background: {
+          DEFAULT: 'hsl(var(--background) / <alpha-value>)',
+          card:     'hsl(var(--background-card) / <alpha-value>)',
+          subtle:   'hsl(var(--background-subtle) / <alpha-value>)',
+          hover:    'hsl(var(--background-hover) / <alpha-value>)',
         },
-        bg: {
-          DEFAULT: "rgb(var(--bg) / <alpha-value>)",
-          card: "rgb(var(--bg-card) / <alpha-value>)",
-          subtle: "rgb(var(--bg-subtle) / <alpha-value>)",
-          muted: "rgb(var(--bg-muted) / <alpha-value>)",
-          sage: "rgb(var(--accent-subtle) / <alpha-value>)",    // legacy alias
-          secondary: "rgb(var(--bg-subtle) / <alpha-value>)",   // legacy alias
+        foreground: 'hsl(var(--foreground) / <alpha-value>)',
+        primary: {
+          DEFAULT:    'hsl(var(--primary) / <alpha-value>)',
+          hover:      'hsl(var(--primary-hover) / <alpha-value>)',
+          foreground: 'hsl(var(--primary-foreground) / <alpha-value>)',
+          dim:        'var(--primary-dim)',
         },
-        text: {
-          DEFAULT: "rgb(var(--text-primary) / <alpha-value>)",
-          primary: "rgb(var(--text-primary) / <alpha-value>)",
-          secondary: "rgb(var(--text-secondary) / <alpha-value>)",
-          muted: "rgb(var(--text-muted) / <alpha-value>)",
-          disabled: "rgb(var(--text-disabled) / <alpha-value>)",
+        card: {
+          DEFAULT:    'hsl(var(--card) / <alpha-value>)',
+          foreground: 'hsl(var(--card-foreground) / <alpha-value>)',
         },
-        destructive: {
-          DEFAULT: "rgb(var(--destructive) / <alpha-value>)",
+        secondary: {
+          DEFAULT:    'hsl(var(--secondary) / <alpha-value>)',
+          foreground: 'hsl(var(--secondary-foreground) / <alpha-value>)',
         },
-        danger: {
-          DEFAULT: "rgb(var(--destructive) / <alpha-value>)",
-          soft: "rgb(254 242 242 / <alpha-value>)",
-        },
-        success: {
-          DEFAULT: "rgb(var(--accent) / <alpha-value>)",
-          soft: "rgb(var(--accent-subtle) / <alpha-value>)",
-        },
-        warning: {
-          DEFAULT: "rgb(var(--warning) / <alpha-value>)",
-          soft: "rgb(var(--warning-subtle) / <alpha-value>)",
+        muted: {
+          DEFAULT:    'hsl(var(--muted) / <alpha-value>)',
+          foreground: 'hsl(var(--muted-foreground) / <alpha-value>)',
         },
         border: {
-          DEFAULT: "rgb(var(--border) / <alpha-value>)",
-          light: "rgb(var(--border) / <alpha-value>)",          // legacy alias
-          strong: "rgb(var(--border-strong) / <alpha-value>)",
+          DEFAULT: 'var(--border)',
+          strong:  'var(--border-strong)',
+        },
+        ring:         'hsl(var(--ring) / <alpha-value>)',
+        success:      'hsl(var(--success) / <alpha-value>)',
+        warning:      'hsl(var(--warning) / <alpha-value>)',
+        danger:       'hsl(var(--danger) / <alpha-value>)',
+        /* ── Legacy aliases — backward compat with old class names ── */
+        bg: {
+          DEFAULT: 'hsl(var(--background) / <alpha-value>)',
+          card:    'hsl(var(--background-card) / <alpha-value>)',
+          subtle:  'hsl(var(--background-subtle) / <alpha-value>)',
+          muted:   'hsl(var(--muted) / <alpha-value>)',
+        },
+        text: {
+          DEFAULT:  'hsl(var(--foreground) / <alpha-value>)',
+          primary:  'hsl(var(--foreground) / <alpha-value>)',
+          secondary:'hsl(var(--foreground) / 0.75)',
+          muted:    'hsl(var(--muted-foreground) / <alpha-value>)',
+          disabled: 'hsl(var(--muted-foreground) / 0.5)',
+        },
+        destructive: {
+          DEFAULT: 'hsl(var(--danger) / <alpha-value>)',
         },
         /* ── Landing Page Colors (HSL) ── */
         "lp-background": "hsl(var(--lp-background))",

@@ -41,12 +41,12 @@ export function AgentThinkingPanel({ steps, success }: Props) {
         onClick={() => setExpanded(!expanded)}
         className="flex w-full items-center gap-2 px-3 py-2 text-text-muted hover:text-text transition-colors"
       >
-        <Brain className="size-3.5 text-accent shrink-0" />
+        <Brain className="size-3.5 text-primary shrink-0" />
         <span className="font-medium">Agent 推理过程 · {steps.length} 步</span>
         <span
           className={`ml-auto shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-medium ${
             success
-              ? "bg-accent/10 text-accent"
+              ? "bg-primary/10 text-primary"
               : "bg-danger/10 text-danger"
           }`}
         >
@@ -71,9 +71,9 @@ export function AgentThinkingPanel({ steps, success }: Props) {
               </div>
 
               {/* Tool call */}
-              <div className="ml-5 flex items-center gap-1.5 rounded-lg bg-accent/5 border border-accent/10 px-2.5 py-1.5">
+              <div className="ml-5 flex items-center gap-1.5 rounded-lg bg-primary/5 border border-primary/10 px-2.5 py-1.5">
                 {toolIcons[step.tool] ?? <span className="text-xs">🔧</span>}
-                <span className="font-mono text-[11px] text-accent font-medium">
+                <span className="font-mono text-[11px] text-primary font-medium">
                   {step.tool}
                 </span>
                 {step.toolInput && (
