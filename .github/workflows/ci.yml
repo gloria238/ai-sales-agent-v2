@@ -1,0 +1,92 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  unit-test:
+    name: Unit tests + type check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma client
+        run: pnpm --filter @salesagent/db generate
+
+      - name: Unit tests (web)
+        run: pnpm --filter @salesagent/web test --reporter=verbose
+
+      - name: Type check (web)
+        run: pnpm --filter @salesagent/web exec tsc --noEmit
+
+  type-check-packages:
+    name: Type check (all packages)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma client
+        run: pnpm --filter @salesagent/db generate
+
+      - name: Type check (ai-core)
+        run: pnpm --filter @salesagent/ai-core exec tsc --noEmit
+
+      - name: Type check (rag-core)
+        run: pnpm --filter @salesagent/rag-core exec tsc --noEmit
+
+      - name: Type check (worker)
+        run: pnpm --filter @salesagent/worker exec tsc --noEmit
+
+  rag-eval:
+    name: RAG eval (optional)
+    runs-on: ubuntu-latest
+    if: ${{ secrets.EMBEDDING_API_KEY != '' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma client
+        run: pnpm --filter @salesagent/db generate
+
+      - name: RAG retrieval eval
+        run: pnpm --filter @salesagent/rag-core eval:sales:retrieval
+        env:
+          EMBEDDING_API_KEY: ${{ secrets.EMBEDDING_API_KEY }}
