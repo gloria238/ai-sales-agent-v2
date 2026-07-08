@@ -10,6 +10,8 @@ jobs:
   unit-test:
     name: Unit tests + type check
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgresql://ci:dummy@localhost:5432/ci?connection_limit=1
     steps:
       - uses: actions/checkout@v4
 
@@ -37,6 +39,8 @@ jobs:
   type-check-packages:
     name: Type check (all packages)
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgresql://ci:dummy@localhost:5432/ci?connection_limit=1
     steps:
       - uses: actions/checkout@v4
 
@@ -68,6 +72,7 @@ jobs:
     name: RAG eval (optional)
     runs-on: ubuntu-latest
     env:
+      DATABASE_URL: postgresql://ci:dummy@localhost:5432/ci?connection_limit=1
       EMBEDDING_API_KEY: ${{ secrets.EMBEDDING_API_KEY }}
     steps:
       - uses: actions/checkout@v4
