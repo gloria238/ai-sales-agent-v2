@@ -34,8 +34,5 @@ export function createCampaignEndpoints(request: RequestFn, config: ClientConfig
       request(`${base(orgSlug || config.orgSlug || "")}/${id}/start`, {
         method: "POST",
       }),
-
-    getAnalytics: (id: string, orgSlug?: string) =>
-      request(`${base(orgSlug || config.orgSlug || "")}/${id}/analytics`),
   };
 }

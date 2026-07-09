@@ -1,4 +1,5 @@
 import { prisma } from "@salesagent/db";
+import { estimateCost } from "@salesagent/ai-core";
 import { getSession } from "@/lib/session";
 import { redirect } from "next/navigation";
 import { TrendingUp, Send, BarChart3, Bot, DollarSign, Target, CalendarCheck, Users, AlertCircle, ShieldCheck, Activity } from "lucide-react";
@@ -103,7 +104,7 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: { 
     });
     const totalPromptTokens = costMetrics.reduce((s, m) => s + m.promptTokens, 0);
     const totalCompletionTokens = costMetrics.reduce((s, m) => s + m.completionTokens, 0);
-    const estimatedTotalCost = (totalPromptTokens * 0.14 + totalCompletionTokens * 0.28) / 1_000_000;
+    const estimatedTotalCost = estimateCost(totalPromptTokens, totalCompletionTokens);
     const totalAiCalls = costMetrics.length;
     const successRate = totalAiCalls > 0
       ? ((costMetrics.filter((m) => m.success).length / totalAiCalls) * 100).toFixed(1)
@@ -113,7 +114,7 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: { 
     const costByDay = new Map<string, number>();
     for (const m of costMetrics) {
       const day = m.createdAt.toISOString().slice(0, 10);
-      const cost = (m.promptTokens * 0.14 + m.completionTokens * 0.28) / 1_000_000;
+      const cost = estimateCost(m.promptTokens, m.completionTokens);
       costByDay.set(day, (costByDay.get(day) || 0) + cost);
     }
     const dailyCost = Array.from(costByDay.entries())

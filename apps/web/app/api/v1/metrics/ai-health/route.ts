@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@salesagent/db";
 import { getSession } from "@/lib/session";
 import { checkPermission } from "@/lib/permissions";
+import { estimateCost } from "@salesagent/ai-core";
 
 /** GET /api/v1/metrics/ai-health?orgSlug=acme&period=24h
  *  Aggregate AI call metrics for the AI Health Dashboard.
@@ -33,31 +34,39 @@ export async function GET(req: NextRequest) {
   const succeededCalls = metrics.filter((m) => m.success);
   const fallbackCalls = metrics.filter((m) => m.fallbackUsed);
 
-  // Latency P50 / P95
-  const latencies = succeededCalls.map((m) => m.llmLatencyMs).sort((a, b) => a - b);
-  const p50 = latencies[Math.floor(latencies.length * 0.5)] ?? 0;
-  const p95 = latencies[Math.floor(latencies.length * 0.95)] ?? 0;
+  // Latency P50 / P95 — use SQL percentile_cont (consistent with ai-metrics route)
+  const [percentileRows] = (await prisma.$queryRawUnsafe(
+    `SELECT
+      percentile_cont(0.5) WITHIN GROUP (ORDER BY "llmLatencyMs")::int AS p50,
+      percentile_cont(0.95) WITHIN GROUP (ORDER BY "llmLatencyMs")::int AS p95
+    FROM sales_agent."AICallMetric"
+    WHERE "organizationId" = $1
+      AND "createdAt" >= $2`,
+    membership.organizationId,
+    since,
+  )) as unknown as [Record<string, number | null>];
+  const p50 = percentileRows?.["p50"] ?? 0;
+  const p95 = percentileRows?.["p95"] ?? 0;
 
-  // Total cost
+  // Total cost — use shared estimateCost()
   const totalPromptTokens = metrics.reduce((s, m) => s + m.promptTokens, 0);
   const totalCompletionTokens = metrics.reduce((s, m) => s + m.completionTokens, 0);
-  const totalCost = (totalPromptTokens * 0.14 + totalCompletionTokens * 0.28) / 1_000_000;
+  const totalCost = estimateCost(totalPromptTokens, totalCompletionTokens);
 
   // Fallback rate
   const fallbackRate = totalCalls > 0 ? fallbackCalls.length / totalCalls : 0;
 
-  // By job type
+  // By job type — use shared estimateCost()
   const byJobType = ["compose_response", "score_lead", "summarize_conversation", "generate_script", "campaign_ai", "kb_ask"]
     .map((jt) => {
       const group = metrics.filter((m) => m.jobType === jt);
-      const groupLatencies = group.filter((m) => m.success).map((m) => m.llmLatencyMs).sort((a, b) => a - b);
+      const groupPromptTokens = group.reduce((s, m) => s + m.promptTokens, 0);
+      const groupCompletionTokens = group.reduce((s, m) => s + m.completionTokens, 0);
       return {
         jobType: jt,
         count: group.length,
         avgLatency: group.length > 0 ? Math.round(group.reduce((s, m) => s + m.llmLatencyMs, 0) / group.length) : 0,
-        cost: group.length > 0
-          ? Math.round((group.reduce((s, m) => s + m.promptTokens, 0) * 0.14 + group.reduce((s, m) => s + m.completionTokens, 0) * 0.28) / 1_000_000 * 1_000_000) / 1_000_000
-          : 0,
+        cost: group.length > 0 ? estimateCost(groupPromptTokens, groupCompletionTokens) : 0,
       };
     })
     .filter((g) => g.count > 0);

@@ -109,7 +109,7 @@ export function InboxDetailClient({ conversation, conversations, orgSlug }: Prop
   const [translating, setTranslating] = useState(false);
   const [translated, setTranslated] = useState("");
   const [scoring, setScoring] = useState(false);
-  const [chatMode, setChatMode] = useState(false); // Toggle: email compose vs real-time chat
+  const [chatMode, setChatMode] = useState(conversation.channel === "chat"); // Auto-detect from conversation channel
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
 
@@ -232,7 +232,8 @@ export function InboxDetailClient({ conversation, conversations, orgSlug }: Prop
     setSending(false);
   }
 
-  /** Patch Worker-generated draft message with reviewAction (HITL audit trail). */
+  /** Patch Worker-generated draft message with reviewAction (HITL audit trail).
+   *  Also resets conversation status from awaiting_approval → active. */
   async function patchWorkerDraft(action: "approved" | "rejected") {
     const workerDraft = [...messages].reverse().find(
       (m) => m.direction === "outbound" && !m.reviewAction
@@ -246,6 +247,10 @@ export function InboxDetailClient({ conversation, conversations, orgSlug }: Prop
       setMessages((prev) => prev.map((m) =>
         m.id === workerDraft.id ? { ...m, reviewAction: action } : m
       ));
+      // Reset local conversation status so "needs_review" badge clears
+      if (conversation.status === "awaiting_approval") {
+        conversation.status = "active";
+      }
     } catch { /* non-blocking */ }
   }
 

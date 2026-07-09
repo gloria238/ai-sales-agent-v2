@@ -45,5 +45,18 @@ export async function PATCH(
     data: { reviewAction: parsed.data.reviewAction ?? null },
   });
 
+  // Reset conversation status from awaiting_approval → active after review
+  if (parsed.data.reviewAction && message.conversationId) {
+    const conv = await prisma.conversation.findFirst({
+      where: { id: message.conversationId, status: "awaiting_approval" },
+    });
+    if (conv) {
+      await prisma.conversation.update({
+        where: { id: message.conversationId },
+        data: { status: "active", updatedAt: new Date() },
+      });
+    }
+  }
+
   return NextResponse.json({ message: updated });
 }

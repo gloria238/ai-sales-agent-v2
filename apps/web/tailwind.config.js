@@ -61,23 +61,23 @@ module.exports = {
         destructive: {
           DEFAULT: 'hsl(var(--danger) / <alpha-value>)',
         },
-        /* ── Landing Page Colors (HSL) ── */
-        "lp-background": "hsl(var(--lp-background))",
-        "lp-foreground": "hsl(var(--lp-foreground))",
+        /* ── Landing Page Colors (HSL with alpha support) ── */
+        "lp-background": "hsl(var(--lp-background) / <alpha-value>)",
+        "lp-foreground": "hsl(var(--lp-foreground) / <alpha-value>)",
         "lp-primary": {
-          DEFAULT: "hsl(var(--lp-primary))",
-          foreground: "hsl(var(--lp-primary-foreground))",
+          DEFAULT: "hsl(var(--lp-primary) / <alpha-value>)",
+          foreground: "hsl(var(--lp-primary-foreground) / <alpha-value>)",
         },
-        "lp-secondary": "hsl(var(--lp-secondary))",
-        "lp-border": "hsl(var(--lp-border))",
-        "lp-card": "hsl(var(--lp-card))",
+        "lp-secondary": "hsl(var(--lp-secondary) / <alpha-value>)",
+        "lp-border": "hsl(var(--lp-border) / <alpha-value>)",
+        "lp-card": "hsl(var(--lp-card) / <alpha-value>)",
         "lp-muted": {
-          DEFAULT: "hsl(var(--lp-muted))",
-          foreground: "hsl(var(--lp-muted-foreground))",
+          DEFAULT: "hsl(var(--lp-muted) / <alpha-value>)",
+          foreground: "hsl(var(--lp-muted-foreground) / <alpha-value>)",
         },
         "lp-hero": {
-          heading: "hsl(var(--lp-hero-heading))",
-          sub: "hsl(var(--lp-hero-sub))",
+          heading: "hsl(var(--lp-hero-heading) / <alpha-value>)",
+          sub: "hsl(var(--lp-hero-sub) / <alpha-value>)",
         },
       },
       borderRadius: {
@@ -109,12 +109,17 @@ module.exports = {
           "0%, 100%": { opacity: "1" },
           "50%": { opacity: "0.4" },
         },
+        marquee: {
+          "0%": { transform: "translateX(0%)" },
+          "100%": { transform: "translateX(-50%)" },
+        },
       },
       animation: {
         "fade-in": "fade-in 150ms ease-out",
         "slide-up": "slide-up 200ms ease-out",
         "scale-in": "scale-in 150ms ease-out",
         "skeleton": "skeleton 2s ease-in-out infinite",
+        marquee: "marquee 20s linear infinite",
       },
     },
   },

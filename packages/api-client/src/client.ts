@@ -5,7 +5,6 @@ import { createConversationEndpoints } from "./endpoints/conversations";
 import { createCampaignEndpoints } from "./endpoints/campaigns";
 import { createAgentEndpoints } from "./endpoints/agents";
 import { createScriptEndpoints } from "./endpoints/scripts";
-import { createAnalyticsEndpoints } from "./endpoints/analytics";
 import { createOrganizationEndpoints } from "./endpoints/organizations";
 
 export type AuthMode = "cookie" | "bearer";
@@ -24,7 +23,6 @@ export interface ApiClient {
   campaigns: ReturnType<typeof createCampaignEndpoints>;
   agents: ReturnType<typeof createAgentEndpoints>;
   scripts: ReturnType<typeof createScriptEndpoints>;
-  analytics: ReturnType<typeof createAnalyticsEndpoints>;
   organizations: ReturnType<typeof createOrganizationEndpoints>;
 }
 
@@ -70,7 +68,6 @@ export function createClient(config: ClientConfig): ApiClient {
     campaigns: createCampaignEndpoints(request, config),
     agents: createAgentEndpoints(request, config),
     scripts: createScriptEndpoints(request, config),
-    analytics: createAnalyticsEndpoints(request, config),
     organizations: createOrganizationEndpoints(request, config),
   };
 }

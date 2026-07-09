@@ -99,7 +99,7 @@ function CrosshairIcon({ className }: { className?: string }) {
 
 function StatCard({ title, desc, stat, label, icon }: { title: string; desc: string; stat: string; label: string; icon: React.ReactNode }) {
   return (
-    <div className="liquid-glass rounded-xl p-8 flex flex-col justify-between hover:bg-white/[0.03] transition-colors duration-300">
+    <div className="liquid-glass rounded-3xl p-8 flex flex-col justify-between hover:bg-white/[0.03] transition-colors duration-300">
       <div>
         <div className="flex items-center gap-3 mb-3">
           <div className="text-lp-primary">{icon}</div>
@@ -136,10 +136,10 @@ export default function LandingPage() {
         }} />
 
         <header className="relative z-20 flex justify-center pt-6 px-4">
-          <nav className="liquid-glass rounded-xl w-full max-w-[850px] flex items-center justify-between px-5 py-3">
+          <nav className="liquid-glass rounded-3xl w-full max-w-[850px] flex items-center justify-between px-5 py-3">
             <div className="flex items-center gap-2.5">
-              <div className="w-7 h-7 rounded-lg bg-gradient-to-b from-green-700 to-green-500 flex items-center justify-center">
-                <CrosshairIcon className="size-4 text-green-300" />
+              <div className="w-7 h-7 rounded-lg bg-gradient-to-b from-lp-secondary to-lp-muted flex items-center justify-center">
+                <CrosshairIcon className="size-4 text-lp-primary" />
               </div>
               <span className="text-xl font-semibold text-lp-foreground">SalesAgent AI</span>
             </div>
@@ -148,7 +148,7 @@ export default function LandingPage() {
               <a href="#architecture" className="text-sm text-lp-hero-sub hover:text-lp-foreground px-3 py-2 rounded-lg transition-colors">架构</a>
             </div>
             <Link href="/api/demo-login" className="inline-flex items-center rounded-full bg-lp-primary text-lp-primary-foreground px-5 py-2 text-sm font-semibold hover:bg-lp-primary/90 transition-colors">
-              体验 Demo
+              体验 Viewer
             </Link>
           </nav>
         </header>
@@ -172,7 +172,7 @@ export default function LandingPage() {
 
           <div className="flex items-center gap-4 mt-8">
             <Link href="/api/demo-login" className="inline-flex items-center rounded-full bg-lp-primary text-lp-primary-foreground px-6 py-3 text-base font-medium hover:bg-lp-primary/90 transition-colors">
-              立即体验 Demo <ArrowRight className="size-4 ml-1.5" />
+              立即体验 Viewer <ArrowRight className="size-4 ml-1.5" />
             </Link>
             <a href="#features" className="liquid-glass inline-flex items-center rounded-full px-6 py-3 text-base font-normal text-lp-foreground hover:bg-white/5 transition-colors">
               了解更多 ↓
@@ -231,7 +231,7 @@ export default function LandingPage() {
       {/* ═══════════ RAG PIPELINE (Chess-style split layout) ════════════ */}
       <section id="architecture" className="py-32 px-4">
         <div className="max-w-6xl mx-auto grid lg:grid-cols-2 gap-20 items-center">
-          <div className="liquid-glass rounded-xl aspect-[4/3] overflow-hidden order-1">
+          <div className="liquid-glass rounded-3xl aspect-[4/3] overflow-hidden order-1">
             <HlsBackground src={CHESS_HLS}><div className="aspect-[4/3]" /></HlsBackground>
           </div>
           <div className="order-2">
@@ -260,7 +260,7 @@ export default function LandingPage() {
             </ul>
             <div className="flex items-center gap-4">
               <Link href="/api/demo-login" className="inline-flex items-center rounded-full bg-lp-primary text-lp-primary-foreground px-6 py-3 text-base font-medium hover:bg-lp-primary/90 transition-colors">
-                进入 Demo <ArrowRight className="size-4 ml-1.5" />
+                进入 Viewer <ArrowRight className="size-4 ml-1.5" />
               </Link>
               <Link href="/register" className="liquid-glass inline-flex items-center rounded-full px-6 py-3 text-base font-normal text-lp-foreground hover:bg-white/5 transition-colors">
                 注册账号
@@ -285,7 +285,7 @@ export default function LandingPage() {
                 从基础设施到 AI 管线，从评测框架到实时聊天——每条链路经过工程化打磨。
               </p>
             </div>
-            <div className="liquid-glass rounded-xl p-12 grid md:grid-cols-2 max-w-3xl mx-auto">
+            <div className="liquid-glass rounded-3xl p-12 grid md:grid-cols-2 max-w-3xl mx-auto">
               <div className="text-center md:border-r border-lp-border/50 md:pr-12">
                 <p className="text-5xl sm:text-6xl font-semibold text-lp-hero-heading tracking-tight">
                   ~32,000
@@ -331,10 +331,10 @@ export default function LandingPage() {
           </div>
           <div className="grid md:grid-cols-3 gap-6 items-start">
             {TESTIMONIALS.map((t, i) => (
-              <div key={t.name} className={`liquid-glass rounded-xl p-8 ${i === 1 ? "md:-translate-y-6" : ""}`}>
+              <div key={t.name} className={`liquid-glass rounded-3xl p-8 ${i === 1 ? "md:-translate-y-6" : ""}`}>
                 <blockquote className="text-lp-hero-sub text-sm leading-relaxed">&ldquo;{t.quote}&rdquo;</blockquote>
                 <div className="mt-6 pt-5 border-t border-lp-border/50 flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-green-800 flex items-center justify-center text-sm font-semibold text-green-300">{t.initials}</div>
+                  <div className="w-10 h-10 rounded-full bg-lp-secondary flex items-center justify-center text-sm font-semibold text-lp-primary">{t.initials}</div>
                   <div>
                     <p className="text-lp-foreground text-sm font-medium">{t.name}</p>
                     <p className="text-lp-muted-foreground text-xs">{t.role}</p>
@@ -353,11 +353,11 @@ export default function LandingPage() {
             <div className="liquid-glass rounded-[2rem] p-12 sm:p-20 text-center max-w-2xl w-full">
               <h2 className="text-lp-hero-heading text-3xl sm:text-5xl font-semibold leading-[1.1]">想看看它能做什么？</h2>
               <p className="text-lp-hero-sub text-base mt-4 max-w-md mx-auto">
-                一键启动 Demo 环境——打开 Dashboard，上传一份 PDF 到知识库，在 Portal 发一条消息，亲眼看到 RAG 如何检索、AI 如何回复。无需注册。
+                Viewer 只读账号，无需注册。浏览数据看板，进入知识库 Playground 亲手输入问题，看六阶段 RAG 管线如何检索召回、生成带引用的答案。只看不改，放心体验。
               </p>
               <div className="flex items-center justify-center gap-4 mt-8">
                 <Link href="/api/demo-login" className="inline-flex items-center rounded-full bg-lp-primary text-lp-primary-foreground px-6 py-3 text-base font-medium hover:bg-lp-primary/90 transition-colors">
-                  进入 Demo <ArrowRight className="size-4 ml-1.5" />
+                  进入 Viewer <ArrowRight className="size-4 ml-1.5" />
                 </Link>
                 <Link href="/register" className="liquid-glass inline-flex items-center rounded-full px-6 py-3 text-base font-normal text-lp-foreground hover:bg-white/5 transition-colors">
                   注册账号
@@ -371,8 +371,8 @@ export default function LandingPage() {
               <div className="grid grid-cols-2 md:grid-cols-5 gap-8 mb-16">
                 <div className="col-span-2">
                   <div className="flex items-center gap-2.5 mb-3">
-                    <div className="w-7 h-7 rounded-lg bg-gradient-to-b from-green-700 to-green-500 flex items-center justify-center">
-                      <CrosshairIcon className="size-4 text-green-300" />
+                    <div className="w-7 h-7 rounded-lg bg-gradient-to-b from-lp-secondary to-lp-muted flex items-center justify-center">
+                      <CrosshairIcon className="size-4 text-lp-primary" />
                     </div>
                     <span className="text-xl font-semibold text-lp-foreground">SalesAgent AI</span>
                   </div>

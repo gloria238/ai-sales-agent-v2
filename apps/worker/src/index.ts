@@ -8,6 +8,7 @@ import type { JobContext } from "./queue";
 import { sendEmail } from "./email";
 import { callDeepSeekJSON, PROMPT_ARMOR, safe, runReActAgent, buildMetric, estimateCost } from "@salesagent/ai-core";
 import type { AICallMetricInput, AgentStep } from "@salesagent/ai-core";
+import type { TokenUsage } from "@salesagent/shared-types";
 import { checkAndMarkDedup } from "./dedup";
 
 const Q_PREFIX = "sales-agent";
@@ -15,6 +16,7 @@ const Q_PREFIX = "sales-agent";
 // ── AI Response Composition ───────────────────────────────────────
 interface ComposeResult {
   subject: string; body: string; tone: string; suggestedAction: string;
+  confidence?: number; caveat?: string;
 }
 
 async function composeAiResponse(conversationId: string, agentId?: string, requestId?: string): Promise<ComposeResult> {
@@ -32,30 +34,63 @@ async function composeAiResponse(conversationId: string, agentId?: string, reque
 
   const system = `${PROMPT_ARMOR}
 
-You are an expert B2B SDR. Compose personalized, helpful sales emails matching the agent's personality. Never fabricate facts. Return JSON only.`;
+你是「启云科技」的 AI 销售助理，专注企业级 AI 客服与销售自动化 SaaS。
+你在后台自动处理新入站消息，生成初稿供人工审核，不直接发送给客户。
 
-  const prompt = `Compose a reply for this sales conversation:
+## 行为准则
 
-LEAD:
-  Name: <user_data>${safe(conversation.lead.name)}</user_data>
-  Email: <user_data>${safe(conversation.lead.email || "N/A")}</user_data>
-  Company: <user_data>${safe(conversation.lead.company || "Unknown")}</user_data>
-  Stage: <user_data>${safe(conversation.lead.stage || "new")}</user_data>
-  Score: <user_data>${conversation.lead.score ?? "Not scored"}</user_data>
+**不编造**：只使用下方 Agent 知识库配置里有记录的产品信息，没有的不写。
+**语言跟随**：使用客户来信语言（中文 / 英文 / 其他）。
+**历史连贯**：通读对话历史，不重复内容，不重复问题。
+**简洁有力**：正文不超过 150 字，结尾一个明确 CTA。
 
-AGENT:
-  Personality: ${safe(effectiveAgent?.personality || "Professional, friendly B2B SDR")}
-  Goals: ${JSON.stringify(effectiveAgent?.goals || [{ type: "qualify_lead" }])}
-  Knowledge: ${JSON.stringify(effectiveAgent?.knowledgeBase || {})}
+## 输出格式
 
-CONVERSATION:
+返回严格的 JSON，不加 Markdown 包裹：
+
+{
+  "subject": "邮件主题（≤15字）",
+  "body": "正文（≤150字，结尾一个 CTA）",
+  "tone": "friendly | professional | direct | consultative",
+  "suggestedAction": "send_now | review | escalate_to_human",
+  "confidence": 0.0~1.0,
+  "caveat": "无法确认的信息在此注明，否则填空字符串"
+}
+
+suggestedAction 判定规则：
+- send_now：标准跟进，无敏感内容，confidence ≥ 0.85
+- review：含报价 / 竞品 / 异议 / confidence < 0.85
+- escalate_to_human：客户明确要求与人工沟通 / 投诉 / 法律合同相关 / 识别到强烈负面情绪`;
+
+  const goalsText = effectiveAgent?.goals
+    ? (effectiveAgent.goals as Array<{ type: string; priority: number; successCriteria?: string }>)
+        .map((g) => `${g.priority}. ${g.type}${g.successCriteria ? `（${g.successCriteria}）` : ""}`)
+        .join("；")
+    : "1. 识别意向 2. 邀约演示";
+
+  const prompt = `请为以下入站消息生成销售回复初稿。
+
+## 客户信息
+- 姓名：<user_data>${safe(conversation.lead.name)}</user_data>
+- 公司：<user_data>${safe(conversation.lead.company || "未知")}</user_data>
+- 邮箱：<user_data>${safe(conversation.lead.email || "N/A")}</user_data>
+- 当前阶段：<user_data>${safe(conversation.lead.stage || "new")}</user_data>
+- 线索评分：<user_data>${conversation.lead.score ?? "未评分"}</user_data>
+
+## 负责 Agent 配置
+- 性格风格：${safe(effectiveAgent?.personality || "专业、友好")}
+- 销售目标：${goalsText}
+- 产品知识库：
+${JSON.stringify(effectiveAgent?.knowledgeBase || {}, null, 2)}
+
+## 对话历史（最近 20 条，时间由远到近）
 <user_data>
-${conversation.messages.map((m) => `[${m.direction.toUpperCase()}] ${safe(m.content.substring(0, 400))}`).join("\n")}
+${conversation.messages.map((m) => `[${m.direction === "inbound" ? "客户" : "我方"}] ${safe(m.content.substring(0, 400))}`).join("\n")}
 </user_data>
 
-${latestInbound ? `LATEST INBOUND: <user_data>${safe(latestInbound.content)}</user_data>` : ""}
+${latestInbound ? `## 客户最新消息（完整）\n<user_data>${safe(latestInbound.content)}</user_data>` : ""}
 
-Return JSON: { "subject": "...", "body": "...", "tone": "friendly|professional|direct|consultative", "suggestedAction": "send_now|review|escalate_to_human" }`;
+请严格按 System Prompt 中的 JSON 格式输出。`;
 
   const llmStart = Date.now();
   const { result, usage } = await callDeepSeekJSON<ComposeResult>(prompt, system, { temperature: 0.7, timeoutMs: 15_000 });
@@ -154,6 +189,8 @@ interface AgentFollowUpResult {
   steps: AgentStep[];
   success: boolean;
   messageId?: string;
+  usage?: TokenUsage;
+  llmLatencyMs?: number;
 }
 
 /**
@@ -177,19 +214,19 @@ async function followUpLead(
   const tools = [
     {
       name: "get_lead_history",
-      description: "获取该 lead 的历史对话记录和活动日志，输入任意字符串触发",
+      description: "获取该线索的最近 10 条对话消息和 5 条活动日志，用于了解历史沟通情况和当前状态。无需参数。",
       execute: async (_: string) => {
         const [messages, activities] = await Promise.all([
           prisma.message.findMany({
             where: { conversation: { leadId: lead.id, organizationId: orgId } },
             orderBy: { createdAt: "desc" },
-            take: 5,
+            take: 10,
             select: { direction: true, content: true, createdAt: true },
           }),
           prisma.leadActivity.findMany({
             where: { leadId: lead.id },
             orderBy: { createdAt: "desc" },
-            take: 3,
+            take: 5,
             select: { type: true, content: true },
           }),
         ]);
@@ -203,7 +240,7 @@ async function followUpLead(
     },
     {
       name: "search_knowledge_base",
-      description: "从知识库搜索产品信息、话术或案例，输入搜索关键词",
+      description: "在产品知识库中检索相关内容，返回最相关的 3 条片段及来源文档名。参数：query（搜索关键词，建议包含产品名称和具体问题，如「启云科技 定价方案 中小企业」）。",
       execute: async (query: string) => {
         const chunks = await prisma.$queryRawUnsafe<
           Array<{ content: string; metadata: Record<string, unknown> }>
@@ -211,7 +248,7 @@ async function followUpLead(
           `SELECT content, metadata
            FROM sales_agent."DocumentChunk"
            WHERE organization_id = $1 AND content ~* $2
-           LIMIT 5`,
+           LIMIT 3`,
           orgId,
           query.split(/\s+/).filter((w) => w.length > 1).join(" | ") || query,
         );
@@ -221,14 +258,14 @@ async function followUpLead(
     },
     {
       name: "get_lead_info",
-      description: "获取该 lead 的基本信息和当前阶段",
+      description: "获取线索的完整档案，包含联系方式、公司信息、当前阶段和评分。无需参数。",
       execute: async (_: string) => {
         return `名称: ${lead.name}\n公司: ${lead.company || "未知"}\n邮箱: ${lead.email || "未知"}\n阶段: ${lead.stage || "new"}\n评分: ${lead.score ?? "未评分"}`;
       },
     },
     {
       name: "send_followup_message",
-      description: "发送跟进消息给该 lead，输入要发送的消息内容",
+      description: "创建跟进消息并设为待人工审核状态。参数：content（消息正文，不超过 300 字，结尾包含明确 CTA）。",
       execute: async (content: string) => {
         await prisma.message.create({
           data: {
@@ -257,14 +294,37 @@ async function followUpLead(
     },
   ];
 
-  const personality = agentPersonality || "专业、友好的 B2B 销售代表";
-  const task = `跟进销售线索 ${lead.name}${lead.company ? `（${lead.company}）` : ""}。
-当前阶段: ${lead.stage || "new"}，评分: ${lead.score ?? "未评分"}。
-你的性格风格: ${personality}
-请分析他的历史记录，从知识库检索相关产品信息或话术，
-然后生成并发送个性化跟进消息。如果知识库没有相关内容，根据你的销售经验撰写。`;
+  const personality = agentPersonality || "专业、直接、以客户业务为中心";
+  const task = `你是「启云科技」的 AI 销售助理，正在执行活动跟进任务。
 
-  const { result, steps, success } = await runReActAgent(task, tools);
+## 任务
+跟进销售线索 ${lead.name}${lead.company ? `（${lead.company}）` : ""}。
+当前阶段: ${lead.stage || "new"} | 线索评分: ${lead.score ?? "未评分"}
+Agent 风格: ${personality}
+
+## 执行规则
+1. 先用 get_lead_history 了解历史，再用 search_knowledge_base 找产品信息
+2. 知识库检索到内容时，回复必须引用，格式：「（来源：{文档名}）」
+3. 知识库检索不到相关内容时，在消息里写明"我向团队确认后告知您"，不自行编造
+4. 确认内容充分后，调用 send_followup_message 创建跟进消息（将进入人工审核）
+5. 任务完成后立即输出「最终答案」，不再调用工具
+
+## 输出格式（每一步严格遵守，不得省略字段）
+
+单步格式：
+思考：[分析当前已知信息和下一步目的]
+行动：[工具名称，只能是下方工具列表中的一个]
+行动输入：[传给工具的内容，字符串格式]
+
+收到工具结果后继续下一步，直到任务完成。
+
+完成时格式：
+思考：[确认所有步骤已完成]
+最终答案：[概述本次跟进内容，包括：发送了什么消息、引用了哪条知识库内容、是否有待确认信息]`;
+
+  const reactStart = Date.now();
+  const { result, steps, success, usage } = await runReActAgent(task, tools);
+  const reactLatencyMs = Date.now() - reactStart;
 
   // Update the outbound message(s) created by send_followup_message with agentSteps
   const agentMessages = await prisma.message.findMany({
@@ -294,7 +354,7 @@ async function followUpLead(
     });
   }
 
-  return { result, steps, success, messageId };
+  return { result, steps, success, messageId, usage, llmLatencyMs: reactLatencyMs };
 }
 
 // ── Campaign Step Execution ───────────────────────────────────────
@@ -361,7 +421,7 @@ async function executeCampaignStep(campaignId: string, leadId: string, stepIndex
       });
     }
 
-    const { steps: agentSteps, success, result, messageId } = await followUpLead(
+    const { steps: agentSteps, success, result, messageId, usage: reactUsage, llmLatencyMs: reactLatency } = await followUpLead(
       { id: lead.id, name: lead.name, email: lead.email, company: lead.company, stage: lead.stage, score: lead.score, tags: lead.tags },
       conversation.id,
       campaign.organizationId,
@@ -375,17 +435,11 @@ async function executeCampaignStep(campaignId: string, leadId: string, stepIndex
 
     // Log AI call metric for the ReAct agent run
     try {
-      await prisma.aICallMetric.create({
-        data: {
-          organizationId: campaign.organizationId,
-          jobType: "campaign_ai",
-          success,
-          requestId,
-          leadId,
-          llmLatencyMs: 0,
-          totalLatencyMs: 0,
-        },
-      });
+      const metricData = buildMetric(
+        { organizationId: campaign.organizationId, jobType: "campaign_ai", requestId, leadId },
+        reactUsage, reactLatency ?? 0, reactLatency ?? 0, success, false,
+      );
+      await prisma.aICallMetric.create({ data: metricData });
     } catch { /* non-blocking */ }
 
     // Enqueue next step if available

@@ -28,7 +28,6 @@ export async function GET(req: NextRequest, { params }: { params: { slug: string
       percentile_cont(0.95) WITHIN GROUP (ORDER BY "totalLatencyMs")::int AS p95
     FROM sales_agent."AICallMetric"
     WHERE "organizationId" = $1
-      AND "jobType" = 'compose_response'
       AND "createdAt" >= $2`,
     orgId,
     from,
@@ -37,7 +36,7 @@ export async function GET(req: NextRequest, { params }: { params: { slug: string
   const p95 = percentileRows?.["p95"] ?? null;
 
   const totalCalls = await prisma.aICallMetric.count({
-    where: { organizationId: orgId, jobType: "compose_response", createdAt: { gte: from } },
+    where: { organizationId: orgId, createdAt: { gte: from } },
   });
 
   // ── Quality Layer: daily call counts ─────────────────────────
@@ -84,8 +83,24 @@ export async function GET(req: NextRequest, { params }: { params: { slug: string
     ? Math.round((aiInvolvedConversations / totalConversations) * 100) / 100
     : null;
 
-  // Draft adoption rate — requires reviewAction field (pending schema change)
-  const draftAdoptionRate = null;
+  // Draft adoption rate — from Message.reviewAction audit trail
+  const totalReviewable = await prisma.message.count({
+    where: {
+      conversation: { organizationId: orgId },
+      direction: "outbound",
+      reviewAction: { not: null },
+    },
+  });
+  const approvedCount = await prisma.message.count({
+    where: {
+      conversation: { organizationId: orgId },
+      direction: "outbound",
+      reviewAction: "approved",
+    },
+  });
+  const draftAdoptionRate = totalReviewable > 0
+    ? Math.round((approvedCount / totalReviewable) * 100) / 100
+    : null;
 
   // ── Risk Layer: timeouts ─────────────────────────────────────
   const timeouts = await prisma.aICallMetric.count({

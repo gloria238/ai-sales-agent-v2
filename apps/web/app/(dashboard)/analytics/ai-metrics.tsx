@@ -135,7 +135,7 @@ export default function AIMetricsTab({ orgSlug }: { orgSlug: string }) {
             <div className="size-9 rounded-lg bg-primary/10 flex items-center justify-center mb-2">
               <Zap className="size-4 text-primary" />
             </div>
-            <p className="text-xs text-text-muted">AI 回复总量</p>
+            <p className="text-xs text-text-muted">AI 调用总量</p>
             <p className="text-xl font-bold text-text">{data.system.totalCalls}</p>
           </div>
           <div className="rounded-md border border-border bg-bg-card p-4">

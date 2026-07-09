@@ -5,5 +5,4 @@ export * from "./endpoints/conversations";
 export * from "./endpoints/campaigns";
 export * from "./endpoints/agents";
 export * from "./endpoints/scripts";
-export * from "./endpoints/analytics";
 export * from "./endpoints/organizations";

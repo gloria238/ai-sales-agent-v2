@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@salesagent/db";
 import { getSession } from "@/lib/session";
 import { requirePermission, checkPermission } from "@/lib/permissions";
-import { callDeepSeekJSON, GENERATE_SCRIPT_SYSTEM, buildGenerateScriptPrompt } from "@salesagent/ai-core";
+import { callDeepSeekJSON, GENERATE_SCRIPT_SYSTEM, buildGenerateScriptPrompt, buildMetric } from "@salesagent/ai-core";
 import { generateScriptSchema } from "@/lib/validation";
 import { isEnabled } from "@/lib/feature-flags";
 
@@ -33,14 +33,30 @@ export async function POST(request: Request, { params }: { params: { slug: strin
       channel: parsed.data.channel,
     });
 
-    const { result: script, usage: _genUsage } = await callDeepSeekJSON<{
+    const llmStart = Date.now();
+    const { result: script, usage } = await callDeepSeekJSON<{
       name: string; description: string; category: string;
       bestPractices: string[]; subjectLineTips: string[];
       steps: Array<{ order: number; type: string; template?: string; subject?: string; delay?: string; condition?: string }>;
     }>(prompt, GENERATE_SCRIPT_SYSTEM, { temperature: 0.8 });
+    const latencyMs = Date.now() - llmStart;
+
+    // Log AI call metric (non-blocking)
+    const metric = buildMetric(
+      { organizationId: membership.organizationId, jobType: "generate_script" },
+      usage, latencyMs, latencyMs, true, false,
+    );
+    prisma.aICallMetric.create({ data: metric }).catch(() => {});
 
     return NextResponse.json({ script });
   } catch (err) {
+    // Log failed metric (non-blocking)
+    const failMetric = buildMetric(
+      { organizationId: membership!.organizationId, jobType: "generate_script" },
+      undefined, 0, 0, false, true,
+      err instanceof Error ? err.message.slice(0, 200) : "unknown",
+    );
+    prisma.aICallMetric.create({ data: failMetric }).catch(() => {});
     console.error("Script generation error:", err instanceof Error ? err.message : "Unknown");
     return NextResponse.json({ error: "Script generation failed" }, { status: 502 });
   }

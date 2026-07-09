@@ -79,7 +79,9 @@ Question: <user_data>${safe(question)}</user_data>
 
 Answer the question based on the context above. Include source citations like [Source 1] in your answer. Return JSON: { "answer": "..." }`;
 
-    const { result: aiAnswer, usage: _askUsage } = await callDeepSeekJSON<{ answer: string }>(prompt, system, { temperature: 0.3 });
+    const llmStart = Date.now();
+    const { result: aiAnswer, usage } = await callDeepSeekJSON<{ answer: string }>(prompt, system, { temperature: 0.3 });
+    const latencyMs = Date.now() - llmStart;
 
     // Log AI call metric (non-blocking)
     try {
@@ -87,11 +89,11 @@ Answer the question based on the context above. Include source citations like [S
         data: {
           organizationId: membership.organizationId,
           jobType: "kb_ask",
-          promptTokens: _askUsage?.prompt_tokens ?? 0,
-          completionTokens: _askUsage?.completion_tokens ?? 0,
-          totalTokens: _askUsage?.total_tokens ?? 0,
-          llmLatencyMs: 0,
-          totalLatencyMs: 0,
+          promptTokens: usage?.prompt_tokens ?? 0,
+          completionTokens: usage?.completion_tokens ?? 0,
+          totalTokens: usage?.total_tokens ?? 0,
+          llmLatencyMs: latencyMs,
+          totalLatencyMs: latencyMs,
           success: chunks.length > 0,
           fallbackUsed: secondaryRetrievalUsed,
         },

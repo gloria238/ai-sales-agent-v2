@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@salesagent/db";
 import { getSession } from "@/lib/session";
 import { requirePermission, checkPermission } from "@/lib/permissions";
-import { callDeepSeekJSON, SUMMARIZE_CONVERSATION_SYSTEM, buildSummarizeConversationPrompt } from "@salesagent/ai-core";
+import { callDeepSeekJSON, SUMMARIZE_CONVERSATION_SYSTEM, buildSummarizeConversationPrompt, buildMetric } from "@salesagent/ai-core";
 import { summarizeConversationSchema } from "@/lib/validation";
 import { isEnabled } from "@/lib/feature-flags";
 
@@ -44,14 +44,30 @@ export async function POST(request: Request, { params }: { params: { slug: strin
       })),
     });
 
-    const { result: summary, usage: _sumUsage } = await callDeepSeekJSON<{
+    const llmStart = Date.now();
+    const { result: summary, usage } = await callDeepSeekJSON<{
       summary: string; keyPoints: string[]; objections: string[];
       sentiment: string; buyingSignals: string[]; missingInfo: string[];
       nextSteps: string[]; shouldEscalate: boolean;
     }>(prompt, SUMMARIZE_CONVERSATION_SYSTEM, { temperature: 0.3 });
+    const latencyMs = Date.now() - llmStart;
+
+    // Log AI call metric (non-blocking)
+    const metric = buildMetric(
+      { organizationId: membership.organizationId, jobType: "summarize_conversation", conversationId: conversation.id },
+      usage, latencyMs, latencyMs, true, false,
+    );
+    prisma.aICallMetric.create({ data: metric }).catch(() => {});
 
     return NextResponse.json(summary);
   } catch (err) {
+    // Log failed metric (non-blocking)
+    const failMetric = buildMetric(
+      { organizationId: membership!.organizationId, jobType: "summarize_conversation" },
+      undefined, 0, 0, false, true,
+      err instanceof Error ? err.message.slice(0, 200) : "unknown",
+    );
+    prisma.aICallMetric.create({ data: failMetric }).catch(() => {});
     console.error("Summarization error:", err instanceof Error ? err.message : "Unknown");
     return NextResponse.json({ error: "Summarization failed" }, { status: 502 });
   }

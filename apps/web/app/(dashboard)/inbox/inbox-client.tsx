@@ -201,6 +201,9 @@ export function InboxClient({ conversations, orgSlug, selectedId: initialSelecte
 
   useEffect(() => {
     if (!selectedId) { setMessages([]); setNextCursor(null); setHasMore(false); return; }
+    // Auto-detect channel from the selected conversation
+    const selectedConv = conversations.find((c: any) => c.id === selectedId);
+    setChatMode(selectedConv?.channel === "chat");
     setMsgsLoading(true);
     setReplyDraft("");
     setAiDraft(null);
@@ -300,7 +303,8 @@ export function InboxClient({ conversations, orgSlug, selectedId: initialSelecte
     setSending(false);
   }
 
-  /** Patch Worker-generated draft message with reviewAction (HITL audit trail). */
+  /** Patch Worker-generated draft message with reviewAction (HITL audit trail).
+   *  Also resets conversation status from awaiting_approval → active. */
   async function patchWorkerDraft(action: "approved" | "rejected") {
     const workerDraft = [...messages].reverse().find(
       (m) => m.direction === "outbound" && !m.reviewAction
@@ -314,6 +318,11 @@ export function InboxClient({ conversations, orgSlug, selectedId: initialSelecte
       setMessages((prev) => prev.map((m) =>
         m.id === workerDraft.id ? { ...m, reviewAction: action } : m
       ));
+      // Update conversation status on the filtered list so "needs_review" badge clears
+      const idx = conversations.findIndex((c: any) => c.id === selectedId);
+      if (idx !== -1 && conversations[idx]?.status === "awaiting_approval") {
+        conversations[idx].status = "active";
+      }
     } catch { /* non-blocking — message send/reject already completed */ }
   }
 
